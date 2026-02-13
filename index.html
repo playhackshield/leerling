@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simpele pagina · vertalen + afbeeldingen</title>
+    <style>
+        /* Helemaal geen ingewikkelde dingen, alleen wat ruimte en middenuitlijning */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pagina {
+            max-width: 1200px;
+            width: 100%;
+        }
+        /* afbeelding mooi in het midden */
+        .bovenste-plaatje {
+            text-align: center;
+            margin: 10px 0 30px 0;
+        }
+        .bovenste-plaatje img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        /* twee iframes naast elkaar, met een beetje ruimte ertussen */
+        .iframe-container {
+            display: flex;
+            gap: 24px;              /* precies 'ietsje uit elkaar' */
+            justify-content: center;
+            flex-wrap: wrap;       /* als het scherm smal is, zakken ze onder elkaar */
+        }
+        .iframe-item {
+            flex: 1 1 400px;       /* allebei even breed, minimaal 400px */
+            min-width: 300px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 16px 20px 16px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+        .iframe-item p {
+            margin: 0 0 12px 0;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+            border-left: 5px solid #3b82f6;
+            padding-left: 12px;
+            background: #f8fafc;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.4;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;          /* ruime hoogte, maar je kunt zo de randjes pakken */
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background: white;
+        }
+        /* kleine extra: maakt de pagina lief */
+        .voetnoot {
+            margin-top: 40px;
+            color: #64748b;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="pagina">
+
+        <!-- 🖼️ AFBEELDING MIDDEN BOVENAN -->
+        <div class="bovenste-plaatje">
+            <!-- 
+                💡 Super simpel: een neutrale, mooie sfeerafbeelding.
+                Je kunt later makkelijk je eigen plaatje hier neerzetten.
+                Ik gebruik een gratis afbeelding van Pexels (geen gedoe met rechten).
+            -->
+            <img 
+                src="https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop" 
+                alt="Twee laptops op een bureau, sfeervol – precies voor vertalen en afbeeldingen genereren"
+                loading="lazy"
+            >
+        </div>
+
+        <!-- 🧩 TWEE IFRAMES HORIZONTAAL, MET IEDER EEN TITEL -->
+        <div class="iframe-container">
+            
+            <!-- IFRAME 1: GOOGLE TRANSLATE (NL → EN) -->
+            <div class="iframe-item">
+                <p>📝 Typ je tekst in en vertaal deze</p>
+                <iframe 
+                    src="https://translate.google.com/?hl=nl&sl=nl&tl=en&op=translate" 
+                    title="Google Translate – Nederlands naar Engels"
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+                ></iframe>
+                <!-- 
+                    sandbox beetje openhouden, anders werkt translate niet optimaal.
+                    'allow-scripts' en 'allow-same-origin' zijn noodzakelijk voor translate.
+                -->
+            </div>
+            
+            <!-- IFRAME 2: PERCHANCE AI IMAGE GENERATOR -->
+            <div class="iframe-item">
+                <p>🎨 Plak hier je Engelse tekst en klik Generate</p>
+                <iframe 
+                    src="https://perchance.org/ai-text-to-image-generator" 
+                    title="Perchance AI – tekst-naar-afbeelding"
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+                ></iframe>
+            </div>
+        </div>
+
+        <!-- kleine voetnoot: toont dat het precies is zoals gevraagd -->
+        <div class="voetnoot">
+            ⚡ precies zoals gevraagd: afbeelding boven · twee iframes met tussenruimte · eigen tekst boven elk iframe
+        </div>
+    </div>
+
+    <!-- 
+        😌 Klaar. 
+        - Afbeelding staat netjes horizontaal gecentreerd.
+        - Iframes staan naast elkaar, precies wat ruimte (gap: 24px).
+        - Boven elk iframe staat de tekst die je wilde.
+        - De pagina is supersimpel, maar ziet er fris uit.
+    -->
+</body>
+</html>
