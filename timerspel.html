@@ -598,35 +598,31 @@ function stopTimer(speler) {
     const naam1 = koppel[0];
     const naam2 = koppel[1];
 
-    if (speler === 1) {
-        // Alleen stoppen als het een echte leerling is (geen leraar)
-        if (naam1 !== '👨‍🏫 Leraar') {
-            state.speler1Score = score;
-            state.speler1Gedaan = true;
-            const idx = LEERLINGEN.indexOf(naam1);
-            if (!state.pogingen1[idx]) state.pogingen1[idx] = [];
-            state.pogingen1[idx][state.ronde - 1] = score;
-            document.getElementById('speler1Status').textContent = '✅ Gedaan!';
-        } else {
-            // Leraar tikt maar krijgt geen score
-            state.speler1Gedaan = true;
-            state.speler1Score = null;
-            document.getElementById('speler1Status').textContent = '👨‍🏫 Leraar (geen score)';
-        }
+if (speler === 1) {
+    // Alleen stoppen als het een echte leerling is (geen leraar)
+    if (naam1 !== '👨‍🏫 Leraar') {
+        state.speler1Score = score;
+        state.speler1Gedaan = true;
+        const idx = LEERLINGEN.indexOf(naam1);
+        if (!state.pogingen1[idx]) state.pogingen1[idx] = [];
+        state.pogingen1[idx][state.ronde - 1] = score;
+        document.getElementById('speler1Status').textContent = '✅ Gedaan!';
     } else {
-        if (naam2 !== '👨‍🏫 Leraar') {
-            state.speler2Score = score;
-            state.speler2Gedaan = true;
-            const idx = LEERLINGEN.indexOf(naam2);
-            if (!state.pogingen2[idx]) state.pogingen2[idx] = [];
-            state.pogingen2[idx][state.ronde - 1] = score;
-            document.getElementById('speler2Status').textContent = '✅ Gedaan!';
-        } else {
-            state.speler2Gedaan = true;
-            state.speler2Score = null;
-            document.getElementById('speler2Status').textContent = '👨‍🏫 Leraar (geen score)';
-        }
+        // Leraar tikt maar krijgt geen score
+        state.speler1Gedaan = true;
+        state.speler1Score = null;
+        document.getElementById('speler1Status').textContent = '👨‍🏫 Leraar (geen score)';
     }
+} else {
+    state.speler2Score = score;
+    state.speler2Gedaan = true;
+    if (naam2 !== '👨‍🏫 Leraar') {
+        const idx = LEERLINGEN.indexOf(naam2);
+        if (!state.pogingen2[idx]) state.pogingen2[idx] = [];
+        state.pogingen2[idx][state.ronde - 1] = score;
+    }
+    document.getElementById('speler2Status').textContent = '✅ Gedaan!';
+}
 
     // Update UI met de nieuwe scores (of null voor leraar)
     const s1 = state.speler1Score;
@@ -638,20 +634,14 @@ function stopTimer(speler) {
     if (s1 !== null) {
         score1El.textContent = '⭐ ' + s1.toFixed(1);
         score1El.className = 'score-display';
-    } else if (state.speler1Gedaan && koppel[0] === '👨‍🏫 Leraar') {
-        score1El.textContent = '👨‍🏫';
-        score1El.className = 'score-display waiting';
     } else {
         score1El.textContent = '⭐ ?';
         score1El.className = 'score-display waiting';
     }
-
+    
     if (s2 !== null) {
         score2El.textContent = '⭐ ' + s2.toFixed(1);
         score2El.className = 'score-display';
-    } else if (state.speler2Gedaan && koppel[1] === '👨‍🏫 Leraar') {
-        score2El.textContent = '👨‍🏫';
-        score2El.className = 'score-display waiting';
     } else {
         score2El.textContent = '⭐ ?';
         score2El.className = 'score-display waiting';
