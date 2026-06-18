@@ -536,14 +536,14 @@ function startTimer() {
     state.speler2Score = null;
     state.speler1Gedaan = false;
     state.speler2Gedaan = false;
-    state.timerValue = 3;
+    state.timerValue = 4;
 
     const timer1 = document.getElementById('speler1Timer');
     const timer2 = document.getElementById('speler2Timer');
-    timer1.textContent = '3';
+    timer1.textContent = '4';
     timer1.className = 'timer-display';
     timer1.style.color = '#f9d89c';
-    timer2.textContent = '3';
+    timer2.textContent = '4';
     timer2.className = 'timer-display';
     timer2.style.color = '#f9d89c';
 
@@ -557,7 +557,7 @@ function startTimer() {
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.timerInterval = setInterval(() => {
         const elapsed = (Date.now() - state.timerStart) / 1000;
-        const waarde = 3 - elapsed;
+        const waarde = 4 - elapsed;
         state.timerValue = waarde;
 
         // Alleen hele seconden tonen (afronden naar beneden)
