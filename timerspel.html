@@ -655,12 +655,12 @@ function startTimer() {
 
     // Alleen resetten als de speler nog niet gedaan heeft
     if (!state.speler1Gedaan) {
-        timer1.textContent = START_SECONDEN;
+        timer1.textContent = START_SECONDEN + '.0';
         timer1.className = 'timer-display';
         timer1.style.color = '#f9d89c';
     }
     if (!state.speler2Gedaan) {
-        timer2.textContent = START_SECONDEN;
+        timer2.textContent = START_SECONDEN + '.0';
         timer2.className = 'timer-display';
         timer2.style.color = '#f9d89c';
     }
@@ -685,12 +685,11 @@ function startTimer() {
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.timerInterval = setInterval(() => {
         const elapsed = (Date.now() - state.timerStart) / 1000;
-        // ✅ Gebruik START_SECONDEN - elapsed voor de tijd
         const waarde = START_SECONDEN - elapsed;
         state.timerWaarde = waarde;
 
-        // Alleen hele seconden tonen (afronden naar beneden)
-        const display = Math.floor(waarde);
+        // ✅ Toon met 1 decimaal (bijv. 3.0, 2.9, 2.8, ... 0.0, -0.1, -0.2, ...)
+        const display = waarde.toFixed(1);
 
         const timer1 = document.getElementById('speler1Timer');
         const timer2 = document.getElementById('speler2Timer');
@@ -718,7 +717,7 @@ function startTimer() {
             }
             updateKnoppen();
         }
-    }, 100);
+    }, 100);  // ✅ Interval naar 100ms voor nauwkeurigere weergave
 }
 
 function stopTimer(speler) {
@@ -751,7 +750,7 @@ function stopTimer(speler) {
         document.getElementById('speler1Status').textContent =
             naam1 === '👨‍🏫 Leraar' ? '👨‍🏫 Leraar (gespeeld)' : '✅ Gedaan!';
 
-        // ✅ Toon de tijd waarop gedrukt is (bijv. -0.3)
+        // ✅ Toon de tijd waarop gedrukt is met 1 decimaal (bijv. -0.3)
         const timer1 = document.getElementById('speler1Timer');
         timer1.textContent = waardeOpMoment.toFixed(1);
         timer1.style.color = '#6fcf97';
