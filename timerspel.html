@@ -281,6 +281,37 @@
         @media (min-width: 1200px) {
             .score-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
         }
+        .btn-tik {
+            font-size: 2.5rem;
+            font-weight: 800;
+            padding: 20px 40px;
+            border-radius: 80px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+            transition: all 0.07s ease;
+            margin-top: 10px;
+            width: 80%;
+            max-width: 250px;
+        }
+        .btn-tik:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+        .btn-tik:disabled {
+            opacity: 0.3;
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+        .speler1-tik {
+            background: #6fcf97;
+            color: #1a3a2a;
+        }
+        .speler2-tik {
+            background: #f28b82;
+            color: #3d1c1a;
+        }        
     </style>
 </head>
 <body>
@@ -296,6 +327,7 @@
             <div class="player-name" id="speler1Naam">👤 ...</div>
             <div class="timer-display ready" id="speler1Timer">⏳</div>
             <div class="score-display waiting" id="speler1Score">⭐ ?</div>
+            <button class="btn-tik speler1-tik" id="tikSpeler1">🟢 TIK!</button>
             <div class="key-hint spatie">🟢 Spatiebalk</div>
             <div class="status-text" id="speler1Status">Wacht op start...</div>
         </div>
@@ -305,6 +337,7 @@
             <div class="player-name" id="speler2Naam">👤 ...</div>
             <div class="timer-display ready" id="speler2Timer">⏳</div>
             <div class="score-display waiting" id="speler2Score">⭐ ?</div>
+            <button class="btn-tik speler2-tik" id="tikSpeler2">🟠 TIK!</button>
             <div class="key-hint enter">🟠 Numerieke Enter</div>
             <div class="status-text" id="speler2Status">Wacht op start...</div>
         </div>
@@ -472,6 +505,16 @@ function updateUI() {
         s1 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
     document.getElementById('speler2Status').textContent =
         s2 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
+
+    // Knoppen in-/uitschakelen
+    const tik1 = document.getElementById('tikSpeler1');
+    const tik2 = document.getElementById('tikSpeler2');
+    if (tik1 && tik2) {
+        const s1 = state.speler1Score;
+        const s2 = state.speler2Score;
+        tik1.disabled = !state.timerRunning || s1 !== null;
+        tik2.disabled = !state.timerRunning || s2 !== null;
+    }    
 }
 
 function updateKnoppen() {
@@ -481,6 +524,14 @@ function updateKnoppen() {
     document.getElementById('btnVorige').disabled = isEerste;
     document.getElementById('btnVolgende').disabled = !(state.speler1Score !== null && state.speler2Score !== null);
     document.getElementById('btnStart').disabled = state.timerRunning;
+
+    // Ook de tik-knoppen updaten
+    const tik1 = document.getElementById('tikSpeler1');
+    const tik2 = document.getElementById('tikSpeler2');
+    if (tik1 && tik2) {
+        tik1.disabled = !state.timerRunning || state.speler1Score !== null;
+        tik2.disabled = !state.timerRunning || state.speler2Score !== null;
+    }    
 }
 
 // ============================================================
@@ -546,6 +597,16 @@ function startTimer() {
     timer2.textContent = '4';
     timer2.className = 'timer-display';
     timer2.style.color = '#f9d89c';
+
+    // Maak de timer balken klikbaar
+    timer1.onclick = function() {
+        stopTimer(1);
+    };
+    timer2.onclick = function() {
+        stopTimer(2);
+    };
+    timer1.style.cursor = 'pointer';
+    timer2.style.cursor = 'pointer';
 
     state.timerRunning = true;
     state.timerStart = Date.now();
@@ -833,6 +894,15 @@ document.getElementById('btnReset').addEventListener('click', () => {
         init();
     }
 });
+
+// Klikknoppen voor digibord
+document.getElementById('tikSpeler1').addEventListener('click', function() {
+    stopTimer(1);
+});
+
+document.getElementById('tikSpeler2').addEventListener('click', function() {
+    stopTimer(2);
+});    
 
 // ============================================================
 // START
