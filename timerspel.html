@@ -346,7 +346,7 @@
 
     async function laadData() {
         try {
-            const response = await fetch('data.json');
+            const response = await fetch('leerlingen.json');
             if (!response.ok) throw new Error('JSON bestand niet gevonden');
             const data = await response.json();
             LEERLINGEN = data.leerlingen.map(l => l.naam);
