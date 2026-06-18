@@ -1,0 +1,17 @@
+{
+  "leerlingen": [
+    { "naam": "Jantje", "groep": 1 },
+    { "naam": "Pietje", "groep": 2 },
+    { "naam": "Eva", "groep": 1 },
+    { "naam": "Mohammed", "groep": 0 },
+    { "naam": "Sanne", "groep": 0 },
+    { "naam": "Fatima", "groep": 0 },
+    { "naam": "Ahmed", "groep": 0 }
+  ],
+  "spellen": [
+    "Rekensprint",
+    "Woordenschat",
+    "Tafels",
+    "Topografie"
+  ]
+}
