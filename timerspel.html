@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Timerspel - twee spelers 🎯</title>
+    <title>Timerspel 🎯</title>
     <style>
         * {
             box-sizing: border-box;
@@ -685,6 +685,7 @@ function startTimer() {
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.timerInterval = setInterval(() => {
         const elapsed = (Date.now() - state.timerStart) / 1000;
+        // ✅ Gebruik START_SECONDEN - elapsed voor de tijd
         const waarde = START_SECONDEN - elapsed;
         state.timerWaarde = waarde;
 
@@ -749,11 +750,10 @@ function stopTimer(speler) {
         document.getElementById('speler1Status').textContent =
             naam1 === '👨‍🏫 Leraar' ? '👨‍🏫 Leraar (gespeeld)' : '✅ Gedaan!';
 
-        // Toon score in timer display
+        // ❌ VERWIJDERD: timer display veranderen naar score
+        // ✅ De timer blijft de tijd tonen waarop gedrukt is
         const timer1 = document.getElementById('speler1Timer');
-        timer1.textContent = score.toFixed(1);
-        timer1.className = 'timer-display';
-        timer1.style.color = '#6fcf97';
+        timer1.style.color = '#6fcf97';  // Alleen kleur veranderen naar groen
 
         // Score display updaten
         document.getElementById('speler1Score').textContent = '⭐ ' + score.toFixed(1);
@@ -779,10 +779,10 @@ function stopTimer(speler) {
         document.getElementById('speler2Status').textContent =
             naam2 === '👨‍🏫 Leraar' ? '👨‍🏫 Leraar (gespeeld)' : '✅ Gedaan!';
 
+        // ❌ VERWIJDERD: timer display veranderen naar score
+        // ✅ De timer blijft de tijd tonen waarop gedrukt is
         const timer2 = document.getElementById('speler2Timer');
-        timer2.textContent = score.toFixed(1);
-        timer2.className = 'timer-display';
-        timer2.style.color = '#6fcf97';
+        timer2.style.color = '#6fcf97';  // Alleen kleur veranderen naar groen
 
         document.getElementById('speler2Score').textContent = '⭐ ' + score.toFixed(1);
         document.getElementById('speler2Score').className = 'score-display';
