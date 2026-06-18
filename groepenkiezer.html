@@ -423,7 +423,7 @@
     // ===== GROEPEN BEPALEN =====
     document.getElementById('btnBepaalGroepen').addEventListener('click', function() {
         // Verdeel groep:0 leerlingen random
-        const zonderGroep = state.leerningen.filter(l => l.groep === 0);
+        const zonderGroep = state.leerlingen.filter(l => l.groep === 0);
         // Random schudden
         for (let i = zonderGroep.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
