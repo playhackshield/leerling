@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Timerspel 🎯</title>
+    <title>Timerspel X 🎯</title>
     <style>
         * {
             box-sizing: border-box;
@@ -718,7 +718,7 @@ function startTimer() {
             }
             updateKnoppen();
         }
-    }, 200);
+    }, 100);
 }
 
 function stopTimer(speler) {
@@ -728,19 +728,20 @@ function stopTimer(speler) {
     const naam1 = koppel[0];
     const naam2 = koppel[1];
 
+    // ✅ Vastleggen op het moment van drukken
+    const waardeOpMoment = state.timerWaarde;
+    const afstandTotNul = Math.abs(waardeOpMoment);
+    let score = Math.max(0, 10 - (afstandTotNul * 2));
+    score = Math.round(score * 10) / 10;
+
     if (speler === 1) {
         if (state.speler1Gedaan) return;
-        const waarde = state.timerWaarde;
-        let score = Math.max(0, 10 - (Math.abs(waarde) * 2));
-        score = Math.round(score * 10) / 10;
 
         state.speler1Score = score;
         state.speler1Gedaan = true;
 
-        // Alleen opslaan als het een echte leerling is
         if (naam1 !== '👨‍🏫 Leraar') {
             state.pogingen[naam1][state.ronde - 1] = score;
-            // Update beste score
             const alleScores = state.pogingen[naam1].filter(s => s !== undefined);
             if (alleScores.length > 0) {
                 ALLE_SCORES[naam1] = Math.max(...alleScores);
@@ -750,20 +751,16 @@ function stopTimer(speler) {
         document.getElementById('speler1Status').textContent =
             naam1 === '👨‍🏫 Leraar' ? '👨‍🏫 Leraar (gespeeld)' : '✅ Gedaan!';
 
-        // ❌ VERWIJDERD: timer display veranderen naar score
-        // ✅ De timer blijft de tijd tonen waarop gedrukt is
+        // ✅ Toon de tijd waarop gedrukt is (bijv. -0.3)
         const timer1 = document.getElementById('speler1Timer');
-        timer1.style.color = '#6fcf97';  // Alleen kleur veranderen naar groen
+        timer1.textContent = waardeOpMoment.toFixed(1);
+        timer1.style.color = '#6fcf97';
 
-        // Score display updaten
         document.getElementById('speler1Score').textContent = '⭐ ' + score.toFixed(1);
         document.getElementById('speler1Score').className = 'score-display';
 
     } else {
         if (state.speler2Gedaan) return;
-        const waarde = state.timerWaarde;
-        let score = Math.max(0, 10 - (Math.abs(waarde) * 2));
-        score = Math.round(score * 10) / 10;
 
         state.speler2Score = score;
         state.speler2Gedaan = true;
@@ -779,22 +776,20 @@ function stopTimer(speler) {
         document.getElementById('speler2Status').textContent =
             naam2 === '👨‍🏫 Leraar' ? '👨‍🏫 Leraar (gespeeld)' : '✅ Gedaan!';
 
-        // ❌ VERWIJDERD: timer display veranderen naar score
-        // ✅ De timer blijft de tijd tonen waarop gedrukt is
         const timer2 = document.getElementById('speler2Timer');
-        timer2.style.color = '#6fcf97';  // Alleen kleur veranderen naar groen
+        timer2.textContent = waardeOpMoment.toFixed(1);
+        timer2.style.color = '#6fcf97';
 
         document.getElementById('speler2Score').textContent = '⭐ ' + score.toFixed(1);
         document.getElementById('speler2Score').className = 'score-display';
     }
 
-    // Tik knop uitschakelen
+    // Tik knoppen uitschakelen
     const tik1 = document.getElementById('tikSpeler1');
     const tik2 = document.getElementById('tikSpeler2');
     if (tik1) tik1.disabled = true;
     if (tik2) tik2.disabled = true;
 
-    // Check of beide spelers klaar zijn
     if (state.speler1Gedaan && state.speler2Gedaan) {
         clearInterval(state.timerInterval);
         state.timerInterval = null;
@@ -803,7 +798,6 @@ function stopTimer(speler) {
         updateKnoppen();
         updateScoreOverzicht();
     } else {
-        // Als één speler klaar is, blijft de timer doorlopen voor de ander
         updateKnoppen();
     }
 }
