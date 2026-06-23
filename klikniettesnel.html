@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Klik niet te snel! - Digibord spel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #1a2a3a;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        .bord {
+            background: #2c3e50;
+            border-radius: 40px;
+            padding: 20px 20px 15px 20px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.7), inset 0 0 10px #1a2a3a;
+            max-width: 1300px;
+            width: 100%;
+        }
+        .binnen {
+            background: #34495e;
+            border-radius: 30px;
+            padding: 15px;
+            box-shadow: inset 0 0 0 2px #5d7b93;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px 15px 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .title {
+            color: #ecf0f1;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #1a2a3a;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .title small {
+            font-size: 1rem;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .startknop {
+            background: #f1c40f;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 40px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1a2a3a;
+            box-shadow: 0 6px 0 #b7950b, 0 8px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: 0.05s linear;
+            letter-spacing: 2px;
+            border: 2px solid #f39c12;
+        }
+        .startknop:active {
+            transform: translateY(6px);
+            box-shadow: 0 1px 0 #b7950b;
+        }
+        .startknop:disabled {
+            opacity: 0.5;
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b7950b;
+            pointer-events: none;
+        }
+        .speelveld {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .vlak {
+            background: #1e2b38;
+            border-radius: 30px;
+            min-height: 350px;
+            height: 55vh;
+            max-height: 520px;
+            position: relative;
+            box-shadow: inset 0 0 0 3px #4a667a, inset 0 0 15px #0f1a22;
+            overflow: hidden;
+            transition: background-color 0.15s ease;
+        }
+        .vlak-links {
+            border-top-left-radius: 50px;
+            border-bottom-left-radius: 50px;
+        }
+        .vlak-rechts {
+            border-top-right-radius: 50px;
+            border-bottom-right-radius: 50px;
+        }
+        .vlak.flash-groen {
+            background-color: #27ae60 !important;
+        }
+        .vlak.flash-rood {
+            background-color: #e74c3c !important;
+        }
+
+        .team-label {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 0 #000;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 0;
+            backdrop-filter: blur(2px);
+            border-radius: 30px;
+            margin: 0 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .team-label span {
+            display: inline-block;
+            padding: 0 12px;
+        }
+        .rood-label { color: #e74c3c; }
+        .blauw-label { color: #3498db; }
+
+        .blok {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.4), 0 10px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: 0.08s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.2);
+            transform: scale(1);
+            z-index: 5;
+        }
+        .blok:active {
+            transform: scale(0.92);
+        }
+        .blok.rood {
+            background: #e74c3c;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+        }
+        .blok.blauw {
+            background: #3498db;
+            background: radial-gradient(circle at 30% 30%, #5dade2, #2471a3);
+        }
+        .blok.groen {
+            background: #2ecc71;
+            background: radial-gradient(circle at 30% 30%, #58d68d, #1e8449);
+        }
+        .blok.geel {
+            background: #f1c40f;
+            background: radial-gradient(circle at 30% 30%, #f7dc6f, #b7950b);
+        }
+        .blok.paars {
+            background: #9b59b6;
+            background: radial-gradient(circle at 30% 30%, #af7ac5, #6c3483);
+        }
+        .blok.oranje {
+            background: #e67e22;
+            background: radial-gradient(circle at 30% 30%, #f0b27a, #ca6f1e);
+        }
+        .blok.roze {
+            background: #e84393;
+            background: radial-gradient(circle at 30% 30%, #f06292, #c2185b);
+        }
+        .blok.cyaan {
+            background: #00bcd4;
+            background: radial-gradient(circle at 30% 30%, #4dd0e1, #00838f);
+        }
+        .blok.bruin {
+            background: #8d6e63;
+            background: radial-gradient(circle at 30% 30%, #a1887f, #5d4037);
+        }
+
+        .info-balk {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 10px 0 10px;
+            color: #ecf0f1;
+            font-size: 1.3rem;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .info-balk div {
+            background: #1e2b38;
+            padding: 6px 20px;
+            border-radius: 40px;
+            box-shadow: inset 0 2px 5px #0f1a22;
+        }
+        .straf {
+            color: #f1c40f;
+        }
+        .winnaar-bericht {
+            background: #27ae60;
+            color: white;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-size: 1.6rem;
+            box-shadow: 0 0 20px #2ecc71;
+            transition: 0.3s;
+        }
+        .verborgen {
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .speelveld {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .vlak {
+                min-height: 200px;
+                height: 35vh;
+                border-radius: 30px !important;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .startknop {
+                font-size: 1.5rem;
+                padding: 12px;
+            }
+            .title {
+                font-size: 1.6rem;
+                justify-content: center;
+            }
+            .blok {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="bord">
+    <div class="binnen">
+        <div class="header">
+            <div class="title">
+                ⏳ Klik niet te snel!
+                <small>Rood vs Blauw</small>
+            </div>
+            <button class="startknop" id="startBtn">▶ START</button>
+        </div>
+
+        <div class="speelveld">
+            <div class="vlak vlak-links" id="vlakLinks">
+                <div class="team-label"><span class="rood-label">🔴 ROOD team</span> <span style="opacity:0.5;">|</span> <span id="scoreRood">0.0s</span></div>
+            </div>
+            <div class="vlak vlak-rechts" id="vlakRechts">
+                <div class="team-label"><span class="blauw-label">🔵 BLAUW team</span> <span style="opacity:0.5;">|</span> <span id="scoreBlauw">0.0s</span></div>
+            </div>
+        </div>
+
+        <div class="info-balk">
+            <div id="rondeInfo">Ronde 1 / 8</div>
+            <div id="tijdInfo">⏱️ <span id="chronoDisplay">0.0</span>s</div>
+            <div id="strafInfo" class="straf">✖ Straf: +5s</div>
+            <div id="winnaarDisplay" class="winnaar-bericht verborgen">🏆 Winnaar!</div>
+        </div>
+    </div>
+</div>
+<script>
+    (function() {
+        const TOTALE_RONDES = 8;
+        const STRAF_SECONDEN = 5;
+        const BLOK_GROOTTE = 70;
+
+        // Kleuren in volgorde van toevoeging
+        const KLEUREN = ['rood', 'blauw', 'groen', 'geel', 'paars', 'oranje', 'roze', 'cyaan', 'bruin'];
+
+        const vlakLinks = document.getElementById('vlakLinks');
+        const vlakRechts = document.getElementById('vlakRechts');
+        const scoreRoodEl = document.getElementById('scoreRood');
+        const scoreBlauwEl = document.getElementById('scoreBlauw');
+        const rondeInfoEl = document.getElementById('rondeInfo');
+        const chronoDisplay = document.getElementById('chronoDisplay');
+        const winnaarDisplay = document.getElementById('winnaarDisplay');
+        const startBtn = document.getElementById('startBtn');
+
+        let huidigeRonde = 0;
+        let actief = false;
+        let rondeStartTijd = 0;
+        let timerInterval = null;
+
+        let totaalTijdRood = 0;
+        let totaalTijdBlauw = 0;
+        let tijdRoodDezeRonde = 0;
+        let tijdBlauwDezeRonde = 0;
+        let roodGeklikt = false;
+        let blauwGeklikt = false;
+
+        // Alle blokken per vlak
+        let blokkenLinks = [];
+        let blokkenRechts = [];
+
+        function randomPositie(vlak, bestaandePosities) {
+            const rect = vlak.getBoundingClientRect();
+            const marge = 5;
+            const maxX = 100 - marge - (BLOK_GROOTTE / rect.width * 100);
+            const maxY = 100 - marge - (BLOK_GROOTTE / rect.height * 100);
+            
+            let pogingen = 0;
+            let positie;
+            let overlapt;
+            
+            do {
+                const x = Math.random() * maxX + marge/2;
+                const y = Math.random() * maxY + marge/2;
+                positie = { x, y };
+                overlapt = false;
+                
+                // Check overlap met bestaande blokken
+                for (let bestaand of bestaandePosities) {
+                    const dx = Math.abs(positie.x - bestaand.x);
+                    const dy = Math.abs(positie.y - bestaand.y);
+                    // Overlap als ze dichterbij zijn dan 25% van de blokgrootte
+                    if (dx < 25 && dy < 25) {
+                        overlapt = true;
+                        break;
+                    }
+                }
+                pogingen++;
+                if (pogingen > 100) break;
+            } while (overlapt);
+            
+            return positie;
+        }
+
+        function creerBlok(kleur, vlak, posities) {
+            const blok = document.createElement('div');
+            blok.className = `blok ${kleur}`;
+            blok.style.width = BLOK_GROOTTE + 'px';
+            blok.style.height = BLOK_GROOTTE + 'px';
+            const pos = randomPositie(vlak, posities);
+            blok.style.left = pos.x + '%';
+            blok.style.top = pos.y + '%';
+            blok.dataset.kleur = kleur;
+            return blok;
+        }
+
+        function toonBlokken() {
+            verwijderBlokken();
+            
+            // Bepaal hoeveel kleuren er in deze ronde moeten komen
+            // Ronde 1: 2 kleuren (rood, blauw)
+            // Ronde 2: 3 kleuren (+ groen)
+            // Ronde 8: 9 kleuren
+            const aantalKleuren = Math.min(huidigeRonde + 1, KLEUREN.length);
+            const gebruikteKleuren = KLEUREN.slice(0, aantalKleuren);
+            
+            let positiesLinks = [];
+            let positiesRechts = [];
+            
+            // Maak blokken voor beide vlakken met dezelfde posities
+            for (let kleur of gebruikteKleuren) {
+                // Linker vlak
+                const blokLinks = creerBlok(kleur, vlakLinks, positiesLinks);
+                blokLinks.dataset.vlak = 'links';
+                blokLinks.addEventListener('click', handleKlik);
+                vlakLinks.appendChild(blokLinks);
+                blokkenLinks.push(blokLinks);
+                
+                // Sla positie op voor symmetrie
+                const rect = vlakLinks.getBoundingClientRect();
+                const leftPct = parseFloat(blokLinks.style.left);
+                const topPct = parseFloat(blokLinks.style.top);
+                positiesLinks.push({ x: leftPct, y: topPct });
+                
+                // Rechter vlak (zelfde positie)
+                const blokRechts = document.createElement('div');
+                blokRechts.className = `blok ${kleur}`;
+                blokRechts.style.width = BLOK_GROOTTE + 'px';
+                blokRechts.style.height = BLOK_GROOTTE + 'px';
+                blokRechts.style.left = leftPct + '%';
+                blokRechts.style.top = topPct + '%';
+                blokRechts.dataset.kleur = kleur;
+                blokRechts.dataset.vlak = 'rechts';
+                blokRechts.addEventListener('click', handleKlik);
+                vlakRechts.appendChild(blokRechts);
+                blokkenRechts.push(blokRechts);
+                
+                positiesRechts.push({ x: leftPct, y: topPct });
+            }
+
+            roodGeklikt = false;
+            blauwGeklikt = false;
+            tijdRoodDezeRonde = 0;
+            tijdBlauwDezeRonde = 0;
+        }
+
+        function verwijderBlokken() {
+            for (let blok of blokkenLinks) {
+                blok.removeEventListener('click', handleKlik);
+                blok.remove();
+            }
+            for (let blok of blokkenRechts) {
+                blok.removeEventListener('click', handleKlik);
+                blok.remove();
+            }
+            blokkenLinks = [];
+            blokkenRechts = [];
+        }
+
+        function flashVlak(vlak, kleur) {
+            vlak.classList.add(kleur);
+            setTimeout(() => {
+                vlak.classList.remove(kleur);
+            }, 200);
+        }
+
+        function handleKlik(e) {
+            if (!actief) return;
+            
+            const blok = e.currentTarget;
+            const kleur = blok.dataset.kleur;
+            const vlak = blok.dataset.vlak;
+            
+            // Bepaal of dit de juiste klik is
+            // Links team (Rood) moet op rood klikken in linker vlak
+            // Rechts team (Blauw) moet op blauw klikken in rechter vlak
+            const isLinks = vlak === 'links';
+            const isRechts = vlak === 'rechts';
+            const isRood = kleur === 'rood';
+            const isBlauw = kleur === 'blauw';
+            
+            let correct = false;
+            let team = '';
+            
+            if (isLinks && isRood) {
+                correct = true;
+                team = 'rood';
+            } else if (isRechts && isBlauw) {
+                correct = true;
+                team = 'blauw';
+            } else if (isLinks) {
+                team = 'rood';
+            } else if (isRechts) {
+                team = 'blauw';
+            }
+            
+            // Check of dit team al succesvol heeft geklikt
+            if ((team === 'rood' && roodGeklikt) || (team === 'blauw' && blauwGeklikt)) {
+                return;
+            }
+            
+            const nu = performance.now() / 1000;
+            const verstreken = nu - rondeStartTijd;
+            let toegevoegdeTijd = verstreken;
+            
+            if (!correct) {
+                // Foute klik
+                toegevoegdeTijd += STRAF_SECONDEN;
+                flashVlak(vlak === 'links' ? vlakLinks : vlakRechts, 'flash-rood');
+            } else {
+                // Correcte klik
+                flashVlak(vlak === 'links' ? vlakLinks : vlakRechts, 'flash-groen');
+            }
+            
+            // Update tijd voor het juiste team
+            if (team === 'rood') {
+                tijdRoodDezeRonde = toegevoegdeTijd;
+                if (correct) roodGeklikt = true;
+                scoreRoodEl.textContent = (totaalTijdRood + tijdRoodDezeRonde).toFixed(1) + 's';
+            } else if (team === 'blauw') {
+                tijdBlauwDezeRonde = toegevoegdeTijd;
+                if (correct) blauwGeklikt = true;
+                scoreBlauwEl.textContent = (totaalTijdBlauw + tijdBlauwDezeRonde).toFixed(1) + 's';
+            }
+            
+            // Check of beide spelers klaar zijn
+            if (roodGeklikt && blauwGeklikt) {
+                eindeRonde();
+            }
+        }
+
+        function startRonde(rondeNr) {
+            if (rondeNr > TOTALE_RONDES) {
+                eindeSpel();
+                return;
+            }
+            
+            huidigeRonde = rondeNr;
+            actief = true;
+            roodGeklikt = false;
+            blauwGeklikt = false;
+            rondeStartTijd = performance.now() / 1000;
+            
+            toonBlokken();
+            
+            rondeInfoEl.textContent = `Ronde ${rondeNr} / ${TOTALE_RONDES}`;
+            winnaarDisplay.classList.add('verborgen');
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const nu = performance.now() / 1000;
+                const elapsed = nu - rondeStartTijd;
+                chronoDisplay.textContent = elapsed.toFixed(1);
+            }, 100);
+            
+            startBtn.disabled = true;
+        }
+
+        function eindeRonde() {
+            if (!actief) return;
+            actief = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            
+            totaalTijdRood += tijdRoodDezeRonde;
+            totaalTijdBlauw += tijdBlauwDezeRonde;
+            
+            scoreRoodEl.textContent = totaalTijdRood.toFixed(1) + 's';
+            scoreBlauwEl.textContent = totaalTijdBlauw.toFixed(1) + 's';
+            
+            verwijderBlokken();
+            
+            if (huidigeRonde < TOTALE_RONDES) {
+                setTimeout(() => {
+                    startRonde(huidigeRonde + 1);
+                }, 800);
+            } else {
+                eindeSpel();
+            }
+        }
+
+        function eindeSpel() {
+            actief = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            verwijderBlokken();
+            startBtn.disabled = false;
+            chronoDisplay.textContent = '0.0';
+            
+            let winnaar = '';
+            if (totaalTijdRood < totaalTijdBlauw) winnaar = '🔴 ROOD wint!';
+            else if (totaalTijdBlauw < totaalTijdRood) winnaar = '🔵 BLAUW wint!';
+            else winnaar = '🤝 GELIJKSPEL!';
+            
+            winnaarDisplay.textContent = `🏆 ${winnaar}`;
+            winnaarDisplay.classList.remove('verborgen');
+            rondeInfoEl.textContent = 'Spel voorbij!';
+        }
+
+        function resetSpel() {
+            actief = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            verwijderBlokken();
+            startBtn.disabled = false;
+            chronoDisplay.textContent = '0.0';
+            
+            totaalTijdRood = 0;
+            totaalTijdBlauw = 0;
+            tijdRoodDezeRonde = 0;
+            tijdBlauwDezeRonde = 0;
+            roodGeklikt = false;
+            blauwGeklikt = false;
+            
+            scoreRoodEl.textContent = '0.0s';
+            scoreBlauwEl.textContent = '0.0s';
+            rondeInfoEl.textContent = `Ronde 1 / ${TOTALE_RONDES}`;
+            winnaarDisplay.classList.add('verborgen');
+            winnaarDisplay.textContent = '🏆 Winnaar!';
+            
+            startRonde(1);
+        }
+
+        startBtn.addEventListener('click', resetSpel);
+
+        // Initialisatie
+        (function init() {
+            totaalTijdRood = 0;
+            totaalTijdBlauw = 0;
+            scoreRoodEl.textContent = '0.0s';
+            scoreBlauwEl.textContent = '0.0s';
+            rondeInfoEl.textContent = `Ronde 1 / ${TOTALE_RONDES}`;
+            chronoDisplay.textContent = '0.0';
+            winnaarDisplay.classList.add('verborgen');
+            verwijderBlokken();
+            startBtn.disabled = false;
+        })();
+    })();
+</script>
+</body>
+</html>
