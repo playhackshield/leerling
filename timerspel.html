@@ -364,9 +364,9 @@
     // STATE
     // ============================================================
     let state = {
-        volgorde: [],
-        index: 0,
-        ronde: 1, // 1 of 2
+        volgorde: [],          // array van paren: [[idx1, idx2], [idx3, idx4], ...]
+        paarIndex: 0,          // huidig paar (0, 1, 2, ...)
+        ronde: 1,              // 1 of 2
         timerRunning: false,
         timerStart: 0,
         timerInterval: null,
@@ -379,21 +379,32 @@
         pogingen1: {}, // { index: [poging1, poging2] }
         pogingen2: {}
     };
-
+        
     // ============================================================
     // INIT
     // ============================================================
     function init() {
         if (LEERLINGEN.length === 0) return;
-
-        // Random volgorde
+    
+        // Maak random paren: [ [0,1], [2,3], [4,5], ... ]
         const indices = LEERLINGEN.map((_, i) => i);
         for (let i = indices.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [indices[i], indices[j]] = [indices[j], indices[i]];
         }
-        state.volgorde = indices;
-        state.index = 0;
+    
+        const paren = [];
+        for (let i = 0; i < indices.length; i += 2) {
+            if (i + 1 < indices.length) {
+                paren.push([indices[i], indices[i + 1]]);
+            } else {
+                // Oneven aantal: laatste leerling speelt alleen tegen de timer
+                paren.push([indices[i], null]);
+            }
+        }
+    
+        state.volgorde = paren;
+        state.paarIndex = 0;
         state.ronde = 1;
         state.pogingen1 = {};
         state.pogingen2 = {};
@@ -404,72 +415,75 @@
             clearInterval(state.timerInterval);
             state.timerInterval = null;
         }
-
-        // Reset ALLE_SCORES (alleen null zetten, niet verwijderen)
+    
         LEERLINGEN.forEach(naam => { ALLE_SCORES[naam] = null; });
-
+    
         updateUI();
         updateKnoppen();
         updateScoreOverzicht();
     }
-
+    
     // ============================================================
     // UI UPDATE
     // ============================================================
-    function updateUI() {
-        const idx = state.volgorde[state.index];
-        const naam = LEERLINGEN[idx] || '...';
+function updateUI() {
+    const paar = state.volgorde[state.paarIndex] || [null, null];
+    const idx1 = paar[0];
+    const idx2 = paar[1];
 
-        document.getElementById('speler1Naam').textContent = '👤 ' + naam;
-        document.getElementById('speler2Naam').textContent = '👤 ' + naam;
+    const naam1 = idx1 !== null ? LEERLINGEN[idx1] : '...';
+    const naam2 = idx2 !== null ? LEERLINGEN[idx2] : '...';
 
-        document.getElementById('timerProgress').textContent =
-            `${state.index + 1} van ${LEERLINGEN.length} leerlingen (ronde ${state.ronde}/2)`;
+    document.getElementById('speler1Naam').textContent = '👤 ' + naam1;
+    document.getElementById('speler2Naam').textContent = '👤 ' + naam2;
 
-        if (!state.timerRunning) {
-            document.getElementById('speler1Timer').textContent = '⏳';
-            document.getElementById('speler1Timer').className = 'timer-display ready';
-            document.getElementById('speler2Timer').textContent = '⏳';
-            document.getElementById('speler2Timer').className = 'timer-display ready';
-        }
+    const totaalParen = state.volgorde.length;
+    document.getElementById('timerProgress').textContent =
+        `${state.paarIndex + 1} van ${totaalParen} koppels (ronde ${state.ronde}/2)`;
 
-        const s1 = state.speler1Score;
-        const s2 = state.speler2Score;
-
-        const score1El = document.getElementById('speler1Score');
-        const score2El = document.getElementById('speler2Score');
-
-        if (s1 !== null) {
-            score1El.textContent = '⭐ ' + s1.toFixed(1);
-            score1El.className = 'score-display';
-        } else {
-            score1El.textContent = '⭐ ?';
-            score1El.className = 'score-display waiting';
-        }
-
-        if (s2 !== null) {
-            score2El.textContent = '⭐ ' + s2.toFixed(1);
-            score2El.className = 'score-display';
-        } else {
-            score2El.textContent = '⭐ ?';
-            score2El.className = 'score-display waiting';
-        }
-
-        document.getElementById('speler1Status').textContent =
-            s1 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
-        document.getElementById('speler2Status').textContent =
-            s2 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
+    if (!state.timerRunning) {
+        document.getElementById('speler1Timer').textContent = '⏳';
+        document.getElementById('speler1Timer').className = 'timer-display ready';
+        document.getElementById('speler2Timer').textContent = '⏳';
+        document.getElementById('speler2Timer').className = 'timer-display ready';
     }
 
-    function updateKnoppen() {
-        const isEerste = state.index === 0 && state.ronde === 1;
-        const isLaatste = state.index === LEERLINGEN.length - 1 && state.ronde === 2;
+    const s1 = state.speler1Score;
+    const s2 = state.speler2Score;
 
-        document.getElementById('btnVorige').disabled = isEerste;
-        document.getElementById('btnVolgende').disabled = !(state.speler1Score !== null && state.speler2Score !== null);
-        document.getElementById('btnStart').disabled = state.timerRunning;
+    const score1El = document.getElementById('speler1Score');
+    const score2El = document.getElementById('speler2Score');
+
+    if (s1 !== null) {
+        score1El.textContent = '⭐ ' + s1.toFixed(1);
+        score1El.className = 'score-display';
+    } else {
+        score1El.textContent = '⭐ ?';
+        score1El.className = 'score-display waiting';
     }
 
+    if (s2 !== null) {
+        score2El.textContent = '⭐ ' + s2.toFixed(1);
+        score2El.className = 'score-display';
+    } else {
+        score2El.textContent = '⭐ ?';
+        score2El.className = 'score-display waiting';
+    }
+
+    document.getElementById('speler1Status').textContent =
+        s1 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
+    document.getElementById('speler2Status').textContent =
+        s2 !== null ? '✅ Gedaan!' : (state.timerRunning ? '⏳ Tikken!' : 'Wacht op start...');
+}
+    
+function updateKnoppen() {
+    const isEerste = state.paarIndex === 0 && state.ronde === 1;
+    const isLaatste = state.paarIndex === state.volgorde.length - 1 && state.ronde === 2;
+
+    document.getElementById('btnVorige').disabled = isEerste;
+    document.getElementById('btnVolgende').disabled = !(state.speler1Score !== null && state.speler2Score !== null);
+    document.getElementById('btnStart').disabled = state.timerRunning;
+}
     // ============================================================
     // SCORE OVERZICHT
     // ============================================================
@@ -563,55 +577,71 @@
         }, 50);
     }
 
-    function stopTimer(speler) {
-        if (!state.timerRunning) return;
-        if (speler === 1 && state.speler1Gedaan) return;
-        if (speler === 2 && state.speler2Gedaan) return;
+function stopTimer(speler) {
+    if (!state.timerRunning) return;
+    if (speler === 1 && state.speler1Gedaan) return;
+    if (speler === 2 && state.speler2Gedaan) return;
 
-        const waarde = state.timerValue;
-        let score = Math.max(0, 10 - (Math.abs(waarde) * 2));
-        score = Math.round(score * 10) / 10;
+    const waarde = state.timerValue;
+    let score = Math.max(0, 10 - (Math.abs(waarde) * 2));
+    score = Math.round(score * 10) / 10;
 
-        const idx = state.volgorde[state.index];
-        const naam = LEERLINGEN[idx];
+    const paar = state.volgorde[state.paarIndex];
+    const idx1 = paar[0];
+    const idx2 = paar[1];
+    let naam = '';
 
-        if (speler === 1) {
-            state.speler1Score = score;
-            state.speler1Gedaan = true;
-            // Opslaan in pogingen
-            if (!state.pogingen1[idx]) state.pogingen1[idx] = [];
-            state.pogingen1[idx][state.ronde - 1] = score;
-            document.getElementById('speler1Status').textContent = '✅ Gedaan!';
-        } else {
-            state.speler2Score = score;
-            state.speler2Gedaan = true;
-            if (!state.pogingen2[idx]) state.pogingen2[idx] = [];
-            state.pogingen2[idx][state.ronde - 1] = score;
-            document.getElementById('speler2Status').textContent = '✅ Gedaan!';
+    if (speler === 1) {
+        state.speler1Score = score;
+        state.speler1Gedaan = true;
+        if (idx1 !== null) {
+            naam = LEERLINGEN[idx1];
+            if (!state.pogingen1[idx1]) state.pogingen1[idx1] = [];
+            state.pogingen1[idx1][state.ronde - 1] = score;
         }
-
-        updateUI();
-
-        if (state.speler1Gedaan && state.speler2Gedaan) {
-            clearInterval(state.timerInterval);
-            state.timerInterval = null;
-            state.timerRunning = false;
-            document.getElementById('btnStart').disabled = false;
-
-            // Bepaal de beste score voor deze leerling (hoogste van beide spelers)
-            const s1 = state.pogingen1[idx] || [];
-            const s2 = state.pogingen2[idx] || [];
-            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
-            if (alleScores.length > 0) {
-                const beste = Math.max(...alleScores);
-                ALLE_SCORES[naam] = beste;
-            }
-
-            updateKnoppen();
-            updateScoreOverzicht();
+        document.getElementById('speler1Status').textContent = '✅ Gedaan!';
+    } else {
+        state.speler2Score = score;
+        state.speler2Gedaan = true;
+        if (idx2 !== null) {
+            naam = LEERLINGEN[idx2];
+            if (!state.pogingen2[idx2]) state.pogingen2[idx2] = [];
+            state.pogingen2[idx2][state.ronde - 1] = score;
         }
+        document.getElementById('speler2Status').textContent = '✅ Gedaan!';
     }
 
+    updateUI();
+
+    if (state.speler1Gedaan && state.speler2Gedaan) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.timerRunning = false;
+        document.getElementById('btnStart').disabled = false;
+
+        // Update beste scores voor beide spelers
+        if (idx1 !== null) {
+            const s1 = state.pogingen1[idx1] || [];
+            const s2 = state.pogingen2[idx1] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            if (alleScores.length > 0) {
+                ALLE_SCORES[LEERLINGEN[idx1]] = Math.max(...alleScores);
+            }
+        }
+        if (idx2 !== null) {
+            const s1 = state.pogingen1[idx2] || [];
+            const s2 = state.pogingen2[idx2] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            if (alleScores.length > 0) {
+                ALLE_SCORES[LEERLINGEN[idx2]] = Math.max(...alleScores);
+            }
+        }
+
+        updateKnoppen();
+        updateScoreOverzicht();
+    }
+}
+    
     // ============================================================
     // TOETSEN
     // ============================================================
@@ -633,92 +663,106 @@
     // ============================================================
     document.getElementById('btnStart').addEventListener('click', startTimer);
 
-    document.getElementById('btnVolgende').addEventListener('click', () => {
-        if (state.ronde === 1) {
-            state.ronde = 2;
-            state.speler1Score = null;
-            state.speler2Score = null;
-            state.timerRunning = false;
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            updateUI();
-            updateKnoppen();
-            document.getElementById('btnStart').disabled = false;
-        } else {
-            state.ronde = 1;
-            state.index++;
-            state.speler1Score = null;
-            state.speler2Score = null;
-            state.timerRunning = false;
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            updateUI();
-            updateKnoppen();
-            document.getElementById('btnStart').disabled = false;
+document.getElementById('btnVolgende').addEventListener('click', () => {
+    const paar = state.volgorde[state.paarIndex];
+    const idx1 = paar[0];
+    const idx2 = paar[1];
+
+    if (state.ronde === 1) {
+        state.ronde = 2;
+        state.speler1Score = null;
+        state.speler2Score = null;
+        state.timerRunning = false;
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
         }
-    });
-
-    document.getElementById('btnVorige').addEventListener('click', () => {
-        const idx = state.volgorde[state.index];
-        const naam = LEERLINGEN[idx];
-
-        if (state.ronde === 2) {
-            state.ronde = 1;
-            if (state.pogingen1[idx]) state.pogingen1[idx].pop();
-            if (state.pogingen2[idx]) state.pogingen2[idx].pop();
-            state.speler1Score = null;
-            state.speler2Score = null;
-            state.timerRunning = false;
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            // Update beste score
-            const s1 = state.pogingen1[idx] || [];
-            const s2 = state.pogingen2[idx] || [];
-            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
-            if (alleScores.length > 0) {
-                ALLE_SCORES[naam] = Math.max(...alleScores);
-            } else {
-                ALLE_SCORES[naam] = null;
-            }
-            updateUI();
-            updateKnoppen();
-            updateScoreOverzicht();
-            document.getElementById('btnStart').disabled = false;
-        } else if (state.ronde === 1 && state.index > 0) {
-            state.index--;
-            state.ronde = 2;
-            const prevIdx = state.volgorde[state.index];
-            const prevNaam = LEERLINGEN[prevIdx];
-            if (state.pogingen1[prevIdx]) state.pogingen1[prevIdx].pop();
-            if (state.pogingen2[prevIdx]) state.pogingen2[prevIdx].pop();
-            state.speler1Score = null;
-            state.speler2Score = null;
-            state.timerRunning = false;
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            const s1 = state.pogingen1[prevIdx] || [];
-            const s2 = state.pogingen2[prevIdx] || [];
-            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
-            if (alleScores.length > 0) {
-                ALLE_SCORES[prevNaam] = Math.max(...alleScores);
-            } else {
-                ALLE_SCORES[prevNaam] = null;
-            }
-            updateUI();
-            updateKnoppen();
-            updateScoreOverzicht();
-            document.getElementById('btnStart').disabled = false;
+        updateUI();
+        updateKnoppen();
+        document.getElementById('btnStart').disabled = false;
+    } else {
+        state.ronde = 1;
+        state.paarIndex++;
+        state.speler1Score = null;
+        state.speler2Score = null;
+        state.timerRunning = false;
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
         }
-    });
+        updateUI();
+        updateKnoppen();
+        document.getElementById('btnStart').disabled = false;
+    }
+});
+    
+document.getElementById('btnVorige').addEventListener('click', () => {
+    const paar = state.volgorde[state.paarIndex];
+    const idx1 = paar[0];
+    const idx2 = paar[1];
 
+    if (state.ronde === 2) {
+        state.ronde = 1;
+        if (idx1 !== null && state.pogingen1[idx1]) state.pogingen1[idx1].pop();
+        if (idx2 !== null && state.pogingen2[idx2]) state.pogingen2[idx2].pop();
+        state.speler1Score = null;
+        state.speler2Score = null;
+        state.timerRunning = false;
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        // Update beste scores
+        if (idx1 !== null) {
+            const s1 = state.pogingen1[idx1] || [];
+            const s2 = state.pogingen2[idx1] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            ALLE_SCORES[LEERLINGEN[idx1]] = alleScores.length > 0 ? Math.max(...alleScores) : null;
+        }
+        if (idx2 !== null) {
+            const s1 = state.pogingen1[idx2] || [];
+            const s2 = state.pogingen2[idx2] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            ALLE_SCORES[LEERLINGEN[idx2]] = alleScores.length > 0 ? Math.max(...alleScores) : null;
+        }
+        updateUI();
+        updateKnoppen();
+        updateScoreOverzicht();
+        document.getElementById('btnStart').disabled = false;
+    } else if (state.ronde === 1 && state.paarIndex > 0) {
+        state.paarIndex--;
+        state.ronde = 2;
+        const prevPaar = state.volgorde[state.paarIndex];
+        const prevIdx1 = prevPaar[0];
+        const prevIdx2 = prevPaar[1];
+        if (prevIdx1 !== null && state.pogingen1[prevIdx1]) state.pogingen1[prevIdx1].pop();
+        if (prevIdx2 !== null && state.pogingen2[prevIdx2]) state.pogingen2[prevIdx2].pop();
+        state.speler1Score = null;
+        state.speler2Score = null;
+        state.timerRunning = false;
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        if (prevIdx1 !== null) {
+            const s1 = state.pogingen1[prevIdx1] || [];
+            const s2 = state.pogingen2[prevIdx1] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            ALLE_SCORES[LEERLINGEN[prevIdx1]] = alleScores.length > 0 ? Math.max(...alleScores) : null;
+        }
+        if (prevIdx2 !== null) {
+            const s1 = state.pogingen1[prevIdx2] || [];
+            const s2 = state.pogingen2[prevIdx2] || [];
+            const alleScores = [...s1, ...s2].filter(s => s !== undefined);
+            ALLE_SCORES[LEERLINGEN[prevIdx2]] = alleScores.length > 0 ? Math.max(...alleScores) : null;
+        }
+        updateUI();
+        updateKnoppen();
+        updateScoreOverzicht();
+        document.getElementById('btnStart').disabled = false;
+    }
+});
+    
     document.getElementById('btnReset').addEventListener('click', () => {
         if (confirm('Weet je zeker dat je alle scores wilt resetten?')) {
             LEERLINGEN.forEach(naam => { ALLE_SCORES[naam] = null; });
