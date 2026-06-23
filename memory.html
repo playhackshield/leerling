@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wachtwoord Memory Spel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #2b3a67, #1d2a4a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 40px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            color: #1d2a4a;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #4a5a7a;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .input-section label {
+            font-weight: 600;
+            color: #1d2a4a;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 16px 20px;
+            border: 2px solid #b0c0d8;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            outline: none;
+            resize: vertical;
+            transition: 0.3s;
+            line-height: 1.6;
+        }
+
+        .input-section textarea:focus {
+            border-color: #2b3a67;
+            box-shadow: 0 0 0 3px rgba(43, 58, 103, 0.2);
+        }
+
+        .input-section textarea::placeholder {
+            color: #aab4c8;
+        }
+
+        .input-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-actions button {
+            padding: 14px 40px;
+            border: none;
+            border-radius: 60px;
+            background: #4caf50;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2e7d32;
+            transition: 0.2s;
+        }
+
+        .input-actions button:hover {
+            background: #43a047;
+            transform: translateY(-2px);
+        }
+
+        .input-actions button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #2e7d32;
+        }
+
+        .input-actions button:disabled {
+            opacity: 0.5;
+            transform: translateY(0);
+            box-shadow: 0 4px 0 #2e7d32;
+            pointer-events: none;
+        }
+
+        .input-actions .btn-clear {
+            background: #e57373;
+            box-shadow: 0 4px 0 #b71c1c;
+        }
+
+        .input-actions .btn-clear:hover {
+            background: #ef5350;
+        }
+
+        .name-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            background: #eef2f7;
+            padding: 15px 20px;
+            border-radius: 40px;
+            margin-bottom: 25px;
+            min-height: 56px;
+            align-items: center;
+        }
+
+        .name-tag {
+            background: #2b3a67;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        .game-area {
+            background: #f7f9fc;
+            border-radius: 30px;
+            padding: 30px 25px;
+            min-height: 240px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .turn-indicator {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1d2a4a;
+            margin-bottom: 12px;
+        }
+
+        .secret-display {
+            font-size: 4rem;
+            font-weight: 800;
+            background: #dce3ef;
+            padding: 20px 50px;
+            border-radius: 80px;
+            margin: 10px 0 20px;
+            letter-spacing: 4px;
+            color: #0d1b3a;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);
+            word-break: break-all;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 1.3rem;
+            background: #2b3a67;
+            color: white;
+            padding: 8px 30px;
+            border-radius: 40px;
+            margin: 5px 0 15px;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            min-width: 120px;
+        }
+
+        .button-group button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+        }
+
+        .btn-next {
+            background: #ffb347;
+            color: #1d2a4a;
+        }
+
+        .btn-next:hover {
+            background: #ffa726;
+            transform: translateY(-2px);
+        }
+
+        .btn-good {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-good:hover {
+            background: #43a047;
+            transform: translateY(-2px);
+        }
+
+        .btn-good:disabled, .btn-next:disabled {
+            opacity: 0.5;
+            transform: translateY(0);
+            pointer-events: none;
+        }
+
+        .btn-reset {
+            background: #e57373;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #ef5350;
+            transform: translateY(-2px);
+        }
+
+        .info-text {
+            font-size: 1rem;
+            color: #4a5a7a;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        /* Eindscore scherm */
+        .final-screen {
+            text-align: center;
+        }
+
+        .final-screen h2 {
+            font-size: 2.4rem;
+            color: #1d2a4a;
+            margin-bottom: 20px;
+        }
+
+        .final-score-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .final-score-list li {
+            background: #eef2f7;
+            margin: 8px 0;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .final-score-list .rank {
+            background: #2b3a67;
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .btn-restart {
+            background: #2b3a67;
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 0 #141f36;
+            transition: 0.2s;
+        }
+
+        .btn-restart:hover {
+            background: #3d4f7a;
+            transform: translateY(-2px);
+        }
+
+        .btn-restart:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #141f36;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.96); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .status-message {
+            margin: 12px 0;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        @media (max-width: 550px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.6rem; }
+            .secret-display { font-size: 2.8rem; padding: 15px 25px; }
+            .turn-indicator { font-size: 1.3rem; }
+            .button-group button { min-width: 100px; padding: 12px 18px; font-size: 0.95rem; }
+            .input-section textarea { min-height: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <h1>🔐 Wachtwoord Memory</h1>
+    <p class="subtitle">Onthoud de geheimen en vind de paren!</p>
+
+    <!-- Stap 1: Namen invoeren -->
+    <div id="step-input">
+        <div class="input-section">
+            <label for="nameInput">👦 Voer de namen in (één per regel):</label>
+            <textarea id="nameInput" placeholder="Jan&#10;Piet&#10;Kees&#10;Barry"></textarea>
+            <div class="input-actions">
+                <button id="startGameBtn">🚀 Start</button>
+                <button id="clearBtn" class="btn-clear">🗑️ Leegmaken</button>
+            </div>
+        </div>
+        <div id="statusMessage" class="status-message info">Voeg minimaal 2 namen toe (even aantal).</div>
+        <div class="name-list" id="nameListContainer"></div>
+    </div>
+
+    <!-- Stap 2: Spel -->
+    <div id="step-game" class="hidden">
+        <div class="game-area fade-in" id="gameArea">
+            <div class="turn-indicator" id="turnIndicator">Beurt: <span id="currentTurnName">-</span></div>
+            <div class="secret-display" id="secretDisplay">🌸</div>
+            <div class="score-display" id="scoreDisplay">⭐ 0 punten</div>
+            <div class="info-text" id="gameInfo">Klik op 'Volgende' om het volgende kind te tonen.</div>
+            <div class="button-group">
+                <button class="btn-next" id="nextBtn">➡️ Volgende</button>
+                <button class="btn-good" id="goodBtn" disabled>✅ Goed geraden!</button>
+                <button class="btn-reset" id="resetBtn">🔄 Opnieuw</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stap 3: Eindscore -->
+    <div id="step-final" class="hidden">
+        <div class="final-screen fade-in">
+            <h2>🏆 Einduitslag</h2>
+            <ul class="final-score-list" id="finalScoreList"></ul>
+            <button class="btn-restart" id="restartBtn">🔄 Nieuw spel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---- DOM refs ----
+        const stepInput = document.getElementById('step-input');
+        const stepGame = document.getElementById('step-game');
+        const stepFinal = document.getElementById('step-final');
+
+        const nameInput = document.getElementById('nameInput');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const nameListContainer = document.getElementById('nameListContainer');
+        const statusMessage = document.getElementById('statusMessage');
+
+        const turnIndicator = document.getElementById('turnIndicator');
+        const currentTurnName = document.getElementById('currentTurnName');
+        const secretDisplay = document.getElementById('secretDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const gameInfo = document.getElementById('gameInfo');
+        const nextBtn = document.getElementById('nextBtn');
+        const goodBtn = document.getElementById('goodBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const finalScoreList = document.getElementById('finalScoreList');
+
+        // ---- State ----
+        let names = [];
+        let gameData = null;
+        let isGameActive = false;
+
+        // ---- Hulpfuncties ----
+        function parseNames(text) {
+            return text.split(/\n/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+        }
+
+        function updateNameList() {
+            nameListContainer.innerHTML = '';
+            names.forEach(n => {
+                const span = document.createElement('span');
+                span.className = 'name-tag';
+                span.textContent = n;
+                nameListContainer.appendChild(span);
+            });
+
+            const count = names.length;
+            if (count === 0) {
+                statusMessage.className = 'status-message info';
+                statusMessage.textContent = 'Voeg minimaal 2 namen toe (even aantal).';
+                startGameBtn.disabled = true;
+                return;
+            }
+
+            if (count % 2 !== 0) {
+                statusMessage.className = 'status-message error';
+                statusMessage.textContent = `⚠️ ${count} namen is oneven. Voeg nog een naam toe.`;
+                startGameBtn.disabled = true;
+            } else {
+                statusMessage.className = 'status-message success';
+                statusMessage.textContent = `✅ ${count} namen geladen. Klik op "Start" om te beginnen!`;
+                startGameBtn.disabled = false;
+            }
+        }
+
+        function loadNamesFromTextarea() {
+            const raw = nameInput.value;
+            const parsed = parseNames(raw);
+            if (parsed.length === 0) {
+                names = [];
+            } else {
+                // Check op duplicaten
+                const unique = [...new Set(parsed)];
+                if (unique.length !== parsed.length) {
+                    statusMessage.className = 'status-message error';
+                    statusMessage.textContent = '⚠️ Dubbele namen zijn niet toegestaan.';
+                    startGameBtn.disabled = true;
+                    names = [];
+                    updateNameList();
+                    return;
+                }
+                names = parsed;
+            }
+            updateNameList();
+        }
+
+        // ---- Event: tekstveld verandert ----
+        nameInput.addEventListener('input', loadNamesFromTextarea);
+
+        // ---- Leegmaken ----
+        clearBtn.addEventListener('click', function() {
+            nameInput.value = '';
+            names = [];
+            updateNameList();
+            statusMessage.className = 'status-message info';
+            statusMessage.textContent = 'Voer namen in (één per regel).';
+            startGameBtn.disabled = true;
+        });
+
+        // ---- Start spel ----
+        startGameBtn.addEventListener('click', function() {
+            // Laad opnieuw om zeker te zijn
+            loadNamesFromTextarea();
+            if (names.length === 0 || names.length % 2 !== 0) {
+                return;
+            }
+
+            // Genereer geheimen
+            const total = names.length;
+            const totalPairs = total / 2;
+
+            // Lijst met mogelijke geheimen (woorden, tekens, cijfers)
+            const secretsPool = [
+                '🌸 bloem', '🚪 deur', '🌳 boom', '🏫 school', '📚 boek',
+                '⭐ ster', '🌈 regenboog', '🍎 appel', '🐱 kat', '🐶 hond',
+                '🦋 vlinder', '🌞 zon', '🌙 maan', '❤️ hart', '🧸 beer',
+                '#', '@', '?', '!', '&', '%', '+', '=', '~', '€', '$',
+                '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
+            ];
+
+            // Kies totalPairs unieke geheimen
+            const shuffledSecrets = [...secretsPool].sort(() => Math.random() - 0.5);
+            const chosen = shuffledSecrets.slice(0, totalPairs);
+            // Elk geheim komt 2x voor
+            let secretAssignments = [];
+            chosen.forEach(s => {
+                secretAssignments.push(s, s);
+            });
+            // Schud de toewijzingen
+            for (let i = secretAssignments.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [secretAssignments[i], secretAssignments[j]] = [secretAssignments[j], secretAssignments[i]];
+            }
+
+            // Maak willekeurige volgorde voor de kinderen
+            const order = [...names];
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+
+            // Bouw secrets map
+            const secrets = {};
+            order.forEach((name, idx) => {
+                secrets[name] = secretAssignments[idx];
+            });
+
+            // Scores initialiseren
+            const scores = {};
+            names.forEach(n => { scores[n] = 0; });
+
+            gameData = {
+                order: order,
+                secrets: secrets,
+                scores: scores,
+                currentIndex: 0,
+                phase: 'reveal',
+                totalPairs: totalPairs,
+                foundPairs: 0,
+                allRevealed: false
+            };
+
+            isGameActive = true;
+
+            // UI wisselen
+            stepInput.classList.add('hidden');
+            stepGame.classList.remove('hidden');
+            stepFinal.classList.add('hidden');
+
+            // Start met reveal fase
+            showRevealStep();
+        });
+
+        // ---- Reveal fase ----
+        function showRevealStep() {
+            if (!gameData) return;
+            const idx = gameData.currentIndex;
+            const order = gameData.order;
+            if (idx >= order.length) {
+                // Alle geheimen zijn getoond -> ga naar speelfase
+                gameData.phase = 'play';
+                gameData.currentIndex = 0;
+                showPlayStep();
+                return;
+            }
+            const name = order[idx];
+            const secret = gameData.secrets[name];
+            currentTurnName.textContent = name;
+            secretDisplay.textContent = secret;
+            scoreDisplay.textContent = `⭐ ${gameData.scores[name]} punten`;
+            gameInfo.textContent = `Geheim tonen (${idx+1}/${order.length})`;
+            goodBtn.disabled = true;
+            nextBtn.disabled = false;
+            // Volgende knop gaat naar volgende reveal of naar play
+            nextBtn.onclick = function() {
+                gameData.currentIndex++;
+                showRevealStep();
+            };
+            // Reset
+            resetBtn.onclick = resetGame;
+        }
+
+        // ---- Speelfase ----
+        function showPlayStep() {
+            if (!gameData) return;
+            const order = gameData.order;
+            const idx = gameData.currentIndex;
+            // Check of alle paren gevonden zijn
+            if (gameData.foundPairs >= gameData.totalPairs) {
+                showFinalScreen();
+                return;
+            }
+            // Als de index voorbij de lijst is, begin opnieuw bij 0
+            if (idx >= order.length) {
+                gameData.currentIndex = 0;
+                showPlayStep();
+                return;
+            }
+            const name = order[idx];
+            currentTurnName.textContent = name;
+            secretDisplay.textContent = '❓';
+            scoreDisplay.textContent = `⭐ ${gameData.scores[name]} punten`;
+            gameInfo.textContent = `${name} is aan de beurt! Noem twee kinderen.`;
+            goodBtn.disabled = false;
+            nextBtn.disabled = false;
+        
+            // Volgende knop: ga naar volgende speler (alleen als speler stopt of fout heeft)
+            nextBtn.onclick = function() {
+                gameData.currentIndex++;
+                showPlayStep();
+            };
+        
+            // Goed geraden knop: speler blijft aan de beurt!
+            goodBtn.onclick = function() {
+                const currentName = order[gameData.currentIndex];
+                gameData.scores[currentName] = (gameData.scores[currentName] || 0) + 1;
+                gameData.foundPairs++;
+                scoreDisplay.textContent = `⭐ ${gameData.scores[currentName]} punten`;
+                // Kijk of alle paren gevonden zijn
+                if (gameData.foundPairs >= gameData.totalPairs) {
+                    showFinalScreen();
+                } else {
+                    // Blijf bij dezelfde speler! Geen currentIndex++
+                    showPlayStep(); // Herlaad het scherm met dezelfde speler
+                }
+            };
+        
+            // Reset
+            resetBtn.onclick = resetGame;
+        }
+              
+        // ---- Eindscherm ----
+        function showFinalScreen() {
+            stepGame.classList.add('hidden');
+            stepFinal.classList.remove('hidden');
+            // Sorteer scores
+            const sorted = names.slice().sort((a, b) => (gameData.scores[b] || 0) - (gameData.scores[a] || 0));
+            const list = document.getElementById('finalScoreList');
+            list.innerHTML = '';
+            sorted.forEach((name, index) => {
+                const li = document.createElement('li');
+                const rank = document.createElement('span');
+                rank.className = 'rank';
+                rank.textContent = index + 1;
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = name;
+                const scoreSpan = document.createElement('span');
+                scoreSpan.textContent = `${gameData.scores[name] || 0} punt${(gameData.scores[name] || 0) !== 1 ? 'en' : ''}`;
+                li.appendChild(rank);
+                li.appendChild(nameSpan);
+                li.appendChild(scoreSpan);
+                list.appendChild(li);
+            });
+            restartBtn.onclick = resetGame;
+        }
+
+        // ---- Reset ----
+        function resetGame() {
+            gameData = null;
+            isGameActive = false;
+            stepInput.classList.remove('hidden');
+            stepGame.classList.add('hidden');
+            stepFinal.classList.add('hidden');
+            // Reset knoppen
+            nextBtn.onclick = null;
+            goodBtn.onclick = null;
+            // Herlaad de namen uit het tekstveld
+            loadNamesFromTextarea();
+        }
+
+        // ---- Initialisatie ----
+        // Bij laden, check of er al tekst staat
+        if (nameInput.value.trim() !== '') {
+            loadNamesFromTextarea();
+        } else {
+            updateNameList();
+        }
+
+        // ---- Auto-start bij Enter? Nee, we gebruiken de startknop ----
+
+    })();
+</script>
+
+</body>
+</html>
