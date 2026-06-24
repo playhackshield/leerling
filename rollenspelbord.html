@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackers versus Burgers - Digibord</title>
+    <style>
+        /* ===== BASIS ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: linear-gradient(145deg, #141b2d, #1a233a);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid #2a3a5a;
+        }
+        
+        /* ===== TITEL ===== */
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #7b2ffc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 40px rgba(0,212,255,0.2);
+        }
+        .subtitle {
+            text-align: center;
+            color: #8899bb;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #1e2a44;
+            padding-bottom: 15px;
+        }
+        
+        /* ===== STATUS BADGE ===== */
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .status-naaminvoer { background: #2a3a5a; color: #8899bb; }
+        .status-rolverdeling { background: #7b2ffc; color: #fff; }
+        .status-ondervraging { background: #00d4ff; color: #0a0e1a; }
+        .status-stemming { background: #ff6b35; color: #fff; }
+        .status-uitslag { background: #f7c948; color: #0a0e1a; }
+        .status-einde { background: #ff2d55; color: #fff; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* ===== SECTIES ===== */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ===== NAAM INVOER ===== */
+        textarea {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
+            background: #0a0e1a;
+            border: 2px solid #2a3a5a;
+            border-radius: 15px;
+            color: #fff;
+            resize: vertical;
+            min-height: 200px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #7b2ffc;
+        }
+        textarea::placeholder {
+            color: #445566;
+        }
+        
+        .btn {
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 8px 0;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #7b2ffc, #00d4ff);
+            color: #fff;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: #fff;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff1744, #ff5252);
+            color: #fff;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9100, #ffab40);
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #2a3a5a;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: #3a4a6a;
+        }
+        .btn-block {
+            width: 100%;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* ===== GRID ===== */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        /* ===== SPELER KAARTJES ===== */
+        .speler-card {
+            background: #0a0e1a;
+            border: 2px solid #1e2a44;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .speler-card.afvaller {
+            opacity: 0.3;
+            text-decoration: line-through;
+            border-color: #ff1744;
+        }
+        .speler-card.hacker {
+            border-color: #ff1744;
+            background: rgba(255,23,68,0.1);
+        }
+        .speler-card.burger {
+            border-color: #00c853;
+            background: rgba(0,200,83,0.1);
+        }
+        .speler-card .rol-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 50px;
+            margin-top: 4px;
+        }
+        .rol-badge.hacker { background: #ff1744; color: #fff; }
+        .rol-badge.burger { background: #00c853; color: #fff; }
+        
+        /* ===== TIMER ===== */
+        .timer {
+            font-size: 5rem;
+            font-weight: 900;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            color: #00d4ff;
+            text-shadow: 0 0 60px rgba(0,212,255,0.3);
+            padding: 10px 0;
+        }
+        .timer.warning {
+            color: #ff6b35;
+            animation: blink 0.5s infinite;
+        }
+        .timer.danger {
+            color: #ff1744;
+            animation: blink 0.3s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* ===== STEM UITSLAG ===== */
+        .stem-resultaat {
+            background: #0a0e1a;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            border: 1px solid #1e2a44;
+        }
+        .stem-resultaat .naam {
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .stem-resultaat .aantal {
+            color: #8899bb;
+            font-size: 0.9rem;
+        }
+        .stem-balk {
+            height: 10px;
+            background: #1a233a;
+            border-radius: 10px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .stem-balk .vulling {
+            height: 100%;
+            background: linear-gradient(90deg, #7b2ffc, #00d4ff);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        /* ===== WINNAAR SCHERM ===== */
+        .winnaar-scherm {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .winnaar-scherm h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+        .winnaar-scherm .hackers-win {
+            color: #ff1744;
+            text-shadow: 0 0 80px rgba(255,23,68,0.4);
+        }
+        .winnaar-scherm .burgers-win {
+            color: #00c853;
+            text-shadow: 0 0 80px rgba(0,200,83,0.4);
+        }
+        .winnaar-scherm .emoji-groot {
+            font-size: 8rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+        
+        /* ===== GELIJKE STEM ===== */
+        .gelijke-stem {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .gelijke-stem .optie {
+            background: #0a0e1a;
+            border: 3px solid #f7c948;
+            border-radius: 15px;
+            padding: 20px 40px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+        .gelijke-stem .optie:hover {
+            transform: scale(1.05);
+            background: #1a233a;
+            border-color: #ff6b35;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .title { font-size: 2rem; }
+            .timer { font-size: 3rem; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .winnaar-scherm h1 { font-size: 3rem; }
+        }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0e1a; }
+        ::-webkit-scrollbar-thumb { background: #2a3a5a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3a4a6a; }
+        
+        /* ===== DEBUG INFO ===== */
+        .debug {
+            margin-top: 30px;
+            padding: 15px;
+            background: #0a0e1a;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            color: #445566;
+            border: 1px solid #1a233a;
+            max-height: 200px;
+            overflow: auto;
+            display: none;
+        }
+        .debug.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <h1 class="title">🔐 HACKERS vs BURGERS</h1>
+        <p class="subtitle">Digibord — Weerwolven in het digitale tijdperk</p>
+        
+        <!-- ===== STATUS BADGE ===== -->
+        <div id="statusBadge" class="status-badge status-naaminvoer">📋 Naam invoer</div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 1: NAAM INVOER                                        -->
+        <!-- ============================================================ -->
+        <div id="sectionNaamInvoer" class="section active">
+            <h2>📝 Voer de namen van alle spelers in</h2>
+            <p style="color:#8899bb; margin-bottom:15px;">Typ elke naam op een nieuwe regel.</p>
+            <textarea id="namenInput" placeholder="Lisa&#10;Mohammed&#10;Emma&#10;Daan&#10;Sophie&#10;..."></textarea>
+            <br><br>
+            <button class="btn btn-primary btn-block" onclick="startSpel()">🚀 Start spel</button>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 2: ROLVERDELING                                        -->
+        <!-- ============================================================ -->
+        <div id="sectionRolverdeling" class="section">
+            <h2>🔄 Rolverdeling bezig...</h2>
+            <p style="color:#8899bb; margin-bottom:20px;" id="rolverdelingStatus">Nog 0 van 0 kinderen aan de beurt.</p>
+            <div class="grid-4" id="rolverdelingLijst"></div>
+            <br>
+            <button class="btn btn-primary btn-block" onclick="volgendeKind()">📱 Volgende kind naar voren</button>
+            <br>
+            <button class="btn btn-success btn-block" onclick="rolverdelingKlaar()" disabled id="rolverdelingKlaarBtn">✅ Rolverdeling voltooid</button>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 3: ONDERVRAAGRONDE                                    -->
+        <!-- ============================================================ -->
+        <div id="sectionOndervraging" class="section">
+            <h2>💬 Ondervragronde</h2>
+            <div class="timer" id="ondervraagTimer">2:00</div>
+            <p style="text-align:center; color:#8899bb;">Stel elkaar vragen om erachter te komen wie de hackers zijn!</p>
+            <div class="grid-4" id="ondervraagLijst"></div>
+            <br>
+            <button class="btn btn-warning btn-block" onclick="startStemronde()">🗳️ Begin stemronde</button>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 4: STEMRONDE                                           -->
+        <!-- ============================================================ -->
+        <div id="sectionStemming" class="section">
+            <h2>🗳️ Stemronde</h2>
+            <p style="color:#8899bb; margin-bottom:10px;" id="stemStatus">Wacht op stemmen...</p>
+            <div class="grid-4" id="stemLijst"></div>
+            <br>
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="volgendeStemmer()" style="flex:1;">📱 Volgende stemmer</button>
+                <button class="btn btn-success" onclick="toonUitslag()" style="flex:1;" id="toonUitslagBtn" disabled>📊 Toon uitslag</button>
+            </div>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 5: UITSLAG                                             -->
+        <!-- ============================================================ -->
+        <div id="sectionUitslag" class="section">
+            <h2>📊 Uitslag</h2>
+            <div id="uitslagContent"></div>
+            <br>
+            <button class="btn btn-primary btn-block" onclick="gaNaarVolgendeRonde()">⏭️ Ga naar volgende ronde</button>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTIE 6: EINDE (WINNAAR)                                    -->
+        <!-- ============================================================ -->
+        <div id="sectionEinde" class="section">
+            <div class="winnaar-scherm" id="winnaarScherm">
+                <span class="emoji-groot">🏆</span>
+                <h1 id="winnaarTitel">DE BURGERS WINNEN!</h1>
+                <p style="font-size:1.5rem; color:#8899bb;" id="winnaarSub">Gefeliciteerd! Jullie hebben alle hackers ontmaskerd!</p>
+                <br>
+                <button class="btn btn-secondary" onclick="resetSpel()">🔄 Nieuw spel starten</button>
+            </div>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- DEBUG                                                         -->
+        <!-- ============================================================ -->
+        <div class="debug" id="debug"></div>
+        <button class="btn btn-secondary" style="margin-top:10px; font-size:0.7rem; padding:6px 12px;" onclick="toggleDebug()">🐞 Debug</button>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURATIE
+        // ============================================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbxdbjJAESv_hWFI6FRt7F1z_tjgdur5MaXWNjOaYS6YlGF1NnG_mn6sAXqQcMlYpUPldQ/exec"; // <-- VERVANG DIT!
+        
+        // ============================================================
+        // STATE
+        // ============================================================
+        let state = {
+            namen: [],
+            huidigeIndex: 0,
+            stemBeurtIndex: 0,
+            isEersteStemmer: true,
+            afvallers: [],
+            overgebleven: [],
+            stemmen: {},
+            timerInterval: null,
+            ondervraagTijd: 120, // seconden
+        };
+        
+        // ============================================================
+        // API CALLS
+        // ============================================================
+        async function apiCall(action, data = {}) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showDebug('API Error: ' + error.message);
+                return { status: 'error', message: error.message };
+            }
+        }
+        
+        // ============================================================
+        // SECTIE MANAGEMENT
+        // ============================================================
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        
+        function setStatus(text, className = 'status-naaminvoer') {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = text;
+            badge.className = 'status-badge ' + className;
+        }
+        
+        // ============================================================
+        // NAAM INVOER
+        // ============================================================
+        async function startSpel() {
+            const input = document.getElementById('namenInput');
+            const namen = input.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            
+            if (namen.length < 4) {
+                alert('Voer minimaal 4 namen in!');
+                return;
+            }
+            
+            // Reset spel op server
+            await apiCall('reset');
+            
+            // Sla namen op
+            const result = await apiCall('setNamen', { namen });
+            if (result.status !== 'success') {
+                alert('Fout bij opslaan namen: ' + result.message);
+                return;
+            }
+            
+            // Wijs rollen toe
+            const rolesResult = await apiCall('assignRoles');
+            if (rolesResult.status !== 'success') {
+                alert('Fout bij toewijzen rollen: ' + rolesResult.message);
+                return;
+            }
+            
+            state.namen = rolesResult.namen;
+            state.huidigeIndex = 0;
+            
+            // Start rolverdeling
+            startRolverdeling();
+        }
+        
+        // ============================================================
+        // ROLVERDELING
+        // ============================================================
+        function startRolverdeling() {
+            showSection('sectionRolverdeling');
+            setStatus('🔄 Rolverdeling', 'status-rolverdeling');
+            updateRolverdeling();
+        }
+        
+        function updateRolverdeling() {
+            const totaal = state.namen.length;
+            const gedaan = state.huidigeIndex;
+            const statusText = document.getElementById('rolverdelingStatus');
+            statusText.textContent = `Nog ${totaal - gedaan} van ${totaal} kinderen aan de beurt.`;
+            
+            // Toon alle namen met status
+            const lijst = document.getElementById('rolverdelingLijst');
+            lijst.innerHTML = state.namen.map((naam, i) => {
+                const isGedaan = i < gedaan;
+                return `<div class="speler-card ${isGedaan ? 'afvaller' : ''}">
+                    ${naam}
+                    ${isGedaan ? '<span style="color:#00c853;"> ✅</span>' : ''}
+                </div>`;
+            }).join('');
+            
+            // Knop klaar inschakelen als iedereen is geweest
+            const klaarBtn = document.getElementById('rolverdelingKlaarBtn');
+            klaarBtn.disabled = gedaan < totaal;
+        }
+        
+        async function volgendeKind() {
+            if (state.huidigeIndex >= state.namen.length) {
+                alert('Alle kinderen zijn geweest!');
+                return;
+            }
+            
+            const naam = state.namen[state.huidigeIndex];
+            state.huidigeIndex++;
+            updateRolverdeling();
+            
+            // Stuur signaal naar telefoon (via API)
+            // De telefoon haalt zelf de rol op via getRol
+            showDebug(`📱 ${naam} is aan de beurt. Geef de telefoon door.`);
+            
+            // Optioneel: we kunnen een notificatie naar de telefoon sturen
+            // maar die haalt zelf de data op.
+        }
+        
+        async function rolverdelingKlaar() {
+            if (state.huidigeIndex < state.namen.length) {
+                alert('Niet alle kinderen zijn nog geweest!');
+                return;
+            }
+            
+            // Start ondervragronde
+            await apiCall('startOndervraging');
+            startOndervraging();
+        }
+        
+        // ============================================================
+        // ONDERVRAAGRONDE
+        // ============================================================
+        async function startOndervraging() {
+            showSection('sectionOndervraging');
+            setStatus('💬 Ondervraging', 'status-ondervraging');
+            
+            // Haal overgebleven spelers op
+            const result = await apiCall('getOvergeblevenSpelers');
+            if (result.status === 'success') {
+                state.overgebleven = result.spelers;
+                updateOndervraagLijst();
+            }
+            
+            // Start timer
+            let tijd = state.ondervraagTijd;
+            const timerEl = document.getElementById('ondervraagTimer');
+            timerEl.className = 'timer';
+            
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                tijd--;
+                const min = Math.floor(tijd / 60);
+                const sec = tijd % 60;
+                timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+                
+                if (tijd <= 10) timerEl.className = 'timer danger';
+                else if (tijd <= 30) timerEl.className = 'timer warning';
+                else timerEl.className = 'timer';
+                
+                if (tijd <= 0) {
+                    clearInterval(state.timerInterval);
+                    timerEl.textContent = '⏰ TIJD!';
+                }
+            }, 1000);
+        }
+        
+        function updateOndervraagLijst() {
+            const lijst = document.getElementById('ondervraagLijst');
+            lijst.innerHTML = state.overgebleven.map(s => 
+                `<div class="speler-card">${s.naam}</div>`
+            ).join('');
+        }
+        
+        // ============================================================
+        // STEMRONDE
+        // ============================================================
+        async function startStemronde() {
+            // Stop timer
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            
+            // Reset stemmen op server
+            await apiCall('startStemronde');
+            
+            state.stemBeurtIndex = 0;
+            state.isEersteStemmer = true;
+            state.stemmen = {};
+            
+            showSection('sectionStemming');
+            setStatus('🗳️ Stemming', 'status-stemming');
+            
+            // Haal overgebleven spelers op
+            const result = await apiCall('getOvergeblevenSpelers');
+            if (result.status === 'success') {
+                state.overgebleven = result.spelers;
+                updateStemLijst();
+            }
+            
+            document.getElementById('stemStatus').textContent = 'Wacht op de eerste stemmer...';
+            document.getElementById('toonUitslagBtn').disabled = true;
+            
+            showDebug('Stemronde gestart. Roep de eerste stemmer naar voren.');
+        }
+        
+        function updateStemLijst() {
+            const lijst = document.getElementById('stemLijst');
+            const afvallers = state.afvallers || [];
+            lijst.innerHTML = state.overgebleven.map(s => 
+                `<div class="speler-card ${afvallers.includes(s.naam) ? 'afvaller' : ''}">
+                    ${s.naam}
+                    ${afvallers.includes(s.naam) ? ' ❌' : ''}
+                </div>`
+            ).join('');
+        }
+        
+        async function volgendeStemmer() {
+            // Haal de huidige stemmer op (de volgende in de lijst van overgebleven spelers)
+            const beschikbaar = state.overgebleven.filter(s => !state.afvallers.includes(s.naam));
+            
+            if (state.stemBeurtIndex >= beschikbaar.length) {
+                alert('Alle spelers hebben gestemd!');
+                document.getElementById('toonUitslagBtn').disabled = false;
+                return;
+            }
+            
+            const stemmer = beschikbaar[state.stemBeurtIndex];
+            const isEerste = state.stemBeurtIndex === 0;
+            
+            document.getElementById('stemStatus').textContent = 
+                `📱 ${stemmer.naam} is aan de beurt om te stemmen (${state.stemBeurtIndex + 1}/${beschikbaar.length})`;
+            
+            // Telefoon krijgt de lijst via getStemLijst
+            showDebug(`📱 Geef de telefoon aan ${stemmer.naam}. Hij/zij heeft ${isEerste ? 10 : 5} seconden.`);
+            
+            // We wachten tot de stemmer heeft gestemd (via de telefoon)
+            // De telefoon slaat de stem op via saveVote
+            
+            // Verhoog index pas nadat de stem is opgeslagen
+            // We doen dit via een polling mechanisme of de telefoon geeft een signaal
+            // Voor nu: ga ervan uit dat de stemmer de telefoon gebruikt en daarna
+            // de game master op "Volgende stemmer" klikt.
+            
+            // Maar we moeten de index pas verhogen als de stem is opgeslagen.
+            // We kunnen checken of er een nieuwe stem is.
+            const checkStem = setInterval(async () => {
+                const status = await apiCall('getSpelStatus');
+                const stemmen = status.stemmen || {};
+                const totaalGestemd = Object.keys(stemmen).length;
+                
+                // Als er meer stemmen zijn dan de huidige index, is de stem opgeslagen
+                if (totaalGestemd > state.stemBeurtIndex) {
+                    clearInterval(checkStem);
+                    state.stemBeurtIndex = totaalGestemd;
+                    document.getElementById('stemStatus').textContent = 
+                        `✅ ${stemmer.naam} heeft gestemd. Volgende...`;
+                    
+                    // Check of iedereen heeft gestemd
+                    const beschikbaarNu = state.overgebleven.filter(s => !state.afvallers.includes(s.naam));
+                    if (state.stemBeurtIndex >= beschikbaarNu.length) {
+                        document.getElementById('toonUitslagBtn').disabled = false;
+                        document.getElementById('stemStatus').textContent = '✅ Alle stemmen zijn binnen!';
+                    }
+                }
+            }, 1000);
+            
+            // Timeout na 30 seconden (veiligheidsklep)
+            setTimeout(() => {
+                clearInterval(checkStem);
+            }, 30000);
+        }
+        
+        // ============================================================
+        // UITSLAG
+        // ============================================================
+        async function toonUitslag() {
+            const result = await apiCall('getStemUitslag');
+            if (result.status !== 'success') {
+                alert('Fout bij ophalen uitslag: ' + result.message);
+                return;
+            }
+            
+            showSection('sectionUitslag');
+            setStatus('📊 Uitslag', 'status-uitslag');
+            
+            const content = document.getElementById('uitslagContent');
+            
+            // Toon stemmen
+            let html = '<div style="margin-bottom:20px;">';
+            for (const [naam, aantal] of Object.entries(result.telling)) {
+                const max = Math.max(1, result.maxStemmen);
+                const percentage = (aantal / max) * 100;
+                html += `
+                    <div class="stem-resultaat">
+                        <div>
+                            <span class="naam">${naam}</span>
+                            <span class="aantal">${aantal} stem${aantal !== 1 ? 'men' : ''}</span>
+                        </div>
+                        <div class="stem-balk">
+                            <div class="vulling" style="width:${percentage}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            // Winnaar(s)
+            if (result.winnaars.length === 0) {
+                html += '<p style="color:#ff6b35; font-size:1.3rem;">⚠️ Niemand heeft gestemd?!</p>';
+            } else if (result.winnaars.length === 1) {
+                html += `<h3 style="color:#00d4ff;">🏆 ${result.winnaars[0]} wordt weggestemd met ${result.maxStemmen} stemmen!</h3>`;
+                html += `<button class="btn btn-danger" onclick="elimineer('${result.winnaars[0]}')">❌ Stem ${result.winnaars[0]} weg</button>`;
+            } else {
+                html += `<h3 style="color:#f7c948;">⚖️ Gelijkspel tussen ${result.winnaars.join(', ')}!</h3>`;
+                html += `<p style="color:#8899bb;">Klik op de speler die je wilt wegstemmen:</p>`;
+                html += `<div class="gelijke-stem">`;
+                result.winnaars.forEach(naam => {
+                    html += `<div class="optie" onclick="elimineer('${naam}')">${naam}</div>`;
+                });
+                html += `</div>`;
+            }
+            
+            content.innerHTML = html;
+        }
+        
+        // ============================================================
+        // ELIMINEREN
+        // ============================================================
+        async function elimineer(naam) {
+            const result = await apiCall('eliminateSpeler', { naam });
+            if (result.status !== 'success') {
+                alert('Fout bij elimineren: ' + result.message);
+                return;
+            }
+            
+            state.afvallers = result.afvallers || [];
+            
+            // Toon onthulling
+            const content = document.getElementById('uitslagContent');
+            const rol = result.rol === 'hacker' ? '🔴 HACKER' : '🟢 BURGER';
+            const kleur = result.rol === 'hacker' ? '#ff1744' : '#00c853';
+            
+            content.innerHTML = `
+                <div style="text-align:center; padding:30px 0;">
+                    <h2 style="color:${kleur}; font-size:3rem;">${naam} was een ${rol}!</h2>
+                    <p style="color:#8899bb; font-size:1.2rem;">Deze speler is nu afgevallen en mag niet meer meestemmen.</p>
+                    <br>
+                    <button class="btn btn-primary" onclick="gaNaarVolgendeRonde()">⏭️ Ga naar volgende ronde</button>
+                </div>
+            `;
+            
+            // Check of het spel voorbij is
+            if (result.winnaar) {
+                showWinnaar(result.winnaar);
+            }
+        }
+        
+        // ============================================================
+        // VOLGENDE RONDE
+        // ============================================================
+        async function gaNaarVolgendeRonde() {
+            const status = await apiCall('getSpelStatus');
+            
+            if (status.winnaar) {
+                showWinnaar(status.winnaar);
+                return;
+            }
+            
+            // Start nieuwe ondervragronde
+            await apiCall('startOndervraging');
+            
+            // Update afvallers
+            state.afvallers = status.afvallers || [];
+            
+            startOndervraging();
+        }
+        
+        // ============================================================
+        // WINNAAR
+        // ============================================================
+        function showWinnaar(winnaar) {
+            showSection('sectionEinde');
+            setStatus('🏆 Einde', 'status-einde');
+            
+            const titel = document.getElementById('winnaarTitel');
+            const sub = document.getElementById('winnaarSub');
+            const emoji = document.querySelector('.emoji-groot');
+            
+            if (winnaar === 'hackers') {
+                titel.className = 'hackers-win';
+                titel.textContent = '🔴 DE HACKERS WINNEN!';
+                sub.textContent = 'Ze hebben alle burgers uitgeschakeld!';
+                emoji.textContent = '💻';
+            } else {
+                titel.className = 'burgers-win';
+                titel.textContent = '🟢 DE BURGERS WINNEN!';
+                sub.textContent = 'Ze hebben alle hackers ontmaskerd!';
+                emoji.textContent = '🛡️';
+            }
+        }
+        
+        // ============================================================
+        // RESET
+        // ============================================================
+        async function resetSpel() {
+            if (confirm('Weet je zeker dat je het spel wilt resetten?')) {
+                await apiCall('reset');
+                state = {
+                    namen: [],
+                    huidigeIndex: 0,
+                    stemBeurtIndex: 0,
+                    isEersteStemmer: true,
+                    afvallers: [],
+                    overgebleven: [],
+                    stemmen: {},
+                    timerInterval: null,
+                    ondervraagTijd: 120,
+                };
+                document.getElementById('namenInput').value = '';
+                showSection('sectionNaamInvoer');
+                setStatus('📋 Naam invoer', 'status-naaminvoer');
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                }
+            }
+        }
+        
+        // ============================================================
+        // DEBUG
+        // ============================================================
+        function showDebug(msg) {
+            const el = document.getElementById('debug');
+            if (el.classList.contains('visible')) {
+                el.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+        
+        function toggleDebug() {
+            const el = document.getElementById('debug');
+            el.classList.toggle('visible');
+            if (el.classList.contains('visible')) {
+                el.textContent = '🐞 Debug log:\n';
+            }
+        }
+        
+        // ============================================================
+        // POLLING (houd status in de gaten)
+        // ============================================================
+        async function pollStatus() {
+            try {
+                const status = await apiCall('getSpelStatus');
+                if (status.status === 'einde' && status.winnaar) {
+                    showWinnaar(status.winnaar);
+                }
+                // Update afvallers
+                if (status.afvallers) {
+                    state.afvallers = status.afvallers;
+                }
+            } catch (e) {
+                // Stil falen
+            }
+        }
+        
+        // Poll elke 5 seconden
+        setInterval(pollStatus, 5000);
+        
+        console.log('🔐 Hackers versus Burgers - Digibord geladen!');
+        console.log('📌 Vervang API_URL met jouw Google Apps Script URL.');
+    </script>
+</body>
+</html>
