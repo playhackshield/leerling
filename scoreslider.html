@@ -150,19 +150,19 @@
             border-color: #bdc3c7;
         }
 
-        /* ===== VASTE BREEDTE VOOR NAAM ===== */
+        /* ===== VASTE BREEDTE VOOR NAAM (300px) ===== */
         .student-name-wrapper {
-            min-width: 160px;
-            max-width: 160px;
+            min-width: 300px;
+            max-width: 300px;
             flex-shrink: 0;
         }
 
         .student-name {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: #2c3e50;
             background: #ecf0f1;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 40px;
             text-align: center;
             letter-spacing: 1px;
@@ -266,31 +266,9 @@
             transition: width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 2px 12px rgba(52, 152, 219, 0.3);
             position: relative;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
         }
 
-        /* Naam in de balk */
-        .graph-bar-name {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-
-        /* Toon de naam in de balk als de balk breed genoeg is */
-        .graph-bar:not(.zero) .graph-bar-name {
-            opacity: 1;
-        }
-
-        /* Kleurverloop op de balk zelf */
+        /* Kleurverloop op de balk */
         .graph-bar.positive {
             background: linear-gradient(90deg, #2ecc71, #27ae60);
             box-shadow: 0 2px 12px rgba(46, 204, 113, 0.4);
@@ -329,23 +307,41 @@
 
         .error-message {
             text-align: center;
-            font-size: 1.6rem;
-            color: #e74c3c;
-            padding: 30px;
-            background: #ffeaea;
+            font-size: 1.4rem;
+            color: #e67e22;
+            padding: 25px;
+            background: #fef9e7;
             border-radius: 40px;
-            border: 3px solid #e74c3c;
+            border: 3px solid #f39c12;
+        }
+
+        .error-message .fallback-note {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-top: 10px;
+            display: block;
         }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 1100px) {
+        @media (max-width: 1200px) {
             .student-name-wrapper {
-                min-width: 130px;
-                max-width: 130px;
+                min-width: 220px;
+                max-width: 220px;
+            }
+            .student-name {
+                font-size: 1.8rem;
+                padding: 8px 16px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .student-name-wrapper {
+                min-width: 180px;
+                max-width: 180px;
             }
             .student-name {
                 font-size: 1.6rem;
-                padding: 6px 12px;
+                padding: 6px 14px;
             }
             .btn-score {
                 width: 55px;
@@ -362,7 +358,7 @@
             }
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 850px) {
             .container {
                 padding: 25px 20px 40px;
             }
@@ -377,6 +373,7 @@
             .student-name-wrapper {
                 min-width: 100%;
                 max-width: 100%;
+                flex: 1 1 100%;
             }
             .student-name {
                 font-size: 1.8rem;
@@ -457,8 +454,15 @@
 
 <script>
     // ============================================================
-    //  De applicatie haalt de leerlingen op uit leerlingen.json
-    //  Het JSON-bestand moet in dezelfde map staan.
+    //  FALLBACK-LEERLINGEN (als leerlingen.json niet gevonden wordt)
+    //  Pas deze namen aan naar wens.
+    // ============================================================
+    const FALLBACK_STUDENTS = [
+        "Jan-Willemke",
+        "Mohammed",
+        "Tineke",
+        "Charmaine"
+    ];
     // ============================================================
 
     // ---------- Globale variabele ----------
@@ -497,7 +501,7 @@
         card.className = 'student-card';
         card.dataset.id = student.id;
 
-        // ===== NAAM (vaste breedte) =====
+        // ===== NAAM (vaste breedte 300px) =====
         const nameWrapper = document.createElement('div');
         nameWrapper.className = 'student-name-wrapper';
 
@@ -530,7 +534,7 @@
         controls.appendChild(scoreSpan);
         controls.appendChild(plusBtn);
 
-        // ===== GRAFIEK met NAAM IN DE BALK =====
+        // ===== GRAFIEK (zonder naam erin) =====
         const graphWrapper = document.createElement('div');
         graphWrapper.className = 'graph-wrapper';
 
@@ -540,12 +544,6 @@
         const bar = document.createElement('div');
         bar.className = `graph-bar ${getBarClass(student.score)}`;
         bar.style.width = scoreToPercent(student.score) + '%';
-
-        // Naam in de balk (zichtbaar als balk breed genoeg is)
-        const barName = document.createElement('span');
-        barName.className = 'graph-bar-name';
-        barName.textContent = student.name;
-        bar.appendChild(barName);
 
         barContainer.appendChild(bar);
         graphWrapper.appendChild(barContainer);
@@ -600,15 +598,6 @@
         if (bar) {
             bar.style.width = scoreToPercent(student.score) + '%';
             bar.className = `graph-bar ${getBarClass(student.score)}`;
-            
-            // Zorg dat de naam in de balk blijft
-            let barName = bar.querySelector('.graph-bar-name');
-            if (!barName) {
-                barName = document.createElement('span');
-                barName.className = 'graph-bar-name';
-                barName.textContent = student.name;
-                bar.appendChild(barName);
-            }
         }
     }
 
@@ -649,7 +638,7 @@
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // ---------- Leerlingen laden uit JSON ----------
+    // ---------- Leerlingen laden uit JSON met fallback ----------
     async function loadStudentsFromJson() {
         try {
             const response = await fetch('leerlingen.json');
@@ -662,6 +651,7 @@
                 throw new Error('JSON bevat geen "leerlingen" array');
             }
 
+            // Laad leerlingen uit JSON
             students = data.leerlingen.map(leerling => ({
                 id: generateId(),
                 name: leerling.naam || 'Onbekend',
@@ -676,16 +666,29 @@
             console.log(`✅ ${students.length} leerlingen geladen uit leerlingen.json`);
             
         } catch (error) {
-            console.error('❌ Fout bij laden leerlingen.json:', error);
-            container.innerHTML = `
-                <div class="error-message">
-                    ⚠️ Kon leerlingen.json niet laden.<br>
-                    <span style="font-size: 1.2rem; display: block; margin-top: 10px;">
-                        Controleer of het bestand in dezelfde map staat.<br>
-                        Foutmelding: ${error.message}
-                    </span>
-                </div>
+            // FALLBACK: gebruik de standaardlijst
+            console.warn('⚠️ Gebruik fallback-leerlingen:', error.message);
+            
+            students = FALLBACK_STUDENTS.map(name => ({
+                id: generateId(),
+                name: name,
+                score: 0
+            }));
+
+            renderAllStudents();
+
+            // Toon een melding dat fallback wordt gebruikt
+            const fallbackMsg = document.createElement('div');
+            fallbackMsg.className = 'error-message';
+            fallbackMsg.innerHTML = `
+                ℹ️ <strong>leerlingen.json</strong> niet gevonden.<br>
+                <span class="fallback-note">
+                    Gebruik standaardlijst: ${FALLBACK_STUDENTS.join(', ')}
+                </span>
             `;
+            container.prepend(fallbackMsg);
+            
+            console.log(`📋 ${students.length} fallback-leerlingen geladen`);
         }
     }
 
@@ -703,7 +706,7 @@
     loadStudentsFromJson();
     nameInput.focus();
 
-    console.log('🚀 Scorebord gestart - leerlingen worden geladen uit leerlingen.json');
+    console.log('🚀 Scorebord gestart');
 </script>
 
 </body>
