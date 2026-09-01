@@ -479,57 +479,118 @@
         // ================================================================
         // 1. STANDAARD VRAGEN (10 stuks – dummy, later vervangen)
         // ================================================================
-        const STANDAARD_VRAGEN = [{
-            "leerling": "Jantje",
-            "vraag": "Wat is het favoriete spel van Jantje?",
-            "opties": ["Fortnite", "Minecraft", "Roblox", "FIFA"],
-            "correct": 1
-        }, {
-            "leerling": "Pietje",
-            "vraag": "Wat gebeurde er op de camping van Pietje?",
-            "opties": ["Een overval", "Een schietpartij", "Een vechtpartij", "Brand"],
-            "correct": 1
-        }, {
-            "leerling": "Eva",
-            "vraag": "Wat is het favoriete schoolvak van Eva?",
-            "opties": ["Rekenen", "Taal", "Gym", "Tekenen"],
-            "correct": 2
-        }, {
-            "leerling": "Mohammed",
-            "vraag": "Wat doet Mohammed het liefst in zijn vrije tijd?",
-            "opties": ["Gamen", "Voetballen", "Films kijken", "Tekenen"],
-            "correct": 1
-        }, {
-            "leerling": "Sanne",
-            "vraag": "Wat vindt Sanne het belangrijkst in een vriendschap?",
-            "opties": ["Lachen", "Eerlijkheid", "Samen gamen", "Cadeautjes"],
-            "correct": 1
-        }, {
-            "leerling": "Fatima",
-            "vraag": "Wat doet Fatima als ze boos is online?",
-            "opties": ["Uitlachen", "Rapporteren", "Negeren", "Terug schelden"],
-            "correct": 1
-        }, {
-            "leerling": "Ahmed",
-            "vraag": "Wat is het favoriete apparaat van Ahmed?",
-            "opties": ["Telefoon", "Tablet", "Gameconsole", "Laptop"],
-            "correct": 2
-        }, {
-            "leerling": "Leerling 8",
-            "vraag": "Wat is het leukste aan gamen volgens deze leerling?",
-            "opties": ["Winnen", "Samen spelen", "Mooie graphics", "Verhaallijn"],
-            "correct": 1
-        }, {
-            "leerling": "Leerling 9",
-            "vraag": "Wat zou deze leerling doen met 3 uur vrije tijd?",
-            "opties": ["Gamen", "Buiten spelen", "Film kijken", "Tekenen"],
-            "correct": 0
-        }, {
-            "leerling": "Leerling 10",
-            "vraag": "Wat is het minst leuke aan school voor deze leerling?",
-            "opties": ["Rekenen", "Taal", "Overhoringen", "Vroeg opstaan"],
-            "correct": 3
-        }];
+        const STANDAARD_VRAGEN = [
+  {
+    "leerling": "Vraag 1",
+    "vraag": "Welke app gebruiken veel kinderen om leuke video's te maken met muziek, filters en speciale effecten?",
+    "opties": [
+      "TikTok",
+      "CapCut",
+      "YouTube",
+      "Snapchat"
+    ],
+    "correct": 1
+  },
+  {
+    "leerling": "Vraag 2",
+    "vraag": "Welke game is het meest populair onder kinderen en kun je met vrienden spelen op de telefoon, tablet, PC en console?",
+    "opties": [
+      "Fortnite",
+      "Minecraft",
+      "Roblox",
+      "Brawl Stars"
+    ],
+    "correct": 2
+  },
+  {
+    "leerling": "Vraag 3",
+    "vraag": "Welke game is superpopulair omdat je er zelf outfits kunt ontwerpen, personages kunt stylen en een eigen wereld kunt bouwen?",
+    "opties": [
+      "Fortnite",
+      "Roblox",
+      "Minecraft",
+      "FIFA"
+    ],
+    "correct": 1
+  },
+  {
+    "leerling": "Vraag 4",
+    "vraag": "Tim krijgt een bericht in zijn game: 'Klik hier en krijg gratis 1000 V-Bucks!' Wat moet Tim doen?",
+    "opties": [
+      "Meteen klikken, want hij wil graag gratis V-Bucks",
+      "Zijn vrienden vragen of zij ook hebben geklikt",
+      "Niet klikken en het aan zijn vader of moeder vertellen",
+      "Zijn wachtwoord veranderen en dan klikken"
+    ],
+    "correct": 2
+  },
+  {
+    "leerling": "Vraag 5",
+    "vraag": "Lisa plaatst elke dag een foto op haar Instagram. Wat is het verstandigste om te doen voor haar privacy?",
+    "opties": [
+      "Haar account op privé zetten",
+      "Alleen foto's van haar gezicht plaatsen",
+      "Haar achternaam in haar bio zetten",
+      "Elke dag haar locatie erbij zetten"
+    ],
+    "correct": 0
+  },
+  {
+    "leerling": "Vraag 6",
+    "vraag": "Welke game komt binnenkort uit en zijn heel veel gamers heel erg enthousiast over?",
+    "opties": [
+      "FIFA 26",
+      "GTA 6",
+      "Mario Kart 9",
+      "Pokémon Z"
+    ],
+    "correct": 1
+  },
+  {
+    "leerling": "Vraag 7",
+    "vraag": "Welke social media app is op dit moment het populairst onder meisjes van 8 tot 12 jaar?",
+    "opties": [
+      "Snapchat",
+      "TikTok",
+      "Instagram",
+      "WhatsApp"
+    ],
+    "correct": 1
+  },
+  {
+    "leerling": "Vraag 8",
+    "vraag": "Max gebruikt overal hetzelfde wachtwoord: 'max123'. Waarom is dat niet slim?",
+    "opties": [
+      "Omdat hij dan zijn wachtwoord kan vergeten",
+      "Omdat zijn vrienden het kunnen raden",
+      "Omdat als iemand zijn wachtwoord ontdekt, al zijn accounts gevaar lopen",
+      "Omdat wachtwoorden maar één keer gebruikt mogen worden"
+    ],
+    "correct": 2
+  },
+  {
+    "leerling": "Vraag 9",
+    "vraag": "Een onbekend meisje stuurt Sara een bericht: 'Wil je vriendinnen worden?' Wat is het beste wat Sara kan doen?",
+    "opties": [
+      "Meteen terugschrijven en alles over zichzelf vertellen",
+      "Een foto van zichzelf sturen",
+      "Het aan haar moeder of juf vertellen en niet zomaar alles delen",
+      "Afspreken om elkaar te ontmoeten"
+    ],
+    "correct": 2
+  },
+  {
+    "leerling": "Vraag 10",
+    "vraag": "Wat is het grootste verschil tussen een gameconsole en een gaming PC?",
+    "opties": [
+      "Een PC is goedkoper dan een console",
+      "Een PC kun je zelf upgraden en heeft betere graphics",
+      "Een console kun je meenemen in je tas",
+      "Een PC heeft geen games"
+    ],
+    "correct": 1
+  }
+];
 
         // ================================================================
         // 2. STATE
