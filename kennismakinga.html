@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kennismaking - Digitale Weerbaarheid</title>
+    <style>
+        /* ===== ALGEMENE STIJL ===== */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #1a2a3a;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #4a6a8a;
+            font-size: 0.95rem;
+            margin-top: -5px;
+            margin-bottom: 30px;
+        }
+
+        /* ===== LEERLINGEN GRID ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+        }
+        .leerling-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+            padding: 16px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            font-weight: 500;
+            color: #1a2a3a;
+            user-select: none;
+        }
+        .leerling-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.10);
+            border-color: #6a9ec7;
+        }
+        .leerling-card.active {
+            border-color: #2a6a9a;
+            background: #e3f0fa;
+        }
+        .leerling-card .groep-badge {
+            display: inline-block;
+            background: #d0dce8;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            padding: 2px 12px;
+            margin-top: 6px;
+            color: #2a4a6a;
+        }
+
+        /* ===== PANEL (per leerling) ===== */
+        .panel-container {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .panel {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 20px 24px 24px 24px;
+            border-left: 6px solid #6a9ec7;
+            display: none; /* standaard verborgen */
+            animation: fadeSlide 0.3s ease;
+        }
+        .panel.open {
+            display: block;
+        }
+        @keyframes fadeSlide {
+            0% { opacity: 0; transform: translateY(-8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #1a2a3a;
+            font-weight: 600;
+        }
+        .panel-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #8a9aaa;
+            padding: 0 8px;
+            line-height: 1;
+        }
+        .panel-header .close-btn:hover {
+            color: #c0392b;
+        }
+
+        .panel-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 20px;
+            align-items: center;
+        }
+        .panel-row label {
+            font-weight: 500;
+            color: #2a4a6a;
+            min-width: 120px;
+            font-size: 0.95rem;
+        }
+        .panel-row select,
+        .panel-row textarea {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1.5px solid #d0dce8;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: #fafcfe;
+            transition: border 0.2s;
+        }
+        .panel-row select:focus,
+        .panel-row textarea:focus {
+            outline: none;
+            border-color: #4a8ab0;
+            box-shadow: 0 0 0 3px rgba(74, 138, 176, 0.15);
+        }
+        .panel-row textarea {
+            min-height: 70px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .panel-row .vraag-nummer {
+            font-size: 0.85rem;
+            color: #6a8aaa;
+            background: #eaf0f6;
+            padding: 2px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* ===== GENEREER KNOP ===== */
+        .generate-section {
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+            text-align: right;
+        }
+        .generate-btn {
+            background: #1a6a3a;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(26, 106, 58, 0.25);
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+        }
+        .generate-btn:hover {
+            background: #0f552e;
+            transform: scale(1.02);
+            box-shadow: 0 6px 18px rgba(26, 106, 58, 0.35);
+        }
+        .generate-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ===== PROMPT OUTPUT ===== */
+        .prompt-output {
+            max-width: 1200px;
+            margin: 0 auto 40px auto;
+            background: #1e2a36;
+            color: #e8edf2;
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .prompt-output.visible {
+            display: block;
+            animation: fadeSlide 0.4s ease;
+        }
+        .prompt-output h3 {
+            margin-top: 0;
+            color: #aac8e0;
+            font-weight: 400;
+            letter-spacing: 1px;
+            font-size: 1rem;
+        }
+        .prompt-output textarea {
+            width: 100%;
+            min-height: 300px;
+            background: #0f171f;
+            color: #d4e2ed;
+            border: 1px solid #3a4a5a;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        .prompt-output textarea:focus {
+            outline: none;
+            border-color: #6a9ec7;
+        }
+        .prompt-output .copy-btn {
+            background: #3a5a7a;
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 30px;
+            margin-top: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .prompt-output .copy-btn:hover {
+            background: #4a7aaa;
+        }
+        .prompt-output .copy-feedback {
+            margin-left: 16px;
+            color: #7aaa7a;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .prompt-output .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* ===== STATUS / AANTAL ===== */
+        .status {
+            max-width: 1200px;
+            margin: 0 auto 10px auto;
+            font-size: 0.9rem;
+            color: #4a6a8a;
+            text-align: center;
+        }
+        .status span {
+            font-weight: 600;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .panel-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .panel-row label {
+                min-width: auto;
+            }
+            .panel-row select,
+            .panel-row textarea {
+                min-width: auto;
+            }
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            .generate-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Loading / foutmelding */
+        .error-msg {
+            color: #b03a2a;
+            background: #fde8e4;
+            padding: 12px 20px;
+            border-radius: 10px;
+            max-width: 1200px;
+            margin: 10px auto;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            color: #4a6a8a;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎯 Kennismaking &amp; Verhalen</h1>
+    <p class="subtitle">Klik op een naam, kies een vraag &amp; noteer wat de leerling vertelt</p>
+
+    <!-- Foutmelding / loading -->
+    <div id="statusMessage" class="status"></div>
+    <div id="errorMessage" class="error-msg" style="display:none;"></div>
+
+    <!-- Grid met leerlingen -->
+    <div id="leerlingenGrid" class="grid"></div>
+
+    <!-- Panelen per leerling -->
+    <div id="panelContainer" class="panel-container"></div>
+
+    <!-- Genereer knop -->
+    <div class="generate-section">
+        <button id="generateBtn" class="generate-btn">📋 Genereer prompt</button>
+    </div>
+
+    <!-- Prompt output -->
+    <div id="promptOutput" class="prompt-output">
+        <h3>📄 Kopieer deze prompt en plak hem in een AI (bijv. DeepSeek):</h3>
+        <textarea id="promptTextarea" readonly></textarea>
+        <button id="copyBtn" class="copy-btn">📋 Kopieer prompt</button>
+        <span id="copyFeedback" class="copy-feedback">✓ Gekopieerd!</span>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. VRAGENLIJST (10 OPEN VRAGEN – geïnspireerd op jouw lijst)
+        //    Pas deze gerust aan!
+        // ============================================================
+        const VRAGEN = [
+            { id: 0, tekst: "Hoe was je vakantie? Wat is het meest bijzondere dat je hebt meegemaakt?" },
+            { id: 1, tekst: "Wat deed jij het liefst in je vrije tijd? Houd je meer van beweging of van rust?" },
+            { id: 2, tekst: "Wat vind jij het minst leuk op school? En waarom?" },
+            { id: 3, tekst: "Wat is jouw favoriete onderdeel op school? (bijv. rekenen, taal, tekenen, gym)" },
+            { id: 4, tekst: "Als je 3 uur extra vrije tijd kreeg, wat zou je dan doen? En met wie?" },
+            { id: 5, tekst: "Welke games speel jij het liefst? En speel je liever alleen of samen?" },
+            { id: 6, tekst: "Wat doe jij het liefst op een telefoon, tablet of computer?" },
+            { id: 7, tekst: "Vind jij het belangrijk om te winnen in een spel, of gaat het meer om de lol?" },
+            { id: 8, tekst: "Als je iets online meemaakt dat niet leuk is, wat doe je dan?" },
+            { id: 9, tekst: "Wat vind jij belangrijk in de omgang met anderen? (bijv. eerlijkheid, respect, samenwerken)" }
+        ];
+
+        // ============================================================
+        // 2. LEERLINGEN INLADEN
+        // ============================================================
+        let leerlingen = [];
+
+        async function loadLeerlingen() {
+            try {
+                const response = await fetch('leerlingen.json');
+                if (!response.ok) throw new Error('Bestand niet gevonden');
+                const data = await response.json();
+                if (data.leerlingen && Array.isArray(data.leerlingen) && data.leerlingen.length > 0) {
+                    leerlingen = data.leerlingen;
+                } else {
+                    throw new Error('Geen geldige leerlingen gevonden');
+                }
+            } catch (err) {
+                console.warn('Fout bij laden leerlingen.json, gebruik fallback:', err.message);
+                // Fallback: 4 standaard leerlingen
+                leerlingen = [
+                    { naam: 'Leerling 1', groep: 0 },
+                    { naam: 'Leerling 2', groep: 0 },
+                    { naam: 'Leerling 3', groep: 0 },
+                    { naam: 'Leerling 4', groep: 0 }
+                ];
+                document.getElementById('statusMessage').innerHTML =
+                    '⚠️ <span>leerlingen.json niet gevonden — gebruik standaard 4 leerlingen</span>';
+            }
+            renderLeerlingen();
+        }
+
+        // ============================================================
+        // 3. RENDEREN
+        // ============================================================
+        const grid = document.getElementById('leerlingenGrid');
+        const panelContainer = document.getElementById('panelContainer');
+        const errorDiv = document.getElementById('errorMessage');
+
+        // Opslag voor antwoorden per leerling (alleen in geheugen)
+        const antwoorden = {};
+
+        function renderLeerlingen() {
+            // Leegmaken
+            grid.innerHTML = '';
+            panelContainer.innerHTML = '';
+            antwoorden.clear?.();
+
+            // Kaarten en paneleren maken
+            leerlingen.forEach((l, index) => {
+                const naam = l.naam || `Leerling ${index + 1}`;
+                const groep = l.groep !== undefined ? l.groep : '';
+
+                // --- Kaartje ---
+                const card = document.createElement('div');
+                card.className = 'leerling-card';
+                card.dataset.index = index;
+                card.innerHTML = `
+                    <div>${naam}</div>
+                    ${groep !== '' ? `<span class="groep-badge">Groep ${groep}</span>` : ''}
+                `;
+                card.addEventListener('click', () => togglePanel(index, card));
+                grid.appendChild(card);
+
+                // --- Panel ---
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+                panel.id = `panel-${index}`;
+                panel.dataset.index = index;
+
+                // Vraag dropdown
+                let vraagOptions = VRAGEN.map(v =>
+                    `<option value="${v.id}">${v.id+1}. ${v.tekst.substring(0, 60)}${v.tekst.length > 60 ? '…' : ''}</option>`
+                ).join('');
+
+                panel.innerHTML = `
+                    <div class="panel-header">
+                        <h2>${naam}</h2>
+                        <button class="close-btn" data-index="${index}">&times;</button>
+                    </div>
+                    <div class="panel-row">
+                        <label for="vraag-${index}">📌 Vraag:</label>
+                        <select id="vraag-${index}">
+                            ${vraagOptions}
+                        </select>
+                        <span class="vraag-nummer">vraag 1/10</span>
+                    </div>
+                    <div class="panel-row" style="margin-top:10px;">
+                        <label for="antwoord-${index}">✏️ Wat vertelt de leerling?</label>
+                        <textarea id="antwoord-${index}" placeholder="Typ hier de sleutelwoorden of het verhaal van ${naam}…"></textarea>
+                    </div>
+                `;
+                panelContainer.appendChild(panel);
+
+                // Sluitknop
+                const closeBtn = panel.querySelector('.close-btn');
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closePanel(index);
+                });
+
+                // Opslag in antwoorden object initialiseren
+                antwoorden[index] = {
+                    naam: naam,
+                    vraagId: 0,
+                    antwoord: ''
+                };
+
+                // Event listeners voor opslaan in geheugen
+                const select = panel.querySelector(`#vraag-${index}`);
+                const textarea = panel.querySelector(`#antwoord-${index}`);
+
+                select.addEventListener('change', () => {
+                    antwoorden[index].vraagId = parseInt(select.value);
+                });
+
+                textarea.addEventListener('input', () => {
+                    antwoorden[index].antwoord = textarea.value;
+                });
+
+                // Initial values
+                antwoorden[index].vraagId = parseInt(select.value);
+            });
+
+            // Event listener voor sluiten via klik buiten panel (optional) – doen we niet om verwarring te voorkomen
+        }
+
+        // ============================================================
+        // 4. PANEL TOGGLE / SLUITEN
+        // ============================================================
+        let openPanels = new Set();
+
+        function togglePanel(index, card) {
+            const panel = document.getElementById(`panel-${index}`);
+            if (!panel) return;
+
+            const isOpen = panel.classList.contains('open');
+
+            // Alle andere panels sluiten (optioneel: als je maar 1 tegelijk open wilt)
+            // Zo ja, haal commentaar weg:
+            // document.querySelectorAll('.panel.open').forEach(p => p.classList.remove('open'));
+            // document.querySelectorAll('.leerling-card.active').forEach(c => c.classList.remove('active'));
+
+            if (isOpen) {
+                closePanel(index);
+            } else {
+                openPanel(index);
+            }
+        }
+
+        function openPanel(index) {
+            const panel = document.getElementById(`panel-${index}`);
+            const card = document.querySelector(`.leerling-card[data-index="${index}"]`);
+            if (panel) {
+                panel.classList.add('open');
+                openPanels.add(index);
+            }
+            if (card) card.classList.add('active');
+        }
+
+        function closePanel(index) {
+            const panel = document.getElementById(`panel-${index}`);
+            const card = document.querySelector(`.leerling-card[data-index="${index}"]`);
+            if (panel) {
+                panel.classList.remove('open');
+                openPanels.delete(index);
+            }
+            if (card) card.classList.remove('active');
+        }
+
+        // ============================================================
+        // 5. GENEREER PROMPT
+        // ============================================================
+        document.getElementById('generateBtn').addEventListener('click', generatePrompt);
+
+        function generatePrompt() {
+            // Alle open panels "opslaan" (de tekst staat al in antwoorden via input events)
+            // Maar we moeten ook de laatste tekst ophalen uit de textareas voor het geval ze niet
+            // door input event zijn geüpdatet (bijv. bij paste zonder event)
+            leerlingen.forEach((l, index) => {
+                const textarea = document.querySelector(`#antwoord-${index}`);
+                if (textarea) {
+                    antwoorden[index].antwoord = textarea.value;
+                }
+                const select = document.querySelector(`#vraag-${index}`);
+                if (select) {
+                    antwoorden[index].vraagId = parseInt(select.value);
+                }
+            });
+
+            // Verzamel alle ingevulde antwoorden (alleen als er tekst staat)
+            const ingevuld = [];
+            for (const [index, data] of Object.entries(antwoorden)) {
+                const tekst = data.antwoord?.trim();
+                if (tekst && tekst.length > 0) {
+                    const vraagObj = VRAGEN.find(v => v.id === data.vraagId);
+                    ingevuld.push({
+                        naam: data.naam,
+                        vraag: vraagObj ? vraagObj.tekst : 'Onbekende vraag',
+                        antwoord: tekst
+                    });
+                }
+            }
+
+            if (ingevuld.length === 0) {
+                // Toon foutmelding
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = '⚠️ Er zijn nog geen antwoorden ingevuld. Vul eerst bij een leerling iets in!';
+                document.getElementById('promptOutput').classList.remove('visible');
+                return;
+            } else {
+                errorDiv.style.display = 'none';
+            }
+
+            // Bouw de prompt
+            let prompt = `Ik heb een kennismakingsronde gedaan in mijn klas. Leerlingen vertelden over zichzelf. Hier zijn de antwoorden:\n\n`;
+
+            ingevuld.forEach(item => {
+                prompt += `---\n`;
+                prompt += `Leerling: ${item.naam}\n`;
+                prompt += `Vraag: ${item.vraag}\n`;
+                prompt += `Antwoord: ${item.antwoord}\n\n`;
+            });
+
+            prompt += `---\n`;
+            prompt += `Gebruik deze antwoorden om voor ELKE leerling een leuke en interessante meerkeuzevraag te maken met 4 antwoorden (1 goed, 3 fout).\n`;
+            prompt += `De vragen moeten gaan over wat de leerling zelf heeft verteld. Zorg dat de vragen afwisselend en verrassend zijn.\n`;
+            prompt += `\n`;
+            prompt += `Genereer de output als een JSON array met de volgende structuur:\n`;
+            prompt += `[\n`;
+            prompt += `  {\n`;
+            prompt += `    "leerling": "Naam van de leerling",\n`;
+            prompt += `    "vraag": "De meerkeuzevraag",\n`;
+            prompt += `    "opties": ["Optie A", "Optie B", "Optie C", "Optie D"],\n`;
+            prompt += `    "correct": 0  // index van het juiste antwoord (0 t/m 3)\n`;
+            prompt += `  },\n`;
+            prompt += `  ...\n`;
+            prompt += `]\n`;
+            prompt += `\n`;
+            prompt += `Let op: de JSON moet geldig zijn en alleen de array bevatten (geen extra tekst eromheen).\n`;
+
+            // Toon de prompt
+            const outputDiv = document.getElementById('promptOutput');
+            const textarea = document.getElementById('promptTextarea');
+            textarea.value = prompt;
+            outputDiv.classList.add('visible');
+
+            // Scroll naar de output
+            outputDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Feedback over aantal leerlingen
+            document.getElementById('statusMessage').innerHTML =
+                `✅ <span>${ingevuld.length} leerling(en) verwerkt in de prompt</span>`;
+        }
+
+        // ============================================================
+        // 6. KOPIEER KNOP
+        // ============================================================
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const textarea = document.getElementById('promptTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showCopyFeedback(true);
+                }).catch(() => {
+                    // Fallback: gebruik de oude execCommand methode
+                    document.execCommand('copy');
+                    showCopyFeedback(true);
+                });
+            } catch (e) {
+                document.execCommand('copy');
+                showCopyFeedback(true);
+            }
+        });
+
+        function showCopyFeedback(show) {
+            const fb = document.getElementById('copyFeedback');
+            if (show) {
+                fb.classList.add('show');
+                setTimeout(() => fb.classList.remove('show'), 2500);
+            } else {
+                fb.classList.remove('show');
+            }
+        }
+
+        // ============================================================
+        // 7. START
+        // ============================================================
+        loadLeerlingen();
+
+        // Als er op een lege plek wordt geklikt, sluit dan alle panels? (optioneel)
+        // Niet doen om frustratie te voorkomen.
+
+        console.log('✅ Kennismakingspagina geladen. Vragen: ', VRAGEN.length);
+    </script>
+
+</body>
+</html>
