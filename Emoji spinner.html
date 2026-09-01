@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Emoji Rad - Kindvriendelijk 🌟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #2b5e3b 0%, #1a3a24 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            padding: 1rem;
+            touch-action: manipulation;
+        }
+
+        .slot-machine {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border-radius: 4rem;
+            padding: 1.5rem 1rem 2rem 1rem;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .emoji-stage {
+            background: #0b0f14;
+            border-radius: 3rem;
+            padding: 2rem 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.6), 0 5px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 150, 0.3);
+        }
+
+        .giant-emoji {
+            font-size: 12rem;
+            text-align: center;
+            line-height: 1.2;
+            transition: transform 0.1s ease;
+            filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
+            min-height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .emotion-text {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            color: #ffecb3;
+            text-shadow: 0 2px 5px #00000040;
+            background: rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            width: auto;
+            padding: 0.4rem 1.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(8px);
+        }
+
+        .emotion-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .spin-button {
+            background: linear-gradient(135deg, #ffb347 0%, #ff8c1a 100%);
+            border: none;
+            width: 90%;
+            margin: 1rem auto 0.5rem auto;
+            display: block;
+            padding: 1.2rem 0;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d1b00;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.1s linear;
+            box-shadow: 0 8px 0 #7a3e0c;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            touch-action: manipulation;
+        }
+
+        .spin-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #7a3e0c;
+        }
+
+        .info-hint {
+            text-align: center;
+            color: #dddddd;
+            margin-top: 1.2rem;
+            font-size: 0.85rem;
+            background: #00000066;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+        }
+
+        @keyframes spinShake {
+            0% { transform: scale(1) rotate(0deg); filter: blur(0);}
+            25% { transform: scale(1.08) rotate(3deg); filter: blur(1px);}
+            75% { transform: scale(1.05) rotate(-3deg); filter: blur(1px);}
+            100% { transform: scale(1) rotate(0deg); filter: blur(0);}
+        }
+
+        .spinning {
+            animation: spinShake 0.08s infinite linear;
+        }
+
+        /* status balkje met welke emoji's nog over zijn */
+        .status-bar {
+            background: rgba(0,0,0,0.5);
+            border-radius: 40px;
+            padding: 0.6rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 1.3rem;
+            letter-spacing: 6px;
+            color: white;
+        }
+        .status-label {
+            font-size: 0.7rem;
+            display: block;
+            color: #ffd966;
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 550px) {
+            .giant-emoji { font-size: 9rem; min-height: 180px; }
+            .emotion-text { font-size: 1.5rem; }
+            .spin-button { font-size: 1.8rem; padding: 1rem 0; }
+            .status-bar { font-size: 1.1rem; letter-spacing: 4px; }
+        }
+        @media (max-width: 450px) {
+            .giant-emoji { font-size: 7rem; min-height: 150px; }
+            .emotion-text { font-size: 1.3rem; }
+        }
+        footer {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #ccc9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="slot-machine">
+    <div class="emoji-stage">
+        <div class="giant-emoji" id="mainEmoji">🎲</div>
+        <div class="emotion-container">
+            <div class="emotion-text" id="emotionLabel">KLAAR</div>
+        </div>
+    </div>
+
+    <button class="spin-button" id="spinBtn">🎡 DRAAIEN 🎡</button>
+    <div class="info-hint">
+        👆 Tik op de knop → emoji’s flitsen → nogmaals tikken om te stoppen!<br>
+        Elke emoji komt maar één keer per ronde voorbij.
+    </div>
+    
+    <!-- Laat zien welke emoties er nog in de ronde zitten -->
+    <div class="status-bar">
+        <span class="status-label">🌸 nog over deze ronde 🌸</span>
+        <span id="remainingEmojisDisplay">😊 🥰 😌 😠 😨 😢</span>
+    </div>
+    <footer>✨ 3 blij + 3 boos/bang/verdrietig ✨</footer>
+</div>
+
+<script>
+    (function(){
+        // ============================================================
+        // 6 EMOTIES: 3 positief (blij, ontspannen, verliefd)
+        //            3 negatief (verdrietig, angstig, boos)
+        // ============================================================
+        const ALL_EMOJIS = [
+            { emoji: "😊", emotion: "blij" },        // positief
+            { emoji: "😌", emotion: "ontspannen" },  // positief
+            { emoji: "🥰", emotion: "verliefd" },    // positief
+            { emoji: "😢", emotion: "verdrietig" },  // negatief
+            { emoji: "😨", emotion: "angstig" },     // negatief
+            { emoji: "😠", emotion: "boos" }         // negatief
+        ];
+
+        // ----- spelvariabelen -----
+        let remainingIndices = [];      // bevat indices (0 t/m 5) van de emoji's die nog NIET getrokken zijn deze ronde
+        let isSpinning = false;
+        let spinTimer = null;
+        let currentDisplayIndex = 0;    // alleen voor de animatie
+
+        // DOM elementen
+        const emojiEl = document.getElementById('mainEmoji');
+        const emotionEl = document.getElementById('emotionLabel');
+        const spinBtn = document.getElementById('spinBtn');
+        const remainingDisplaySpan = document.getElementById('remainingEmojisDisplay');
+
+        // Helper: ververs de weergave van welke emoji's nog over zijn (zichtbaar voor kind)
+        function updateRemainingDisplay() {
+            if (!remainingDisplaySpan) return;
+            if (remainingIndices.length === 0) {
+                remainingDisplaySpan.innerText = "✨ ALLEMAAL GEWEEST! ✨";
+                return;
+            }
+            // laat de emoji's zien die nog in de pot zitten
+            let emojiString = "";
+            for (let idx of remainingIndices) {
+                emojiString += ALL_EMOJIS[idx].emoji + " ";
+            }
+            remainingDisplaySpan.innerText = emojiString.trim() || "🎉 klaar!";
+        }
+
+        // Initialiseer een nieuwe ronde (alle 6 emoji's weer beschikbaar)
+        function resetRound() {
+            remainingIndices = [];
+            for (let i = 0; i < ALL_EMOJIS.length; i++) {
+                remainingIndices.push(i);
+            }
+            // random volgorde (schudden) zodat het niet voorspelbaar is
+            for (let i = remainingIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [remainingIndices[i], remainingIndices[j]] = [remainingIndices[j], remainingIndices[i]];
+            }
+            updateRemainingDisplay();
+        }
+
+        // Trek een willekeurige emoji uit de overgebleven set (zonder herhaling binnen de ronde)
+        // Return: { emoji, emotion, index }
+        function drawUniqueEmoji() {
+            // als er geen emoji's meer over zijn -> ronde resetten
+            if (remainingIndices.length === 0) {
+                resetRound();
+            }
+            // kies een willekeurige index uit de remaining lijst
+            const randomPos = Math.floor(Math.random() * remainingIndices.length);
+            const selectedIdx = remainingIndices[randomPos];
+            // verwijder deze uit de remaining lijst (zodat hij niet nog een keer komt deze ronde)
+            remainingIndices.splice(randomPos, 1);
+            updateRemainingDisplay();
+            return {
+                emoji: ALL_EMOJIS[selectedIdx].emoji,
+                emotion: ALL_EMOJIS[selectedIdx].emotion,
+                index: selectedIdx
+            };
+        }
+
+        // Toon een specifieke emoji (op basis van object)
+        function displayEmojiObject(emojiObj) {
+            emojiEl.innerText = emojiObj.emoji;
+            emotionEl.innerText = emojiObj.emotion;
+        }
+
+        // Toon een emoji via index
+        function displayByIndex(idx) {
+            emojiEl.innerText = ALL_EMOJIS[idx].emoji;
+            emotionEl.innerText = ALL_EMOJIS[idx].emotion;
+        }
+
+        // Start het rad: flitsen met ALLEEN de nog beschikbare emoji's (zodat kinderen alvast zien wat er mogelijk is)
+        // Maar tijdens het flitsen gebruiken we steeds een random emoji uit de REMAINING SET 
+        // (zodat het kind alvast de 'overgebleven' emoties ziet langskomen)
+        function startSpinning() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            // Stop eventuele oude timer
+            if (spinTimer) clearInterval(spinTimer);
+            
+            // Voeg spin-klasse toe voor schud-effect
+            emojiEl.classList.add('spinning');
+            
+            // Flits elke 40ms (prettig voor kinderen, niet te snel)
+            spinTimer = setInterval(() => {
+                if (!isSpinning) {
+                    if (spinTimer) clearInterval(spinTimer);
+                    spinTimer = null;
+                    return;
+                }
+                // Pak een willekeurige emoji uit de OVERGEBLEVEN set (alleen de emoji's die nog niet in deze ronde zijn geweest)
+                // Als de set leeg is, resetten we eerst (maar eigenlijk als we stoppen met draaien trekken we een unieke)
+                let tempRemaining = [...remainingIndices];
+                if (tempRemaining.length === 0) {
+                    // tijdelijk reset voor de animatie? maar beter voorkom: we gebruiken een fallback
+                    // trekken uit alle emoji's? Nee, we willen dat het flitsen alleen uit de nog beschikbare bestaat
+                    // Als er geen over zijn (ronde net afgelopen) --> reset voor de show
+                    if(remainingIndices.length === 0) resetRound();
+                    tempRemaining = [...remainingIndices];
+                }
+                if (tempRemaining.length > 0) {
+                    const randPos = Math.floor(Math.random() * tempRemaining.length);
+                    const randIdx = tempRemaining[randPos];
+                    displayByIndex(randIdx);
+                } else {
+                    // uiterst geval: toon eerste emoji
+                    displayByIndex(0);
+                }
+            }, 40); // 40ms = 25 frames per seconde, vloeiend rad
+        }
+
+        // Stop het rad en kies een definitieve emoji uit de REMAINING set (zonder herhaling binnen ronde)
+        function stopSpinningAndPick() {
+            if (!isSpinning) return;
+            
+            // stop interval
+            if (spinTimer) {
+                clearInterval(spinTimer);
+                spinTimer = null;
+            }
+            emojiEl.classList.remove('spinning');
+            
+            // ===== BELANGRIJK: trek een unieke emoji (die nog niet in deze ronde is geweest) =====
+            const chosen = drawUniqueEmoji();
+            displayEmojiObject(chosen);
+            
+            // Kleine vrolijke animatie
+            emojiEl.style.transform = "scale(1.1)";
+            setTimeout(() => {
+                if (emojiEl) emojiEl.style.transform = "";
+            }, 150);
+            
+            isSpinning = false;
+            spinBtn.innerText = "🎡 DRAAIEN 🎡";
+            
+            // Optioneel: trilling voor feedback (mobiel)
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(30);
+            }
+        }
+
+        // Hoofdactie: starten of stoppen
+        function handleMainAction() {
+            if (isSpinning) {
+                stopSpinningAndPick();
+            } else {
+                // Voordat we starten: als de remaining set leeg is, resetten we eerst (zodat er 6 nieuwe klaarstaan)
+                if (remainingIndices.length === 0) {
+                    resetRound();
+                }
+                startSpinning();
+                spinBtn.innerText = "⏹️ STOPPEN ⏹️";
+                // kleine vibe bij start
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(15);
+                }
+            }
+        }
+
+        // Direct een willekeurige UNIEKE emoji tonen (zonder draaien) - handig voor klik op grote emoji
+        function showRandomUniqueEmoji() {
+            // Als er wordt gedraaid, stoppen we eerst het rad
+            if (isSpinning) {
+                if (spinTimer) clearInterval(spinTimer);
+                spinTimer = null;
+                isSpinning = false;
+                emojiEl.classList.remove('spinning');
+                spinBtn.innerText = "🎡 DRAAIEN 🎡";
+            }
+            // Trek een unieke uit de nog beschikbare set
+            const uniquePick = drawUniqueEmoji();
+            displayEmojiObject(uniquePick);
+            // kleine bounce
+            emojiEl.style.transform = "scale(1.05)";
+            setTimeout(() => { if(emojiEl) emojiEl.style.transform = ""; }, 120);
+        }
+
+        // Initialiseer: begin met een volledige ronde en toon een willekeurige startemoji (maar zonder hem te 'verbruiken' voor de ronde?)
+        // We willen bij opstart een leuke emoji tonen, maar zonder dat de trekking al gebruikt is. 
+        // Daarom: zet remainingIndices eerst op alle 6, toon een willekeurige emoji zonder hem uit remaining te halen. 
+        // De eerste officiële trekking (via rad of klik op emoji) verbruikt dan wel een beurt.
+        function initGame() {
+            resetRound();  // alle 6 beschikbaar
+            // toon een willekeurige emoji (alleen voor de show, niet verbruiken)
+            const randomStartIdx = Math.floor(Math.random() * ALL_EMOJIS.length);
+            emojiEl.innerText = ALL_EMOJIS[randomStartIdx].emoji;
+            emotionEl.innerText = ALL_EMOJIS[randomStartIdx].emotion;
+            // Maar pas op: deze is NIET uit de remaining gehaald, dus telt niet als 'getrokken'.
+            // Dat is precies wat we willen: de eerste echte draaibeurt pakt een unieke uit de set.
+        }
+        
+        // Event listeners
+        spinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleMainAction();
+        });
+        spinBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleMainAction();
+        }, { passive: false });
+        
+        // klik op de grote emoji: toon direct een nieuwe unieke emoji (handig voor kinderen)
+        emojiEl.style.cursor = 'pointer';
+        emojiEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showRandomUniqueEmoji();
+        });
+        
+        // Cleanup bij verlaten
+        window.addEventListener('beforeunload', () => {
+            if (spinTimer) clearInterval(spinTimer);
+        });
+        
+        // start de boel
+        initGame();
+    })();
+</script>
+</body>
+</html>
