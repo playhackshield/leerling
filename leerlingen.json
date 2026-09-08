@@ -1,0 +1,20 @@
+{
+  "leerlingen": [
+    { "naam": "1", "groep": 1 },
+    { "naam": "2", "groep": 2 },
+    { "naam": "3", "groep": 1 },
+    { "naam": "4", "groep": 0 },
+    { "naam": "5", "groep": 0 },
+    { "naam": "6", "groep": 0 },
+    { "naam": "7", "groep": 0 },
+    { "naam": "8", "groep": 0 },
+    { "naam": "9", "groep": 0 },
+    { "naam": "0", "groep": 0 }
+  ],
+  "spellen": [
+    "Rekensprint",
+    "Woordenschat",
+    "Tafels",
+    "Topografie"
+  ]
+}
