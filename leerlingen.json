@@ -1,16 +1,10 @@
 {
   "leerlingen": [
-    { "naam": "111", "groep": 0 },
-    { "naam": "222", "groep": 0 },
-    { "naam": "333", "groep": 0 },
-    { "naam": "444", "groep": 0 },
-    { "naam": "555", "groep": 0 },
-    { "naam": "666", "groep": 0 },
-    { "naam": "777", "groep": 0 },
-    { "naam": "888", "groep": 0 },
-    { "naam": "999", "groep": 0 },
-    { "naam": "000", "groep": 0 }
-  ],
+    { "naam": "Sham", "groep": 0 },
+    { "naam": "Shae", "groep": 0 },
+    { "naam": "Mohammed", "groep": 0 },
+    { "naam": "Anwar", "groep": 0 }
+    ],
   "spellen": [
     "Rekensprint",
     "Woordenschat",
