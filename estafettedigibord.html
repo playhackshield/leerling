@@ -20,6 +20,11 @@
         <div id="setupError" class="error-msg"></div>
     </div>
 
+<div class="setup-preview">
+    <h3>📋 Indeling van de rondes</h3>
+    <div id="previewContent"></div>
+</div>
+    
     <div class="setup-config">
         <label>Aantal rondes
             <input type="number" id="numRounds" value="2" min="1" max="20">
@@ -50,6 +55,13 @@
 <div id="betweenScreen" class="screen">
     <h2>Ronde <span id="betweenRoundNumber">1</span> afgelopen</h2>
     <table class="scoreboard" id="roundScoreboard"></table>
+
+    <!-- ✅ NIEUW: volgende ronde preview -->
+    <div class="next-round-preview">
+        <h3>👥 Volgende ronde</h3>
+        <ul id="nextRoundPlayers"></ul>
+    </div>
+
     <button id="nextRoundBtn">Volgende ronde</button>
 </div>
 
