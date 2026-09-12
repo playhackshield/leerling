@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wachtwoord Memory Spel</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -503,33 +508,43 @@
             updateNameList();
         }
 
-        // ---- Nieuwe functie: leerlingen laden uit JSON ----
-        async function loadLeerlingen() {
-            try {
-                const response = await fetch('leerlingen.json');
-                if (!response.ok) {
-                    throw new Error('JSON bestand niet gevonden');
-                }
-                const data = await response.json();
-                
-                // Haal alleen de namen uit de leerlingen array
-                const namen = data.leerlingen.map(leerling => leerling.naam);
-                
-                // Zet de namen in het tekstveld (één per regel)
-                nameInput.value = namen.join('\n');
-                
-                // Laad de namen in de lijst
-                loadNamesFromTextarea();
-                
-                statusMessage.className = 'status-message success';
-                statusMessage.textContent = `✅ ${namen.length} leerlingen geladen uit leerlingen.json`;
-            } catch (error) {
-                statusMessage.className = 'status-message error';
-                statusMessage.textContent = '⚠️ Kon leerlingen.json niet laden. Voer handmatig namen in.';
-                console.error('Fout bij laden van leerlingen.json:', error);
-            }
+// ---- Nieuwe functie: leerlingen laden uit Firebase ----
+async function loadLeerlingen() {
+    try {
+        // Haal het enige document op uit de "contestants" collectie
+        const contestantsSnapshot = await db.collection('contestants').limit(1).get();
+
+        if (contestantsSnapshot.empty) {
+            throw new Error('Geen document gevonden in de "contestants" collectie');
         }
 
+        // Pak het eerste (en enige) document
+        const data = contestantsSnapshot.docs[0].data();
+        const leerlingen = data.leerlingen || [];
+
+        // Haal alleen de namen uit de leerlingen array
+        const namen = leerlingen.map(leerling => leerling.naam);
+
+        if (namen.length === 0) {
+            throw new Error('Geen leerlingen gevonden in het document');
+        }
+
+        // Zet de namen in het tekstveld (één per regel)
+        nameInput.value = namen.join('\n');
+
+        // Laad de namen in de lijst
+        loadNamesFromTextarea();
+
+        statusMessage.className = 'status-message success';
+        statusMessage.textContent = `✅ ${namen.length} leerlingen geladen uit Firebase`;
+
+    } catch (error) {
+        statusMessage.className = 'status-message error';
+        statusMessage.textContent = '⚠️ Kon leerlingen niet laden uit Firebase. Voer handmatig namen in.';
+        console.error('Fout bij laden van leerlingen uit Firebase:', error);
+    }
+}
+        
         // ---- Event: tekstveld verandert ----
         nameInput.addEventListener('input', loadNamesFromTextarea);
 
