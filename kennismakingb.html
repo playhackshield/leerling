@@ -21,28 +21,19 @@
             padding: 20px;
         }
 
-        h1 {
-            color: #1a2a3a;
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 6px;
-            font-size: 2.2rem;
-        }
-        .subtitle {
-            color: #4a6a8a;
-            font-size: 0.95rem;
-            margin-bottom: 25px;
-        }
-
         /* ===== JSON INPUT ===== */
-        .json-section {
+        .json-wrapper {
             width: 100%;
             max-width: 900px;
+            position: relative;
+            margin-bottom: 25px;
+        }
+        .json-section {
+            width: 100%;
             background: white;
             border-radius: 14px;
             padding: 20px 24px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            margin-bottom: 25px;
         }
         .json-section label {
             font-weight: 600;
@@ -113,6 +104,50 @@
         }
         .json-status.error {
             color: #b03a2a;
+        }
+
+        /* Sluit-knopje voor JSON-blok */
+        .json-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8a9aaa;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            z-index: 2;
+        }
+        .json-close-btn:hover {
+            color: #c0392b;
+            background: #fde8e4;
+        }
+
+        /* Toon-knopje wanneer JSON-blok verborgen is */
+        .show-json-btn {
+            display: none;
+            background: #2a6a9a;
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(42, 106, 154, 0.25);
+            transition: all 0.2s ease;
+            margin-bottom: 25px;
+        }
+        .show-json-btn:hover {
+            background: #1a4a7a;
+            transform: scale(1.02);
+        }
+        .show-json-btn.visible {
+            display: inline-block;
         }
 
         /* ===== QUIZ CONTAINER ===== */
@@ -394,7 +429,6 @@
             }
         }
         @media (max-width: 480px) {
-            h1 { font-size: 1.6rem; }
             .json-section { padding: 14px 16px; }
             .antwoorden-grid { gap: 10px; }
         }
@@ -402,13 +436,12 @@
 </head>
 <body>
 
-    <h1>🏃 4-Hoeken Quiz</h1>
-    <p class="subtitle">Ren naar de juiste kleur in de klas!</p>
-
     <!-- ===== JSON INPUT ===== -->
-    <div class="json-section">
-        <label for="jsonInput">📋 Plak hier je JSON met quizvragen:</label>
-        <textarea id="jsonInput" placeholder='[
+    <div class="json-wrapper" id="jsonWrapper">
+        <div class="json-section" id="jsonSection">
+            <button class="json-close-btn" id="jsonCloseBtn" title="Verberg dit blok">✕</button>
+            <label for="jsonInput">📋 Plak hier je JSON met quizvragen:</label>
+            <textarea id="jsonInput" placeholder='[
     {
         "leerling": "Pietje",
         "vraag": "Wat gebeurde er op de camping van Pietje?",
@@ -417,13 +450,17 @@
     },
     ...
 ]'></textarea>
-        <div class="json-actions">
-            <button class="generate-btn" id="generateBtn">🚀 Genereer quiz</button>
-            <button class="clear-btn" id="clearBtn">🗑️ Leeg maken</button>
-            <button class="clear-btn" id="defaultBtn">📚 Gebruik standaard vragen</button>
+            <div class="json-actions">
+                <button class="generate-btn" id="generateBtn">🚀 Genereer quiz</button>
+                <button class="clear-btn" id="clearBtn">🗑️ Leeg maken</button>
+                <button class="clear-btn" id="defaultBtn">📚 Gebruik standaard vragen</button>
+            </div>
+            <div id="jsonStatus" class="json-status"></div>
         </div>
-        <div id="jsonStatus" class="json-status"></div>
     </div>
+
+    <!-- ===== TOON JSON KNOP (verschijnt als blok verborgen is) ===== -->
+    <button class="show-json-btn" id="showJsonBtn">📋 Toon JSON-invoer</button>
 
     <!-- ===== QUIZ ===== -->
     <div class="quiz-container" id="quizContainer">
@@ -607,6 +644,9 @@
         const clearBtn = document.getElementById('clearBtn');
         const defaultBtn = document.getElementById('defaultBtn');
         const jsonStatus = document.getElementById('jsonStatus');
+        const jsonWrapper = document.getElementById('jsonWrapper');
+        const jsonCloseBtn = document.getElementById('jsonCloseBtn');
+        const showJsonBtn = document.getElementById('showJsonBtn');
 
         const quizContainer = document.getElementById('quizContainer');
         const vraagTeller = document.getElementById('vraagTeller');
@@ -817,6 +857,18 @@
 
         resetBtn.addEventListener('click', resetQuiz);
 
+        // JSON-blok verbergen
+        jsonCloseBtn.addEventListener('click', () => {
+            jsonWrapper.style.display = 'none';
+            showJsonBtn.classList.add('visible');
+        });
+
+        // JSON-blok weer tonen
+        showJsonBtn.addEventListener('click', () => {
+            jsonWrapper.style.display = 'block';
+            showJsonBtn.classList.remove('visible');
+        });
+
         // ================================================================
         // 8. KEYBOARD NAVIGATIE (extra handig)
         // ================================================================
@@ -839,9 +891,7 @@
         // ================================================================
         // 9. START: Laad standaard vragen bij opstarten
         // ================================================================
-        // Bij eerste lading meteen standaard vragen tonen (zodat de pagina er niet leeg uitziet)
         window.addEventListener('load', () => {
-            // Kleine vertraging zodat de pagina eerst volledig laadt
             setTimeout(() => {
                 laadQuiz([...STANDAARD_VRAGEN]);
             }, 100);
