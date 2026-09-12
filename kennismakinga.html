@@ -359,31 +359,37 @@
         // ============================================================
         let leerlingen = [];
 
-        async function loadLeerlingen() {
-            try {
-                const response = await fetch('leerlingen.json');
-                if (!response.ok) throw new Error('Bestand niet gevonden');
-                const data = await response.json();
-                if (data.leerlingen && Array.isArray(data.leerlingen) && data.leerlingen.length > 0) {
-                    leerlingen = data.leerlingen;
-                } else {
-                    throw new Error('Geen geldige leerlingen gevonden');
-                }
-            } catch (err) {
-                console.warn('Fout bij laden leerlingen.json, gebruik fallback:', err.message);
-                // Fallback: 4 standaard leerlingen
-                leerlingen = [
-                    { naam: 'Leerling 1', groep: 0 },
-                    { naam: 'Leerling 2', groep: 0 },
-                    { naam: 'Leerling 3', groep: 0 },
-                    { naam: 'Leerling 4', groep: 0 }
-                ];
-                document.getElementById('statusMessage').innerHTML =
-                    '⚠️ <span>leerlingen.json niet gevonden — gebruik standaard 4 leerlingen</span>';
-            }
-            renderLeerlingen();
+async function loadLeerlingen() {
+    try {
+        // Haal het enige document op uit de "contestants" collectie
+        const snapshot = await db.collection('contestants').limit(1).get();
+
+        if (snapshot.empty) {
+            throw new Error('Geen document gevonden in de "contestants" collectie');
         }
 
+        const data = snapshot.docs[0].data();
+
+        if (data.leerlingen && Array.isArray(data.leerlingen) && data.leerlingen.length > 0) {
+            leerlingen = data.leerlingen;
+        } else {
+            throw new Error('Geen geldige leerlingen gevonden in het document');
+        }
+    } catch (err) {
+        console.warn('Fout bij laden leerlingen uit Firebase, gebruik fallback:', err.message);
+        // Fallback: 4 standaard leerlingen
+        leerlingen = [
+            { naam: 'Leerling 1', groep: 0 },
+            { naam: 'Leerling 2', groep: 0 },
+            { naam: 'Leerling 3', groep: 0 },
+            { naam: 'Leerling 4', groep: 0 }
+        ];
+        document.getElementById('statusMessage').innerHTML =
+            '⚠️ <span>Kon leerlingen niet laden uit Firebase — gebruik standaard 4 leerlingen</span>';
+    }
+    renderLeerlingen();
+}
+        
         // ============================================================
         // 3. RENDEREN
         // ============================================================
