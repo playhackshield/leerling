@@ -292,3 +292,84 @@ body.chromebook {
     margin-top: 15px;
     text-align: center;
 }
+
+/* === PREVIEW RONDE-INDELING (setup) === */
+.setup-preview {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #334155;
+}
+
+.setup-preview h3 {
+    color: #38bdf8;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.preview-round {
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.preview-round:last-child { border-bottom: none; }
+
+.preview-round-title {
+    color: #fbbf24;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.preview-count {
+    color: #94a3b8;
+    font-weight: normal;
+    font-size: 0.9rem;
+    margin-left: 8px;
+}
+
+.preview-names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preview-name {
+    background: #1e293b;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 1rem;
+    color: #e2e8f0;
+}
+
+/* === VOLGENDE RONDE (between) === */
+.next-round-preview {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #334155;
+}
+
+.next-round-preview h3 {
+    color: #38bdf8;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+#nextRoundPlayers {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#nextRoundPlayers .next-player {
+    background: #1e293b;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    color: #e2e8f0;
+    font-weight: bold;
+}
