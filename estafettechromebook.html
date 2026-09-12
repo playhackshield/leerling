@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estafette - Chromebook</title>
+    <link rel="stylesheet" href="estafettestyle.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+</head>
+<body class="chromebook">
+
+<div class="cb-header">
+    <h1>Chromebook <span class="cb-num" id="cbNumber">?</span></h1>
+    <div class="cb-status" id="status">Wachten op start...</div>
+</div>
+
+<div class="playersList" id="playersList"></div>
+
+<script src="firebase-config.js"></script>
+<script src="estafettechromebook.js"></script>
+</body>
+</html>
