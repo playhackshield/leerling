@@ -141,8 +141,9 @@ function displayLeerlingen() {
         lijst.innerHTML = '<p style="color:#8899bb;">Geen leerlingen gevonden.</p>';
         return;
     }
+
     lijst.innerHTML = state.leerlingen.map(l =>
-        `<div class="speler-card">${l.naam} <span style="color:#8899bb; font-size:0.75em;">(groep ${l.groep})</span></div>`
+        `<div class="speler-card">${l.naam}</div>`
     ).join('');
 }
 
