@@ -55,8 +55,6 @@
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* ===== ROL WEERGAVE ===== */
         .rol-display {
             text-align: center;
             padding: 20px 0;
@@ -81,8 +79,6 @@
             font-size: 1.1rem;
             color: #ccd;
         }
-        
-        /* ===== STEM LIJST ===== */
         .stem-lijst {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -113,8 +109,6 @@
             border-color: #00d4ff;
             background: rgba(0,212,255,0.15);
         }
-        
-        /* ===== TIMER ===== */
         .timer {
             font-size: 3rem;
             font-weight: 900;
@@ -128,8 +122,6 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
-        
-        /* ===== BUTTONS ===== */
         .btn {
             padding: 14px 30px;
             font-size: 1.1rem;
@@ -150,8 +142,6 @@
         .btn-danger { background: linear-gradient(135deg, #ff1744, #ff5252); color: #fff; }
         .btn-secondary { background: #2a3a5a; color: #fff; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-        
-        /* ===== WAIT SCHERM ===== */
         .wait-screen {
             text-align: center;
             padding: 30px 0;
@@ -168,8 +158,6 @@
             color: #8899bb;
             font-size: 1.2rem;
         }
-        
-        /* ===== HULP ===== */
         .help-text {
             color: #445566;
             font-size: 0.8rem;
@@ -178,8 +166,6 @@
             padding: 10px;
             border-top: 1px solid #1a233a;
         }
-        
-        /* ===== DEBUG ===== */
         .debug {
             margin-top: 15px;
             padding: 10px;
@@ -201,22 +187,16 @@
         <div class="title">📱 HACKERS vs BURGERS</div>
         <div class="subtitle">Telefoon — geef deze door aan de speler die aan de beurt is</div>
         
-        <!-- ============================================================ -->
-        <!-- SECTIE 1: WACHT / START                                       -->
-        <!-- ============================================================ -->
+        <!-- SECTIE 1: WACHT -->
         <div id="sectionWait" class="section active">
             <div class="wait-screen">
                 <div class="spinner">⏳</div>
                 <p>Wacht op de spelleider...</p>
                 <p style="font-size:0.9rem; color:#445566;">Deze telefoon wordt doorgegeven aan de speler die aan de beurt is.</p>
-                <br>
-                <button class="btn btn-primary" onclick="haalRolOp()">📋 Mijn rol ophalen</button>
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- SECTIE 2: ROL TONEN                                           -->
-        <!-- ============================================================ -->
+        <!-- SECTIE 2: ROL TONEN -->
         <div id="sectionRol" class="section">
             <div class="rol-display">
                 <span class="rol-icon" id="rolIcon">🟢</span>
@@ -226,9 +206,7 @@
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- SECTIE 3: STEMMEN                                             -->
-        <!-- ============================================================ -->
+        <!-- SECTIE 3: STEMMEN -->
         <div id="sectionStem" class="section">
             <h2 style="text-align:center; margin-bottom:5px;">🗳️ Stem op een hacker</h2>
             <p style="text-align:center; color:#8899bb; font-size:0.9rem;" id="stemTimerText">Je hebt nog 10 seconden...</p>
@@ -238,48 +216,43 @@
             <p style="text-align:center; color:#445566; font-size:0.8rem; margin-top:8px;">Klik op een naam om te stemmen</p>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- SECTIE 4: BEDANKT                                             -->
-        <!-- ============================================================ -->
+        <!-- SECTIE 4: BEDANKT -->
         <div id="sectionBedankt" class="section">
             <div class="wait-screen">
                 <div style="font-size:4rem;">🙏</div>
                 <p style="font-size:1.5rem; font-weight:700;">Bedankt!</p>
                 <p>Je stem is opgeslagen.</p>
                 <p style="color:#445566; font-size:0.9rem;">Geef de telefoon terug aan de spelleider.</p>
-                <br>
-                <button class="btn btn-secondary" onclick="gaTerugNaarWacht()">🔄 Terug naar wacht</button>
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- SECTIE 5: FOUT / AFGEVALLEN                                   -->
-        <!-- ============================================================ -->
+        <!-- SECTIE 5: FOUT -->
         <div id="sectionFout" class="section">
             <div class="wait-screen">
                 <div style="font-size:4rem;">⛔</div>
                 <p style="font-size:1.5rem; font-weight:700; color:#ff1744;">FOUT!</p>
                 <p id="foutMelding">Er is iets misgegaan.</p>
-                <br>
-                <button class="btn btn-secondary" onclick="gaTerugNaarWacht()">🔄 Probeer opnieuw</button>
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- DEBUG                                                         -->
-        <!-- ============================================================ -->
         <div class="debug" id="debug"></div>
         <button class="btn btn-secondary" style="margin-top:10px; font-size:0.6rem; padding:4px 10px;" onclick="toggleDebug()">🐞 Debug</button>
         
         <div class="help-text">📌 Deze telefoon wordt doorgegeven van speler naar speler.</div>
     </div>
 
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Jouw Firebase config -->
+    <script src="firebase-config.js"></script>
+
     <script>
         // ============================================================
-        // CONFIGURATIE
+        // FIRESTORE REFERENTIE
         // ============================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbxdbjJAESv_hWFI6FRt7F1z_tjgdur5MaXWNjOaYS6YlGF1NnG_mn6sAXqQcMlYpUPldQ/exec"; // <-- VERVANG DIT!
-        
+        const gameRef = db.collection('games').doc('currentGame');
+
         // ============================================================
         // STATE
         // ============================================================
@@ -291,26 +264,10 @@
             timerInterval: null,
             stemTijd: 0,
             isEersteStemmer: true,
+            huidigeBeurt: '',
+            status: ''
         };
-        
-        // ============================================================
-        // API CALLS
-        // ============================================================
-        async function apiCall(action, data = {}) {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...data })
-                });
-                return await response.json();
-            } catch (error) {
-                console.error('API Error:', error);
-                showDebug('API Error: ' + error.message);
-                return { status: 'error', message: error.message };
-            }
-        }
-        
+
         // ============================================================
         // SECTIE MANAGEMENT
         // ============================================================
@@ -318,33 +275,45 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
-        
+
         // ============================================================
-        // ROL OPHALEN
+        // FIRESTORE LISTENER
         // ============================================================
-        async function haalRolOp() {
-            // Vraag om de naam van de speler
-            const naam = prompt('Voer je naam in:', '');
-            if (!naam) return;
-            
-            const result = await apiCall('getRol', { naam });
-            
-            if (result.status === 'error') {
-                document.getElementById('foutMelding').textContent = result.message || 'Geen rol gevonden.';
-                showSection('sectionFout');
-                return;
+        gameRef.onSnapshot((doc) => {
+            if (!doc.exists) return;
+            const data = doc.data();
+            state.status = data.status;
+            state.huidigeBeurt = data.huidigeBeurt;
+
+            // Bepaal welke sectie getoond moet worden
+            if (data.status === 'rolverdeling' && data.huidigeBeurt) {
+                toonRol(data.huidigeBeurt, data.rollen, data.acties);
+            } else if (data.status === 'stemming' && data.huidigeBeurt) {
+                toonStemmen(data.huidigeBeurt, data);
+            } else if (data.status === 'einde') {
+                showSection('sectionWait'); // telefoon kan winnen tonen, maar niet nodig
+            } else {
+                showSection('sectionWait');
             }
-            
-            state.naam = result.naam;
-            state.rol = result.rol;
-            state.actie = result.actie;
-            
-            // Toon rol
+        });
+
+        // ============================================================
+        // ROL TONEN
+        // ============================================================
+        function toonRol(naam, rollen, acties) {
+            const rol = rollen[naam];
+            const actie = acties[naam] || 'Geen actie';
+            if (!rol) return;
+
+            state.naam = naam;
+            state.rol = rol;
+            state.actie = actie;
+
             const icon = document.getElementById('rolIcon');
             const naamEl = document.getElementById('rolNaam');
             const actieEl = document.getElementById('rolActie');
-            
-            if (result.rol === 'hacker') {
+
+            if (rol === 'hacker') {
                 icon.textContent = '🔴';
                 naamEl.textContent = 'HACKER';
                 naamEl.className = 'rol-naam hacker';
@@ -353,114 +322,86 @@
                 naamEl.textContent = 'BURGER';
                 naamEl.className = 'rol-naam burger';
             }
-            
-            actieEl.textContent = `Deze nacht heb je: ${result.actie}`;
-            
+            actieEl.textContent = `Deze nacht heb je: ${actie}`;
+
             showSection('sectionRol');
-            showDebug(`📋 ${naam} is een ${result.rol} met actie: ${result.actie}`);
         }
-        
+
         function rolGezien() {
-            // Check of de stemronde bezig is
-            checkStemronde();
+            showSection('sectionWait');
+            // Wacht tot huidigeBeurt verandert
         }
-        
+
         // ============================================================
         // STEMMEN
         // ============================================================
-        async function checkStemronde() {
-            const status = await apiCall('getSpelStatus');
-            
-            if (status.status === 'stemming') {
-                // Kijk of deze speler al heeft gestemd
-                const stemmen = status.stemmen || {};
-                if (stemmen[state.naam]) {
-                    // Al gestemd
-                    showSection('sectionBedankt');
-                    return;
-                }
-                
-                // Start stemmen
-                startStemmen();
-            } else {
-                // Geen stemronde, ga naar wacht
-                showSection('sectionWait');
-                showDebug('⏳ Geen stemronde actief. Wacht op de spelleider.');
-            }
-        }
-        
-        async function startStemmen() {
-            // Haal stemlijst op
-            const result = await apiCall('getStemLijst', { naam: state.naam });
-            if (result.status !== 'success') {
-                document.getElementById('foutMelding').textContent = result.message || 'Kon stemlijst niet ophalen.';
-                showSection('sectionFout');
+        function toonStemmen(naam, data) {
+            // Als deze speler al heeft gestemd, toon bedankt
+            const stemmen = data.stemmen || {};
+            if (stemmen[naam]) {
+                showSection('sectionBedankt');
                 return;
             }
-            
+
             // Toon stemlijst
+            const namen = data.namen || [];
+            const afvallers = data.afvallers || [];
+            const beschikbaar = namen.filter(n => n !== naam && !afvallers.includes(n));
+
             const lijstEl = document.getElementById('stemLijst');
-            lijstEl.innerHTML = result.lijst.map(naam => 
-                `<div class="stem-optie" onclick="kiesStem('${naam}')">${naam}</div>`
+            lijstEl.innerHTML = beschikbaar.map(n =>
+                `<div class="stem-optie" onclick="kiesStem('${n}')">${n}</div>`
             ).join('');
-            
-            // Reset selectie
+
+            state.naam = naam;
             state.gekozenStem = null;
             document.getElementById('stemBevestigBtn').disabled = true;
-            
-            // Bepaal tijd (eerste stemmer krijgt meer tijd)
-            const isEerste = await apiCall('isEersteStemmer');
-            state.isEersteStemmer = isEerste.isEerste;
-            const tijd = state.isEersteStemmer ? 10 : 5;
+
+            // Bepaal tijd
+            const isEerste = data.isEersteStemmer !== false;
+            const config = data.config || {};
+            const tijd = isEerste ? (config.stemTijdEerste || 10) : (config.stemTijdVolgende || 5);
             state.stemTijd = tijd;
-            
-            // Start timer
+            state.isEersteStemmer = isEerste;
+
             showSection('sectionStem');
-            document.getElementById('stemTimerText').textContent = 
-                `Je hebt nog ${tijd} seconden${state.isEersteStemmer ? ' (eerste stemmer)' : ''}...`;
+            document.getElementById('stemTimerText').textContent =
+                `Je hebt nog ${tijd} seconden${isEerste ? ' (eerste stemmer)' : ''}...`;
             startStemTimer(tijd);
-            
-            showDebug(`🗳️ ${state.naam} mag stemmen. ${tijd} seconden.`);
         }
-        
+
         function kiesStem(naam) {
             state.gekozenStem = naam;
-            
-            // Markeer de gekozen optie
             document.querySelectorAll('.stem-optie').forEach(el => {
                 el.classList.remove('geselecteerd');
                 if (el.textContent === naam) {
                     el.classList.add('geselecteerd');
                 }
             });
-            
             document.getElementById('stemBevestigBtn').disabled = false;
         }
-        
+
         function startStemTimer(seconden) {
             if (state.timerInterval) clearInterval(state.timerInterval);
-            
             const timerEl = document.getElementById('stemTimer');
             let tijd = seconden;
             timerEl.textContent = tijd;
             timerEl.className = 'timer';
-            
+
             state.timerInterval = setInterval(() => {
                 tijd--;
                 timerEl.textContent = tijd;
-                
                 if (tijd <= 3) timerEl.className = 'timer danger';
                 else if (tijd <= 5) timerEl.className = 'timer warning';
                 else timerEl.className = 'timer';
-                
+
                 if (tijd <= 0) {
                     clearInterval(state.timerInterval);
+                    state.timerInterval = null;
                     timerEl.textContent = '⏰';
-                    // Automatisch bevestigen als er een keuze is
                     if (state.gekozenStem) {
                         bevestigStem();
                     } else {
-                        // Geen keuze, random kiezen?
                         const opties = document.querySelectorAll('.stem-optie');
                         if (opties.length > 0) {
                             const randomIndex = Math.floor(Math.random() * opties.length);
@@ -471,45 +412,25 @@
                 }
             }, 1000);
         }
-        
+
         async function bevestigStem() {
-            if (!state.gekozenStem) {
-                alert('Kies eerst een naam!');
-                return;
-            }
-            
+            if (!state.gekozenStem) return;
             if (state.timerInterval) {
                 clearInterval(state.timerInterval);
                 state.timerInterval = null;
             }
-            
-            // Sla stem op
-            const result = await apiCall('saveVote', {
-                voter: state.naam,
-                target: state.gekozenStem
-            });
-            
-            if (result.status !== 'success') {
-                document.getElementById('foutMelding').textContent = result.message || 'Kon stem niet opslaan.';
+
+            try {
+                await gameRef.update({
+                    [`stemmen.${state.naam}`]: state.gekozenStem
+                });
+                showSection('sectionBedankt');
+            } catch (e) {
+                document.getElementById('foutMelding').textContent = 'Kon stem niet opslaan.';
                 showSection('sectionFout');
-                return;
             }
-            
-            showSection('sectionBedankt');
-            showDebug(`✅ ${state.naam} heeft gestemd op ${state.gekozenStem}`);
         }
-        
-        // ============================================================
-        // NAVIGATIE
-        // ============================================================
-        function gaTerugNaarWacht() {
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            showSection('sectionWait');
-        }
-        
+
         // ============================================================
         // DEBUG
         // ============================================================
@@ -520,7 +441,7 @@
                 el.scrollTop = el.scrollHeight;
             }
         }
-        
+
         function toggleDebug() {
             const el = document.getElementById('debug');
             el.classList.toggle('visible');
@@ -528,23 +449,8 @@
                 el.textContent = '🐞 Debug log:\n';
             }
         }
-        
-        // ============================================================
-        // INIT
-        // ============================================================
+
         console.log('📱 Hackers versus Burgers - Telefoon geladen!');
-        console.log('📌 Vervang API_URL met jouw Google Apps Script URL.');
-        
-        // Check bij start of er een stemronde actief is
-        setTimeout(async () => {
-            const status = await apiCall('getSpelStatus');
-            if (status.status === 'stemming') {
-                // Vraag of de gebruiker wil stemmen
-                if (confirm('Er is een stemronde bezig! Wil je je stem uitbrengen?')) {
-                    haalRolOp();
-                }
-            }
-        }, 1000);
     </script>
 </body>
 </html>
