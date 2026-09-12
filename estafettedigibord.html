@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estafette - Digibord</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setupScreen" class="screen active">
+    <h1>🏃 Estafette Spel</h1>
+    <div class="setup-info">
+        <p>Aantal deelnemers: <strong id="deelnemersCount">0</strong></p>
+        <ul id="deelnemersList"></ul>
+        <div id="setupError" class="error-msg"></div>
+    </div>
+
+    <div class="setup-config">
+        <label>Aantal rondes
+            <input type="number" id="numRounds" value="2" min="1" max="20">
+        </label>
+        <label>Aantal Chromebooks
+            <input type="number" id="numChromebooks" value="4" min="1" max="6">
+        </label>
+        <label>Aantal keer rennen
+            <input type="number" id="numRuns" value="3" min="1" max="20">
+        </label>
+    </div>
+
+    <button id="startBtn">Start Spel</button>
+</div>
+
+<!-- PLAYING -->
+<div id="playingScreen" class="screen">
+    <div class="playing-header">
+        <div class="round-info">Ronde <span id="roundNumber">1</span> / <span id="totalRounds">2</span></div>
+        <div class="timer" id="timer">0.0s</div>
+        <button id="resetBtn">Reset</button>
+    </div>
+    <div class="playersGrid" id="playersGrid"></div>
+    <button id="forceEndBtn">Einde ronde forceren</button>
+</div>
+
+<!-- BETWEEN ROUNDS -->
+<div id="betweenScreen" class="screen">
+    <h2>Ronde <span id="betweenRoundNumber">1</span> afgelopen</h2>
+    <table class="scoreboard" id="roundScoreboard"></table>
+    <button id="nextRoundBtn">Volgende ronde</button>
+</div>
+
+<!-- FINISHED -->
+<div id="finishedScreen" class="screen">
+    <h1>🏆 Spel afgelopen!</h1>
+    <table class="scoreboard" id="finalScoreboard"></table>
+    <button id="restartBtn">Opnieuw</button>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="estafettedigibord.js"></script>
+</body>
+</html>
