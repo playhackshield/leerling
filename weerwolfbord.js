@@ -1,10 +1,10 @@
 // ============================================================
-// CONFIGURATIE
+// CONFIG
 // ============================================================
 const CONFIG = {
-    ONDERVRAAG_TIJD: 120,     // seconden
-    STEM_TIJD_EERSTE: 10,    // seconden
-    STEM_TIJD_VOLGENDE: 5,   // seconden
+    ONDERVRAAG_TIJD: 120,
+    STEM_TIJD_EERSTE: 10,
+    STEM_TIJD_VOLGENDE: 5,
 };
 
 const HACKER_ACTIES = [
@@ -64,7 +64,7 @@ const BURGER_ACTIES = [
 ];
 
 // ============================================================
-// FIRESTORE REFERENTIE
+// FIRESTORE
 // ============================================================
 const gameRef = db.collection('games').doc('currentGame');
 
@@ -72,21 +72,27 @@ const gameRef = db.collection('games').doc('currentGame');
 // STATE
 // ============================================================
 let state = {
+    leerlingen: [],
     namen: [],
-    huidigeIndex: 0,
-    stemBeurtIndex: 0,
-    isEersteStemmer: true,
-    afvallers: [],
-    overgebleven: [],
-    stemmen: {},
     timerInterval: null,
-    ondervraagTijd: CONFIG.ONDERVRAAG_TIJD,
+    lastStatus: null,
 };
 
 // ============================================================
-// SECTIE MANAGEMENT
+// UTILS
 // ============================================================
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 function showSection(id) {
+    const current = document.querySelector('.section.active');
+    if (current && current.id === id) return;
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
@@ -97,136 +103,132 @@ function setStatus(text, className = 'status-naaminvoer') {
     badge.className = 'status-badge ' + className;
 }
 
-// ============================================================
-// FIRESTORE LISTENER
-// ============================================================
-gameRef.onSnapshot((doc) => {
-    if (!doc.exists) return;
-    const data = doc.data();
-    state.afvallers = data.afvallers || [];
-    state.stemmen = data.stemmen || {};
-    state.isEersteStemmer = data.isEersteStemmer !== false;
-    state.stemBeurtIndex = data.stemBeurtIndex || 0;
-
-    // Update UI op basis van status
-    switch (data.status) {
-        case 'naaminvoer':
-            showSection('sectionNaamInvoer');
-            setStatus('📋 Naam invoer', 'status-naaminvoer');
-            break;
-        case 'rolverdeling':
-            showSection('sectionRolverdeling');
-            setStatus('🔄 Rolverdeling', 'status-rolverdeling');
-            updateRolverdelingUI(data);
-            break;
-        case 'ondervraging':
-            showSection('sectionOndervraging');
-            setStatus('💬 Ondervraging', 'status-ondervraging');
-            updateOndervraagUI(data);
-            break;
-        case 'stemming':
-            showSection('sectionStemming');
-            setStatus('🗳️ Stemming', 'status-stemming');
-            updateStemUI(data);
-            break;
-        case 'uitslag':
-            // Uitslag wordt lokaal getoond
-            break;
-        case 'einde':
-            showWinnaar(data.winnaar);
-            break;
-        default:
-            break;
+function showDebug(msg) {
+    const el = document.getElementById('debug');
+    if (el.classList.contains('visible')) {
+        el.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+        el.scrollTop = el.scrollHeight;
     }
-});
+}
+
+function toggleDebug() {
+    const el = document.getElementById('debug');
+    el.classList.toggle('visible');
+    if (el.classList.contains('visible')) el.textContent = '🐞 Debug log:\n';
+}
 
 // ============================================================
-// NAAM INVOER
+// LEERLINGEN LADEN
+// ============================================================
+async function laadLeerlingen() {
+    try {
+        const snap = await db.collection('contestants').limit(1).get();
+        if (snap.empty) throw new Error('Geen document in collectie "contestants"');
+        const data = snap.docs[0].data();
+        state.leerlingen = data.leerlingen || [];
+        displayLeerlingen();
+        document.getElementById('laadStatus').textContent =
+            `✅ ${state.leerlingen.length} leerlingen geladen.`;
+    } catch (e) {
+        console.error(e);
+        document.getElementById('laadStatus').textContent = '❌ ' + e.message;
+    }
+}
+
+function displayLeerlingen() {
+    const lijst = document.getElementById('leerlingenLijst');
+    if (state.leerlingen.length === 0) {
+        lijst.innerHTML = '<p style="color:#8899bb;">Geen leerlingen gevonden.</p>';
+        return;
+    }
+    lijst.innerHTML = state.leerlingen.map(l =>
+        `<div class="speler-card">${l.naam} <span style="color:#8899bb; font-size:0.75em;">(groep ${l.groep})</span></div>`
+    ).join('');
+}
+
+// ============================================================
+// ROLVERDELING MET GROEPREGELS
+// ============================================================
+function assignRoles(leerlingen) {
+    const groep0 = leerlingen.filter(l => l.groep === 0);
+    const groep1 = leerlingen.filter(l => l.groep === 1);
+    const groep2 = leerlingen.filter(l => l.groep === 2);
+
+    const shuffledGroep0 = shuffle(groep0);
+
+    // Groep 1 en groep 2 krijgen tegengestelde rollen
+    const groep1Rol = Math.random() < 0.5 ? 'hacker' : 'burger';
+    const groep2Rol = groep1Rol === 'hacker' ? 'burger' : 'hacker';
+
+    const rollen = {};
+    groep1.forEach(l => rollen[l.naam] = groep1Rol);
+    groep2.forEach(l => rollen[l.naam] = groep2Rol);
+
+    // Groep 0 verdeelt zich om zo gebalanceerd mogelijk te zijn
+    let hackers = 0, burgers = 0;
+    Object.values(rollen).forEach(r => r === 'hacker' ? hackers++ : burgers++);
+
+    shuffledGroep0.forEach(l => {
+        if (hackers <= burgers) {
+            rollen[l.naam] = 'hacker'; hackers++;
+        } else {
+            rollen[l.naam] = 'burger'; burgers++;
+        }
+    });
+
+    // Acties toewijzen (uniek)
+    const acties = {};
+    const hackerActies = shuffle(HACKER_ACTIES);
+    const burgerActies = shuffle(BURGER_ACTIES);
+    let hIdx = 0, bIdx = 0;
+
+    // Schud de volgorde waarin we leerlingen verwerken, zodat acties niet
+    // in dezelfde volgorde als namen worden toegewezen
+    const shuffledLeerlingen = shuffle(leerlingen);
+    shuffledLeerlingen.forEach(l => {
+        if (rollen[l.naam] === 'hacker') {
+            acties[l.naam] = hackerActies[hIdx % hackerActies.length];
+            hIdx++;
+        } else {
+            acties[l.naam] = burgerActies[bIdx % burgerActies.length];
+            bIdx++;
+        }
+    });
+
+    return { rollen, acties };
+}
+
+// ============================================================
+// SPEL STARTEN
 // ============================================================
 async function startSpel() {
-    const input = document.getElementById('namenInput');
-    const namen = input.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-
-    if (namen.length < 4) {
-        alert('Voer minimaal 4 namen in!');
+    if (state.leerlingen.length < 4) {
+        alert('Minimaal 4 leerlingen nodig!');
         return;
     }
 
-    // Reset Firestore document
+    const namen = shuffle(state.leerlingen.map(l => l.naam));
+    const { rollen, acties } = assignRoles(state.leerlingen);
+
     await gameRef.set({
         status: 'rolverdeling',
+        leerlingen: state.leerlingen,
         namen: namen,
-        rollen: {},
-        acties: {},
+        rollen: rollen,
+        acties: acties,
         afvallers: [],
         stemmen: {},
-        stemBeurtIndex: 0,
+        stemStart: false,
         isEersteStemmer: true,
-        huidigeBeurt: '',
+        huidigeBeurt: namen[0],
         winnaar: '',
         ronden: 0,
         config: {
             ondervraagTijd: CONFIG.ONDERVRAAG_TIJD,
             stemTijdEerste: CONFIG.STEM_TIJD_EERSTE,
-            stemTijdVolgende: CONFIG.STEM_TIJD_VOLGENDE
+            stemTijdVolgende: CONFIG.STEM_TIJD_VOLGENDE,
         }
     });
-
-    // Wijs rollen toe
-    await assignRoles(namen);
-}
-
-async function assignRoles(namen) {
-    // Schud namen
-    const shuffled = [...namen];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    const aantalHackers = Math.max(1, Math.floor(shuffled.length / 2));
-
-    const rollen = {};
-    const acties = {};
-    let beschikbareHackerActies = [...HACKER_ACTIES];
-    let beschikbareBurgerActies = [...BURGER_ACTIES];
-
-    // Schud acties
-    for (let i = beschikbareHackerActies.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [beschikbareHackerActies[i], beschikbareHackerActies[j]] =
-            [beschikbareHackerActies[j], beschikbareHackerActies[i]];
-    }
-    for (let i = beschikbareBurgerActies.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [beschikbareBurgerActies[i], beschikbareBurgerActies[j]] =
-            [beschikbareBurgerActies[j], beschikbareBurgerActies[i]];
-    }
-
-    let hackerIndex = 0;
-    let burgerIndex = 0;
-
-    shuffled.forEach((naam, index) => {
-        if (index < aantalHackers) {
-            rollen[naam] = 'hacker';
-            acties[naam] = beschikbareHackerActies[hackerIndex % beschikbareHackerActies.length];
-            hackerIndex++;
-        } else {
-            rollen[naam] = 'burger';
-            acties[naam] = beschikbareBurgerActies[burgerIndex % beschikbareBurgerActies.length];
-            burgerIndex++;
-        }
-    });
-
-    await gameRef.update({
-        namen: shuffled,
-        rollen: rollen,
-        acties: acties,
-        huidigeBeurt: shuffled[0]
-    });
-
-    state.namen = shuffled;
-    state.huidigeIndex = 0;
 }
 
 // ============================================================
@@ -235,42 +237,42 @@ async function assignRoles(namen) {
 function updateRolverdelingUI(data) {
     const namen = data.namen || [];
     const huidigeBeurt = data.huidigeBeurt || '';
-    const totaal = namen.length;
-    const gedaan = namen.indexOf(huidigeBeurt);
-    const statusText = document.getElementById('rolverdelingStatus');
-    statusText.textContent = `Nog ${totaal - gedaan} van ${totaal} kinderen aan de beurt.`;
+    const idx = namen.indexOf(huidigeBeurt);
+
+    document.getElementById('rolBeurtNaam').textContent = huidigeBeurt || '—';
+    document.getElementById('rolverdelingStatus').textContent =
+        `Kind ${idx + 1} van ${namen.length} is aan de beurt.`;
 
     const lijst = document.getElementById('rolverdelingLijst');
     lijst.innerHTML = namen.map((naam, i) => {
-        const isGedaan = i < gedaan;
-        return `<div class="speler-card ${isGedaan ? 'afvaller' : ''}">
+        const isGedaan = i < idx;
+        const isNu = i === idx;
+        return `<div class="speler-card ${isGedaan ? 'afvaller' : ''}"
+                    style="${isNu ? 'border-color:#00d4ff; box-shadow:0 0 20px rgba(0,212,255,0.4);' : ''}">
             ${naam}
-            ${isGedaan ? '<span style="color:#00c853;"> ✅</span>' : ''}
+            ${isGedaan ? ' <span style="color:#00c853;">✅</span>' : ''}
+            ${isNu ? ' <span style="color:#00d4ff;">👈</span>' : ''}
         </div>`;
     }).join('');
 
-    const klaarBtn = document.getElementById('rolverdelingKlaarBtn');
-    klaarBtn.disabled = gedaan < totaal - 1;
+    // Volgende-knop: uit als laatste kind aan de beurt is
+    document.getElementById('volgendeKindBtn').disabled = idx >= namen.length - 1;
+    // Klaar-knop: aan als laatste kind aan de beurt is
+    document.getElementById('rolverdelingKlaarBtn').disabled = idx < namen.length - 1;
 }
 
 async function volgendeKind() {
     const data = (await gameRef.get()).data();
+    if (!data) return;
     const namen = data.namen || [];
-    const huidigeBeurt = data.huidigeBeurt || '';
-    const huidigeIndex = namen.indexOf(huidigeBeurt);
-    if (huidigeIndex < namen.length - 1) {
-        const volgende = namen[huidigeIndex + 1];
-        await gameRef.update({ huidigeBeurt: volgende });
-    } else {
-        alert('Alle kinderen zijn geweest!');
+    const idx = namen.indexOf(data.huidigeBeurt);
+    if (idx < namen.length - 1) {
+        await gameRef.update({ huidigeBeurt: namen[idx + 1] });
     }
 }
 
 async function rolverdelingKlaar() {
-    await gameRef.update({
-        status: 'ondervraging',
-        huidigeBeurt: ''
-    });
+    await gameRef.update({ status: 'ondervraging', huidigeBeurt: '' });
 }
 
 // ============================================================
@@ -302,7 +304,6 @@ function startOndervraagTimer(tijd) {
         const min = Math.floor(resterend / 60);
         const sec = resterend % 60;
         timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
-
         if (resterend <= 10) timerEl.className = 'timer danger';
         else if (resterend <= 30) timerEl.className = 'timer warning';
         else timerEl.className = 'timer';
@@ -321,21 +322,20 @@ async function startStemronde() {
         state.timerInterval = null;
     }
     const data = (await gameRef.get()).data();
-    const namen = data.namen || [];
     const afvallers = data.afvallers || [];
-    const overgebleven = namen.filter(n => !afvallers.includes(n));
+    const overgebleven = data.namen.filter(n => !afvallers.includes(n));
 
     await gameRef.update({
         status: 'stemming',
         stemmen: {},
-        stemBeurtIndex: 0,
+        stemStart: false,
         isEersteStemmer: true,
-        huidigeBeurt: overgebleven[0]
+        huidigeBeurt: overgebleven[0],
     });
 }
 
 // ============================================================
-// STEMRONDE UI
+// STEMRONDE
 // ============================================================
 function updateStemUI(data) {
     const namen = data.namen || [];
@@ -343,33 +343,70 @@ function updateStemUI(data) {
     const overgebleven = namen.filter(n => !afvallers.includes(n));
     const huidigeBeurt = data.huidigeBeurt || '';
     const stemmen = data.stemmen || {};
+    const stemStart = data.stemStart === true;
 
-    document.getElementById('stemStatus').textContent =
-        huidigeBeurt ? `📱 ${huidigeBeurt} is aan de beurt om te stemmen` : 'Wacht op stemmen...';
+    const idx = overgebleven.indexOf(huidigeBeurt);
+    const heeftGestemd = huidigeBeurt && stemmen[huidigeBeurt] !== undefined;
+    const totaalGestemd = Object.keys(stemmen).filter(k => overgebleven.includes(k)).length;
+    const alleGestemd = totaalGestemd >= overgebleven.length;
 
+    // Beurt-box
+    document.getElementById('stemBeurtNaam').textContent = huidigeBeurt || '—';
+    let instructie;
+    if (heeftGestemd) {
+        instructie = '✅ Stem is uitgebracht!';
+    } else if (stemStart) {
+        instructie = '⏳ Timer loopt op de telefoon...';
+    } else {
+        instructie = 'Geef de telefoon aan deze leerling en klik op "Start timer".';
+    }
+    document.getElementById('stemBeurtInstructie').textContent = instructie;
+
+    // Lijst
     const lijst = document.getElementById('stemLijst');
     lijst.innerHTML = overgebleven.map(naam =>
-        `<div class="speler-card ${afvallers.includes(naam) ? 'afvaller' : ''}">
+        `<div class="speler-card"
+              style="${naam === huidigeBeurt ? 'border-color:#00d4ff; box-shadow:0 0 20px rgba(0,212,255,0.4);' : ''}">
             ${naam}
-            ${afvallers.includes(naam) ? ' ❌' : ''}
+            ${naam === huidigeBeurt ? ' <span style="color:#00d4ff;">👈</span>' : ''}
+            ${stemmen[naam] !== undefined ? ' <span style="color:#00c853;">🗳️</span>' : ''}
         </div>`
     ).join('');
 
-    // Tel aantal stemmen
-    const totaalStemmen = Object.keys(stemmen).length;
-    const nodig = overgebleven.length;
+    // Knoppen
+    document.getElementById('startTimerBtn').disabled = stemStart || heeftGestemd || !huidigeBeurt;
+    document.getElementById('vorigeStemmerBtn').disabled = idx <= 0;
+    document.getElementById('volgendeStemmerBtn').disabled = !heeftGestemd && !alleGestemd;
+    document.getElementById('toonUitslagBtn').disabled = !alleGestemd;
 
-    // Update info
     document.getElementById('stemInfo').textContent =
-        `Er zijn ${totaalStemmen} van ${nodig} stemmen uitgebracht.`;
+        `Er zijn ${totaalGestemd} van ${overgebleven.length} stemmen uitgebracht.`;
+}
 
-    // Enable/disable "Toon uitslag"
-    const toonUitslagBtn = document.getElementById('toonUitslagBtn');
-    const alleGestemd = totaalStemmen >= nodig;
-    toonUitslagBtn.disabled = !alleGestemd;
+async function startTimer() {
+    await gameRef.update({ stemStart: true });
+}
 
-    // Debug log
-    showDebug(`Stemmen: ${totaalStemmen}/${nodig}, knop ${alleGestemd ? 'enabled' : 'disabled'}`);
+async function vorigeStemmer() {
+    const data = (await gameRef.get()).data();
+    const namen = data.namen || [];
+    const afvallers = data.afvallers || [];
+    const overgebleven = namen.filter(n => !afvallers.includes(n));
+    const idx = overgebleven.indexOf(data.huidigeBeurt);
+
+    if (idx <= 0) return;
+    const vorige = overgebleven[idx - 1];
+
+    // Verwijder hun oude stem
+    const update = {
+        huidigeBeurt: vorige,
+        stemStart: false,
+        isEersteStemmer: (idx - 1 === 0),
+    };
+    if (data.stemmen && data.stemmen[vorige] !== undefined) {
+        update[`stemmen.${vorige}`] = firebase.firestore.FieldValue.delete();
+    }
+    await gameRef.update(update);
 }
 
 async function volgendeStemmer() {
@@ -377,25 +414,22 @@ async function volgendeStemmer() {
     const namen = data.namen || [];
     const afvallers = data.afvallers || [];
     const overgebleven = namen.filter(n => !afvallers.includes(n));
-    const huidigeBeurt = data.huidigeBeurt || '';
-    const huidigeIndex = overgebleven.indexOf(huidigeBeurt);
+    const idx = overgebleven.indexOf(data.huidigeBeurt);
+    const stemmen = data.stemmen || {};
 
-    if (huidigeIndex < overgebleven.length - 1) {
-        const volgende = overgebleven[huidigeIndex + 1];
+    // Als alle stemmen binnen zijn, hoef je niet verder
+    const totaalGestemd = Object.keys(stemmen).filter(k => overgebleven.includes(k)).length;
+    if (totaalGestemd >= overgebleven.length) {
+        document.getElementById('stemInfo').textContent = 'Alle stemmen zijn binnen! Klik op "Toon uitslag".';
+        return;
+    }
+
+    if (idx < overgebleven.length - 1) {
         await gameRef.update({
-            huidigeBeurt: volgende,
-            isEersteStemmer: false
+            huidigeBeurt: overgebleven[idx + 1],
+            stemStart: false,
+            isEersteStemmer: false,
         });
-    } else {
-        // Laatste speler was al aan de beurt; check of iedereen heeft gestemd
-        const stemmen = data.stemmen || {};
-        const totaalStemmen = Object.keys(stemmen).length;
-        if (totaalStemmen >= overgebleven.length) {
-            document.getElementById('toonUitslagBtn').disabled = false;
-            document.getElementById('stemInfo').textContent = 'Alle stemmen zijn binnen! Klik op "Toon uitslag".';
-        } else {
-            alert('Alle spelers zijn aan de beurt geweest, maar nog niet iedereen heeft gestemd!');
-        }
     }
 }
 
@@ -405,10 +439,8 @@ async function volgendeStemmer() {
 async function toonUitslag() {
     const data = (await gameRef.get()).data();
     const stemmen = data.stemmen || {};
-    const namen = data.namen || [];
     const afvallers = data.afvallers || [];
 
-    // Tel stemmen
     const telling = {};
     Object.values(stemmen).forEach(target => {
         if (!afvallers.includes(target)) {
@@ -419,12 +451,8 @@ async function toonUitslag() {
     let maxStemmen = 0;
     let winnaars = [];
     for (const [naam, aantal] of Object.entries(telling)) {
-        if (aantal > maxStemmen) {
-            maxStemmen = aantal;
-            winnaars = [naam];
-        } else if (aantal === maxStemmen) {
-            winnaars.push(naam);
-        }
+        if (aantal > maxStemmen) { maxStemmen = aantal; winnaars = [naam]; }
+        else if (aantal === maxStemmen) winnaars.push(naam);
     }
 
     showSection('sectionUitslag');
@@ -434,18 +462,12 @@ async function toonUitslag() {
     let html = '<div style="margin-bottom:20px;">';
     for (const [naam, aantal] of Object.entries(telling)) {
         const max = Math.max(1, maxStemmen);
-        const percentage = (aantal / max) * 100;
-        html += `
-            <div class="stem-resultaat">
-                <div>
-                    <span class="naam">${naam}</span>
-                    <span class="aantal">${aantal} stem${aantal !== 1 ? 'men' : ''}</span>
-                </div>
-                <div class="stem-balk">
-                    <div class="vulling" style="width:${percentage}%;"></div>
-                </div>
-            </div>
-        `;
+        const perc = (aantal / max) * 100;
+        html += `<div class="stem-resultaat">
+            <div><span class="naam">${naam}</span>
+            <span class="aantal">${aantal} stem${aantal !== 1 ? 'men' : ''}</span></div>
+            <div class="stem-balk"><div class="vulling" style="width:${perc}%;"></div></div>
+        </div>`;
     }
     html += '</div>';
 
@@ -484,25 +506,23 @@ async function elimineer(naam) {
     if (!hackerOver) winnaar = 'burgers';
     else if (!burgerOver) winnaar = 'hackers';
 
-    const updateData = {
+    const update = {
         afvallers: nieuweAfvallers,
         stemmen: {},
-        stemBeurtIndex: 0,
+        stemStart: false,
         isEersteStemmer: true,
         huidigeBeurt: '',
-        ronden: (data.ronden || 0) + 1
+        ronden: (data.ronden || 0) + 1,
     };
 
     if (winnaar) {
-        updateData.winnaar = winnaar;
-        updateData.status = 'einde';
+        update.winnaar = winnaar;
+        update.status = 'einde';
     } else {
-        updateData.status = 'ondervraging';
+        update.status = 'ondervraging';
     }
+    await gameRef.update(update);
 
-    await gameRef.update(updateData);
-
-    // Toon onthulling
     const content = document.getElementById('uitslagContent');
     const rol = rollen[naam] === 'hacker' ? '🔴 HACKER' : '🟢 BURGER';
     const kleur = rollen[naam] === 'hacker' ? '#ff1744' : '#00c853';
@@ -510,22 +530,15 @@ async function elimineer(naam) {
     content.innerHTML = `
         <div style="text-align:center; padding:30px 0;">
             <h2 style="color:${kleur}; font-size:3rem;">${naam} was een ${rol}!</h2>
-            <p style="color:#8899bb; font-size:1.2rem;">Deze speler is nu afgevallen en mag niet meer meestemmen.</p>
+            <p style="color:#8899bb; font-size:1.2rem;">Deze speler valt af en mag niet meer meestemmen.</p>
             <br>
             <button class="btn btn-primary" onclick="gaNaarVolgendeRonde()">⏭️ Ga naar volgende ronde</button>
         </div>
     `;
 }
 
-// ============================================================
-// VOLGENDE RONDE
-// ============================================================
 async function gaNaarVolgendeRonde() {
-    const data = (await gameRef.get()).data();
-    if (data.winnaar) {
-        showWinnaar(data.winnaar);
-        return;
-    }
+    // Status is al 'ondervraging' (of 'einde')
     state.timerInterval = null;
 }
 
@@ -535,7 +548,6 @@ async function gaNaarVolgendeRonde() {
 function showWinnaar(winnaar) {
     showSection('sectionEinde');
     setStatus('🏆 Einde', 'status-einde');
-
     const titel = document.getElementById('winnaarTitel');
     const sub = document.getElementById('winnaarSub');
     const emoji = document.querySelector('.emoji-groot');
@@ -557,63 +569,75 @@ function showWinnaar(winnaar) {
 // RESET
 // ============================================================
 async function resetSpel() {
-    if (confirm('Weet je zeker dat je het spel wilt resetten?')) {
-        await gameRef.set({
-            status: 'naaminvoer',
-            namen: [],
-            rollen: {},
-            acties: {},
-            afvallers: [],
-            stemmen: {},
-            stemBeurtIndex: 0,
-            isEersteStemmer: true,
-            huidigeBeurt: '',
-            winnaar: '',
-            ronden: 0,
-            config: {
-                ondervraagTijd: CONFIG.ONDERVRAAG_TIJD,
-                stemTijdEerste: CONFIG.STEM_TIJD_EERSTE,
-                stemTijdVolgende: CONFIG.STEM_TIJD_VOLGENDE
-            }
-        });
-        state = {
-            namen: [],
-            huidigeIndex: 0,
-            stemBeurtIndex: 0,
-            isEersteStemmer: true,
-            afvallers: [],
-            overgebleven: [],
-            stemmen: {},
-            timerInterval: null,
+    if (!confirm('Weet je zeker dat je het spel wilt resetten?')) return;
+
+    await gameRef.set({
+        status: 'naaminvoer',
+        leerlingen: state.leerlingen,
+        namen: [],
+        rollen: {},
+        acties: {},
+        afvallers: [],
+        stemmen: {},
+        stemStart: false,
+        isEersteStemmer: true,
+        huidigeBeurt: '',
+        winnaar: '',
+        ronden: 0,
+        config: {
             ondervraagTijd: CONFIG.ONDERVRAAG_TIJD,
-        };
-        document.getElementById('namenInput').value = '';
-        showSection('sectionNaamInvoer');
-        setStatus('📋 Naam invoer', 'status-naaminvoer');
-        if (state.timerInterval) {
-            clearInterval(state.timerInterval);
-            state.timerInterval = null;
+            stemTijdEerste: CONFIG.STEM_TIJD_EERSTE,
+            stemTijdVolgende: CONFIG.STEM_TIJD_VOLGENDE,
         }
+    });
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
     }
 }
 
 // ============================================================
-// DEBUG
+// FIRESTORE LISTENER
 // ============================================================
-function showDebug(msg) {
-    const el = document.getElementById('debug');
-    if (el.classList.contains('visible')) {
-        el.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
-        el.scrollTop = el.scrollHeight;
-    }
-}
+gameRef.onSnapshot((doc) => {
+    if (!doc.exists) return;
+    const data = doc.data();
 
-function toggleDebug() {
-    const el = document.getElementById('debug');
-    el.classList.toggle('visible');
-    if (el.classList.contains('visible')) {
-        el.textContent = '🐞 Debug log:\n';
+    // Stop timer als we niet in ondervraging zijn
+    if (data.status !== 'ondervraging' && state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
     }
-}
 
+    switch (data.status) {
+        case 'naaminvoer':
+            showSection('sectionNaamInvoer');
+            setStatus('📋 Naam invoer', 'status-naaminvoer');
+            break;
+        case 'rolverdeling':
+            showSection('sectionRolverdeling');
+            setStatus('🔄 Rolverdeling', 'status-rolverdeling');
+            updateRolverdelingUI(data);
+            break;
+        case 'ondervraging':
+            showSection('sectionOndervraging');
+            setStatus('💬 Ondervraging', 'status-ondervraging');
+            updateOndervraagUI(data);
+            break;
+        case 'stemming':
+            showSection('sectionStemming');
+            setStatus('🗳️ Stemming', 'status-stemming');
+            updateStemUI(data);
+            break;
+        case 'einde':
+            showWinnaar(data.winnaar);
+            break;
+    }
+    state.lastStatus = data.status;
+});
+
+// ============================================================
+// INIT
+// ============================================================
 console.log('🔐 Hackers versus Burgers - Digibord geladen!');
+laadLeerlingen();
