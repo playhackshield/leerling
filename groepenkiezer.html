@@ -275,6 +275,24 @@
             display: block;
             margin: 20px 0;
         }
+        .spel-link {
+            color: #2d1f0f;
+            text-decoration: none;
+            border-bottom: 4px dashed #f9b83a;
+            padding-bottom: 2px;
+            transition: all 0.15s ease;
+        }
+        .spel-link:hover {
+            background: #f9b83a;
+            border-bottom-color: #2d1f0f;
+            border-radius: 8px;
+            padding: 0 8px 2px 8px;
+        }
+        .spel-link::after {
+            content: " ↗";
+            font-size: 0.8em;
+            opacity: 0.6;
+        }        
         @media (max-width: 700px) {
             .app { padding: 24px 18px; }
             h1 { font-size: 2.4rem; }
