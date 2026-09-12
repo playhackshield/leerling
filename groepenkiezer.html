@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Groepenmaker 🎯</title>
+    
+    <!-- Firebase SDK's -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <!-- Jouw Firebase config -->
+    <script src="firebase-config.js"></script>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -356,18 +365,51 @@
     // ============================================================
     let DATA = null;
     
-    async function laadData() {
-        try {
-            const response = await fetch('leerlingen.json');
-            if (!response.ok) throw new Error('JSON bestand niet gevonden');
-            DATA = await response.json();
-            init();
-        } catch (error) {
-            console.error('Fout bij laden data:', error);
-            alert('❌ Kon data.json niet laden! Zorg dat het bestand in dezelfde map staat.');
-        }
-    }
+async function laadData() {
+    try {
+        // 1. Leerlingen ophalen uit de "contenders" collectie
+        const contendersSnapshot = await db.collection('contenders').get();
 
+        if (contendersSnapshot.empty) {
+            throw new Error('Geen leerlingen gevonden in de collectie "contenders"');
+        }
+
+        const leerlingen = [];
+        contendersSnapshot.forEach(doc => {
+            const data = doc.data();
+            leerlingen.push({
+                naam: data.naam,
+                groep: data.groep !== undefined ? data.groep : 0
+            });
+        });
+
+        // 2. Spellen ophalen uit de "spelletjes" collectie
+        // We pakken het eerste (en enige) document
+        const spelletjesSnapshot = await db.collection('spelletjes').limit(1).get();
+
+        let spellen = [];
+        if (!spelletjesSnapshot.empty) {
+            const spelletjesDoc = spelletjesSnapshot.docs[0].data();
+            spellen = spelletjesDoc.spellen || [];
+        } else {
+            console.warn('Geen document gevonden in de "spelletjes" collectie');
+        }
+
+        // 3. DATA object opbouwen
+        DATA = {
+            leerlingen: leerlingen,
+            spellen: spellen
+        };
+
+        console.log('✅ Data geladen:', DATA);
+        init();
+
+    } catch (error) {
+        console.error('Fout bij laden data uit Firebase:', error);
+        alert('❌ Kon de data niet laden uit Firebase!\n\n' + error.message);
+    }
+}
+    
     // ============================================================
     // STATE
     // ============================================================
@@ -478,9 +520,10 @@
     function renderRonde() {
         const ronde = state.rondeIndex;
         const totaal = DATA.spellen.length;
+        const spel = DATA.spellen[ronde];
 
         document.getElementById('rondeTitel').textContent = `🏁 Ronde ${ronde + 1}`;
-        document.getElementById('rondeSpelNaam').textContent = `🎯 ${DATA.spellen[ronde]}`;
+        document.getElementById('rondeSpelNaam').innerHTML = `🎯 <a href="${spel.url}" target="_blank" class="spel-link">${spel.naam}</a>`;
         document.getElementById('rondeProgress').textContent = `Ronde ${ronde + 1} van ${totaal}`;
 
         if (!state.rondeScores[ronde]) {
