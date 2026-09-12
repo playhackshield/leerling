@@ -639,59 +639,61 @@
     }
 
     // ---------- Leerlingen laden uit JSON met fallback ----------
-    async function loadStudentsFromJson() {
-        try {
-            const response = await fetch('leerlingen.json');
-            if (!response.ok) {
-                throw new Error(`HTTP fout! status: ${response.status}`);
-            }
-            const data = await response.json();
-            
-            if (!data.leerlingen || !Array.isArray(data.leerlingen)) {
-                throw new Error('JSON bevat geen "leerlingen" array');
-            }
+async function loadStudentsFromJson() {
+    try {
+        // Haal het enige document op uit de "contestants" collectie
+        const snapshot = await db.collection('contestants').limit(1).get();
 
-            // Laad leerlingen uit JSON
-            students = data.leerlingen.map(leerling => ({
-                id: generateId(),
-                name: leerling.naam || 'Onbekend',
-                score: 0
-            }));
-
-            if (data.spellen && Array.isArray(data.spellen)) {
-                console.log('📚 Spellen beschikbaar:', data.spellen.join(', '));
-            }
-
-            renderAllStudents();
-            console.log(`✅ ${students.length} leerlingen geladen uit leerlingen.json`);
-            
-        } catch (error) {
-            // FALLBACK: gebruik de standaardlijst
-            console.warn('⚠️ Gebruik fallback-leerlingen:', error.message);
-            
-            students = FALLBACK_STUDENTS.map(name => ({
-                id: generateId(),
-                name: name,
-                score: 0
-            }));
-
-            renderAllStudents();
-
-            // Toon een melding dat fallback wordt gebruikt
-            const fallbackMsg = document.createElement('div');
-            fallbackMsg.className = 'error-message';
-            fallbackMsg.innerHTML = `
-                ℹ️ <strong>leerlingen.json</strong> niet gevonden.<br>
-                <span class="fallback-note">
-                    Gebruik standaardlijst: ${FALLBACK_STUDENTS.join(', ')}
-                </span>
-            `;
-            container.prepend(fallbackMsg);
-            
-            console.log(`📋 ${students.length} fallback-leerlingen geladen`);
+        if (snapshot.empty) {
+            throw new Error('Geen document gevonden in de "contestants" collectie');
         }
-    }
 
+        const data = snapshot.docs[0].data();
+
+        if (!data.leerlingen || !Array.isArray(data.leerlingen)) {
+            throw new Error('Document bevat geen "leerlingen" array');
+        }
+
+        // Laad leerlingen uit Firebase
+        students = data.leerlingen.map(leerling => ({
+            id: generateId(),
+            name: leerling.naam || 'Onbekend',
+            score: 0
+        }));
+
+        if (data.spellen && Array.isArray(data.spellen)) {
+            console.log('📚 Spellen beschikbaar:', data.spellen.map(s => s.naam).join(', '));
+        }
+
+        renderAllStudents();
+        console.log(`✅ ${students.length} leerlingen geladen uit Firebase (contestants)`);
+
+    } catch (error) {
+        // FALLBACK: gebruik de standaardlijst
+        console.warn('⚠️ Gebruik fallback-leerlingen:', error.message);
+
+        students = FALLBACK_STUDENTS.map(name => ({
+            id: generateId(),
+            name: name,
+            score: 0
+        }));
+
+        renderAllStudents();
+
+        // Toon een melding dat fallback wordt gebruikt
+        const fallbackMsg = document.createElement('div');
+        fallbackMsg.className = 'error-message';
+        fallbackMsg.innerHTML = `
+            ℹ️ <strong>Firebase (contestants)</strong> niet beschikbaar.<br>
+            <span class="fallback-note">
+                Gebruik standaardlijst: ${FALLBACK_STUDENTS.join(', ')}
+            </span>
+        `;
+        container.prepend(fallbackMsg);
+
+        console.log(`📋 ${students.length} fallback-leerlingen geladen`);
+    }
+}
     // ---------- Event listeners ----------
     addBtn.addEventListener('click', addStudentFromInput);
 
