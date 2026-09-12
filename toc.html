@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Games voor het digibord</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 2rem 1rem;
+    line-height: 1.5;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+  }
+  h2 {
+    font-size: 1.3rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  h2 .emoji { font-size: 1.4rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  a.game {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--card);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  }
+  a.game:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59,130,246,0.18);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+  }
+  a.game .icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: var(--primary-dark);
+    margin-left: auto;
+  }
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎮 Games voor het digibord</h1>
+  <p class="subtitle">Kies een game om te starten</p>
+
+  <!-- Weerwolf -->
+  <h2><span class="emoji">🐺</span> Weerwolf</h2>
+  <div class="grid">
+    <a class="game" href="weerwolfbord.html">
+      <span class="icon">🗺️</span> Weerwolfbord
+    </a>
+    <a class="game" href="weerwolftelefoon.html">
+      <span class="icon">📱</span> Weerwolftelefoon
+    </a>
+  </div>
+
+  <!-- Estafette -->
+  <h2><span class="emoji">🏃</span> Estafette</h2>
+  <div class="grid">
+    <a class="game" href="estafettedigibord.html">
+      <span class="icon">🖥️</span> Estafette Digibord
+    </a>
+    <a class="game" href="estafettechromebook.html">
+      <span class="icon">💻</span> Estafette Chromebook
+    </a>
+  </div>
+
+  <!-- Kennismaking -->
+  <h2><span class="emoji">🤝</span> Kennismaking</h2>
+  <div class="grid">
+    <a class="game" href="kennismakinga.html">
+      <span class="icon">🅰️</span> Kennismaking A
+    </a>
+    <a class="game" href="kennismakingb.html">
+      <span class="icon">🅱️</span> Kennismaking B
+    </a>
+  </div>
+
+  <!-- Losse games -->
+  <h2><span class="emoji">🎲</span> Overige games</h2>
+  <div class="grid">
+    <a class="game" href="beweegstastil.html">
+      <span class="icon">🤸</span> Beweeg &amp; Stastil
+    </a>
+    <a class="game" href="emojispinner.html">
+      <span class="icon">😀</span> Emoji Spinner
+    </a>
+    <a class="game" href="groepenkiezer.html">
+      <span class="icon">👥</span> Groepenkiezer
+    </a>
+    <a class="game" href="klikniettesnel.html">
+      <span class="icon">⚡</span> Klik niet te snel
+    </a>
+    <a class="game" href="memory.html">
+      <span class="icon">🧠</span> Memory
+    </a>
+    <a class="game" href="scoreslider.html">
+      <span class="icon">📊</span> Score Slider
+    </a>
+    <a class="game" href="teken.html">
+      <span class="icon">✏️</span> Tekenen
+    </a>
+    <a class="game" href="timerspel.html">
+      <span class="icon">⏱️</span> Timerspel
+    </a>
+    <a class="game" href="wachtwoord.html">
+      <span class="icon">🔒</span> Wachtwoord
+    </a>
+  </div>
+
+  <footer>
+    Alleen HTML-bestanden worden getoond · JS/CSS/JSON worden automatisch geladen
+  </footer>
+</div>
+</body>
+</html>
