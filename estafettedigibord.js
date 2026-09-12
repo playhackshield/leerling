@@ -3,6 +3,7 @@ const SESSION_REF = db.collection('estafette_session').doc('current');
 let contestants = [];
 let session = null;
 let timerInterval = null;
+let previewAssignment = []; // [[{naam,groep}, ...], [...], ...] per ronde
 
 // === INIT ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +23,7 @@ async function loadContestants() {
             groep: (l.groep !== undefined && l.groep > 0) ? l.groep : 0
         }));
         renderContestants();
+        regeneratePreview(); // ✅ preview meteen genereren
     } catch (err) {
         console.error(err);
         document.getElementById('setupError').textContent = 'Kon deelnemers niet laden: ' + err.message;
@@ -121,6 +123,7 @@ function renderBetween() {
         return a.finishTime - b.finishTime;
     });
 
+    // Scorebord
     const table = document.getElementById('roundScoreboard');
     table.innerHTML = `
         <thead><tr><th>#</th><th>Naam</th><th>Tijd</th></tr></thead>
@@ -132,6 +135,23 @@ function renderBetween() {
                     <td>${p.finishTime != null ? formatTime(p.finishTime) : '—'}</td>
                 </tr>`).join('')}
         </tbody>`;
+
+    // ✅ Volgende ronde preview
+    const nextRoundIndex = session.currentRoundIndex + 1;
+    const nextPlayers = session.players.filter(p => p.roundIndex === nextRoundIndex);
+    const nextList = document.getElementById('nextRoundPlayers');
+    const nextBtn = document.getElementById('nextRoundBtn');
+
+    if (nextRoundIndex >= session.config.numRounds) {
+        // Laatste ronde was dit → geen volgende ronde
+        nextList.innerHTML = '<li style="color:#94a3b8;">Dit was de laatste ronde.</li>';
+        nextBtn.textContent = 'Bekijk eindscore';
+    } else {
+        nextList.innerHTML = nextPlayers.map(p =>
+            `<li class="next-player">${escapeHtml(p.naam)}</li>`
+        ).join('');
+        nextBtn.textContent = `Volgende ronde (${nextRoundIndex + 1} van ${session.config.numRounds})`;
+    }
 }
 
 function renderFinished() {
@@ -189,6 +209,7 @@ function setupEventListeners() {
     document.getElementById('resetBtn').addEventListener('click', resetGame);
     document.getElementById('forceEndBtn').addEventListener('click', forceEndRound);
     document.getElementById('restartBtn').addEventListener('click', resetGame);
+    document.getElementById('numRounds').addEventListener('input', () => { regeneratePreview(); });
 }
 
 // === SPEL STARTEN ===
@@ -204,56 +225,38 @@ async function startGame() {
     if (numChromebooks < 1 || numChromebooks > 6) { alert('Aantal Chromebooks moet 1-6 zijn'); return; }
     if (numRuns < 1) { alert('Aantal keer rennen moet minstens 1 zijn'); return; }
 
-    // 1. Groepen automatisch toewijzen waar nodig
-    const players = contestants.map(c => ({
-        naam: c.naam,
-        groep: c.groep > 0 ? c.groep : 0
-    }));
-    let nextGroup = 1;
-    players.forEach(p => {
-        if (p.groep === 0) {
-            p.groep = nextGroup;
-            nextGroup = nextGroup === 1 ? 2 : 1;
-        }
-    });
-
-    // 2. Willekeurige volgorde
-    shuffleArray(players);
-
-    // 3. Rondes verdelen
-    const N = players.length;
-    const R = numRounds;
-    const base = Math.floor(N / R);
-    const rem = N % R;
-    const roundSizes = [];
-    for (let i = 0; i < R; i++) roundSizes.push(i < rem ? base + 1 : base);
-
-    let idx = 0;
-    const roundsAssignment = [];
-    for (let r = 0; r < R; r++) {
-        roundsAssignment.push(players.slice(idx, idx + roundSizes[r]));
-        idx += roundSizes[r];
+    // Zorg dat de preview actueel is
+    if (previewAssignment.length !== numRounds) {
+        regeneratePreview();
+    }
+    if (previewAssignment.length === 0) {
+        alert('Kon geen indeling genereren'); return;
     }
 
-    // 4. Unieke volgorde per speler binnen elke ronde
-    roundsAssignment.forEach((roundPlayers, r) => {
-        const used = new Set();
+    // Bouw players-array op basis van de previewAssignment
+    const players = [];
+    previewAssignment.forEach((roundPlayers, r) => {
+        const usedSeqs = new Set();
         roundPlayers.forEach(p => {
             let seq, attempts = 0;
             do {
                 seq = generateSequence(numRuns, numChromebooks);
                 attempts++;
-            } while (used.has(seq.join(',')) && attempts < 100);
-            used.add(seq.join(','));
-            p.roundIndex = r;
-            p.sequence = seq;
-            p.currentStep = 0;
-            p.finished = false;
-            p.finishTime = null;
+            } while (usedSeqs.has(seq.join(',')) && attempts < 100);
+            usedSeqs.add(seq.join(','));
+
+            players.push({
+                naam: p.naam,
+                groep: p.groep,
+                roundIndex: r,
+                sequence: seq,
+                currentStep: 0,
+                finished: false,
+                finishTime: null
+            });
         });
     });
 
-    // 5. Wegschrijven
     await SESSION_REF.set({
         status: 'playing',
         config: { numRounds, numChromebooks, numRuns },
@@ -319,7 +322,59 @@ async function resetGame() {
         roundStartTime: null,
         players: []
     });
-    loadContestants();
+    loadContestants(); // herlaadt contestants + regenereert preview
+}
+
+// === PREVIEW: ronde-indeling genereren en tonen ===
+function generatePreviewAssignment() {
+    if (contestants.length === 0) return [];
+
+    const numRounds = parseInt(document.getElementById('numRounds').value);
+    if (isNaN(numRounds) || numRounds < 1 || numRounds > contestants.length) return [];
+
+    // Kopieer en shuffle (dezelfde verdeling wordt straks ook gebruikt)
+    const players = contestants.map(c => ({ ...c }));
+    shuffleArray(players);
+
+    // Rondes zo gelijk mogelijk verdelen
+    const N = players.length;
+    const R = numRounds;
+    const base = Math.floor(N / R);
+    const rem = N % R;
+    const roundSizes = [];
+    for (let i = 0; i < R; i++) roundSizes.push(i < rem ? base + 1 : base);
+
+    let idx = 0;
+    const rounds = [];
+    for (let r = 0; r < R; r++) {
+        rounds.push(players.slice(idx, idx + roundSizes[r]));
+        idx += roundSizes[r];
+    }
+    return rounds;
+}
+
+function renderPreview() {
+    const container = document.getElementById('previewContent');
+    if (!container) return;
+
+    if (previewAssignment.length === 0) {
+        container.innerHTML = '<p style="color:#94a3b8;">Stel het aantal rondes in om de indeling te zien.</p>';
+        return;
+    }
+
+    container.innerHTML = previewAssignment.map((round, i) => `
+        <div class="preview-round">
+            <div class="preview-round-title">Ronde ${i + 1} <span class="preview-count">${round.length} spelers</span></div>
+            <div class="preview-names">
+                ${round.map(p => `<span class="preview-name">${escapeHtml(p.naam)}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function regeneratePreview() {
+    previewAssignment = generatePreviewAssignment();
+    renderPreview();
 }
 
 // === HELPER ===
