@@ -385,15 +385,15 @@
     
 async function laadData() {
     try {
-        // 1. Leerlingen ophalen uit de "contenders" collectie
-        const contendersSnapshot = await db.collection('contenders').get();
+        // 1. Leerlingen ophalen uit de "contestants" collectie
+        const contestantsSnapshot = await db.collection('contestants').get();
 
-        if (contendersSnapshot.empty) {
-            throw new Error('Geen leerlingen gevonden in de collectie "contenders"');
+        if (contestantsSnapshot.empty) {
+            throw new Error('Geen leerlingen gevonden in de collectie "contestants"');
         }
 
         const leerlingen = [];
-        contendersSnapshot.forEach(doc => {
+        contestantsSnapshot.forEach(doc => {
             const data = doc.data();
             leerlingen.push({
                 naam: data.naam,
