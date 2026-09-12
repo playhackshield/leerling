@@ -385,33 +385,19 @@
     
 async function laadData() {
     try {
-        // 1. Leerlingen ophalen uit de "contestants" collectie
-        const contestantsSnapshot = await db.collection('contestants').get();
+        // 1. Haal het enige document op uit de "contestants" collectie
+        const contestantsSnapshot = await db.collection('contestants').limit(1).get();
 
         if (contestantsSnapshot.empty) {
-            throw new Error('Geen leerlingen gevonden in de collectie "contestants"');
+            throw new Error('Geen document gevonden in de collectie "contestants"');
         }
 
-        const leerlingen = [];
-        contestantsSnapshot.forEach(doc => {
-            const data = doc.data();
-            leerlingen.push({
-                naam: data.naam,
-                groep: data.groep !== undefined ? data.groep : 0
-            });
-        });
+        // Pak het eerste (en enige) document
+        const data = contestantsSnapshot.docs[0].data();
 
-        // 2. Spellen ophalen uit de "spelletjes" collectie
-        // We pakken het eerste (en enige) document
-        const spelletjesSnapshot = await db.collection('spelletjes').limit(1).get();
-
-        let spellen = [];
-        if (!spelletjesSnapshot.empty) {
-            const spelletjesDoc = spelletjesSnapshot.docs[0].data();
-            spellen = spelletjesDoc.spellen || [];
-        } else {
-            console.warn('Geen document gevonden in de "spelletjes" collectie');
-        }
+        // 2. Leerlingen en spellen zitten beide in dit document
+        const leerlingen = data.leerlingen || [];
+        const spellen = data.spellen || [];
 
         // 3. DATA object opbouwen
         DATA = {
