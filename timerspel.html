@@ -344,21 +344,33 @@
     let LEERLINGEN = [];
     let ALLE_SCORES = {}; // { "naam": besteScore }
 
-    async function laadData() {
-        try {
-            const response = await fetch('leerlingen.json');
-            if (!response.ok) throw new Error('JSON bestand niet gevonden');
-            const data = await response.json();
-            LEERLINGEN = data.leerlingen.map(l => l.naam);
-            // Reset scores
-            ALLE_SCORES = {};
-            LEERLINGEN.forEach(naam => { ALLE_SCORES[naam] = null; });
-            init();
-        } catch (error) {
-            console.error('Fout bij laden data:', error);
-            alert('❌ Kon leerlingen.json niet laden! Zorg dat het bestand in dezelfde map staat.');
+async function laadData() {
+    try {
+        // Haal het enige document op uit de "contestants" collectie
+        const snapshot = await db.collection('contestants').limit(1).get();
+
+        if (snapshot.empty) {
+            throw new Error('Geen document gevonden in de "contestants" collectie');
         }
+
+        const data = snapshot.docs[0].data();
+
+        if (!data.leerlingen || !Array.isArray(data.leerlingen)) {
+            throw new Error('Document bevat geen "leerlingen" array');
+        }
+
+        LEERLINGEN = data.leerlingen.map(l => l.naam);
+
+        // Reset scores
+        ALLE_SCORES = {};
+        LEERLINGEN.forEach(naam => { ALLE_SCORES[naam] = null; });
+
+        init();
+    } catch (error) {
+        console.error('Fout bij laden data:', error);
+        alert('❌ Kon leerlingen niet laden uit Firebase (contestants)!');
     }
+}
 
     // ============================================================
     // STATE
