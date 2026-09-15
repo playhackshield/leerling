@@ -1,75 +1,18 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fluisterspel - Telefoon</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <style>
-    * { box-sizing:border-box; }
-    body {
-      margin:0; min-height:100vh; background:#17202a; color:white; font-family:Arial,sans-serif;
-      display:flex; align-items:center; justify-content:center; padding:24px;
-    }
-    .card {
-      width:min(720px,100%); background:white; color:#17202a; border-radius:26px;
-      padding:34px 24px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.3);
-    }
-    h1 { font-size:38px; margin:0 0 28px; }
-    #message { font-size:22px; color:#56616d; margin-bottom:25px; }
-    #sequence {
-      display:flex; flex-direction:column; gap:16px; margin:20px 0 30px;
-    }
-    .item {
-      font-size:clamp(34px,9vw,64px); font-weight:bold; padding:18px 12px;
-      border-radius:16px; background:#eef2f6;
-    }
-    .hint { font-size:18px; color:#697582; margin-top:10px; }
-    .waiting { font-size:26px; padding:50px 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluister Telefoon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
-<body>
-  <div class="card">
-    <h1>🤫 Fluisterspel</h1>
-    <div id="message">Wachten op de volgende ronde…</div>
-    <div id="sequence"></div>
-    <div class="hint" id="hint">Houd de telefoon bij de twee eerste leerlingen.</div>
-  </div>
-<script>
-const db = firebase.firestore();
-const gameRef = db.collection("fluisterspel").doc("active");
-
-function showWaiting() {
-  document.getElementById("message").textContent = "Wachten op de volgende ronde…";
-  document.getElementById("sequence").innerHTML = '<div class="waiting">Er is nog geen nieuwe reeks.</div>';
-  document.getElementById("hint").textContent = "Start de ronde op het digibord.";
-}
-
-function showSequence(data) {
-  document.getElementById("message").textContent = "Onthoud deze reeks en fluister hem door:";
-  const box = document.getElementById("sequence");
-  box.innerHTML = "";
-  (data.sequence || []).forEach(x => {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.textContent = x.item;
-    box.appendChild(div);
-  });
-  document.getElementById("hint").textContent = "Dezelfde reeks geldt voor beide groepen.";
-}
-
-gameRef.onSnapshot(doc => {
-  if (!doc.exists) return showWaiting();
-  const data = doc.data();
-  if (data.state === "playing" && Array.isArray(data.sequence)) showSequence(data);
-  else showWaiting();
-}, err => {
-  document.getElementById("message").textContent = "Kan geen verbinding maken met Firebase.";
-  document.getElementById("sequence").innerHTML = "";
-  console.error(err);
-});
-</script>
+<body class="bg-slate-950 text-white p-4 font-sans max-w-md mx-auto">
+    <!-- Telefoon Code Interface -->
+    <h1 class="text-xl font-bold text-center mb-4">De Geheime Code - Telefoon</h1>
+    <p class="text-center text-slate-400">Plaats dit bestand op je server naast firebase-config.js</p>
 </body>
 </html>
