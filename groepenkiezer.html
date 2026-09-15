@@ -292,7 +292,55 @@
             content: " ↗";
             font-size: 0.8em;
             opacity: 0.6;
-        }        
+        }       
+        /* ===== POPUP ===== */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .popup-content {
+            background: #fff;
+            border-radius: 40px;
+            padding: 30px 40px 35px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 3px solid #f9b83a;
+            text-align: center;
+        }
+        .popup-content h2 {
+            font-size: 2.2rem;
+            color: #2d1f0f;
+            margin-bottom: 20px;
+        }
+        .popup-groepen {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .popup-content .groep-card {
+            min-width: 150px;
+            flex: 1 1 150px;
+        }
+        .popup-content .groep-card h3 {
+            font-size: 1.6rem;
+        }
+        .popup-content .groep-card ul {
+            font-size: 1.3rem;
+        }
         @media (max-width: 700px) {
             .app { padding: 24px 18px; }
             h1 { font-size: 2.4rem; }
@@ -357,6 +405,9 @@
             <div style="margin-top:12px; font-size:1.2rem; color:#6b4f32;">
                 <span id="rondeProgress"></span>
             </div>
+            <button class="btn btn-secondary btn-small" id="btnToonGroepen" style="margin-top:20px;">
+                👥 Bekijk groepen
+            </button>            
         </div>
     </div>
 
@@ -375,6 +426,14 @@
         </div>
     </div>
 
+    <!-- ===== POPUP GROEPEN ===== -->
+    <div id="popupGroepen" class="popup-overlay hidden">
+        <div class="popup-content">
+            <h2>👥 Groepsindeling</h2>
+            <div class="popup-groepen" id="popupGroepenContainer"></div>
+            <button class="btn btn-small" id="btnSluitPopup">✖️ Sluiten</button>
+        </div>
+    </div>    
 </div>
 
 <script>
@@ -640,6 +699,52 @@ function init() {
         }
     });
 
+    // ===== POPUP GROEPEN =====
+    document.getElementById('btnToonGroepen').addEventListener('click', function() {
+        renderPopupGroepen();
+        document.getElementById('popupGroepen').classList.remove('hidden');
+    });
+    
+    document.getElementById('btnSluitPopup').addEventListener('click', function() {
+        document.getElementById('popupGroepen').classList.add('hidden');
+    });
+    
+    // Sluit popup als je buiten de content klikt
+    document.getElementById('popupGroepen').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+    
+    // Sluit popup met Escape-toets
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('popupGroepen').classList.add('hidden');
+        }
+    });
+    
+    function renderPopupGroepen() {
+        const container = document.getElementById('popupGroepenContainer');
+        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨'];
+        
+        if (!state.groepen || state.groepen.length === 0) {
+            container.innerHTML = '<p style="color:#a08f7e;">Nog geen groepen gemaakt.</p>';
+            return;
+        }
+        
+        container.innerHTML = state.groepen.map((groep, i) => {
+            const emoji = emojis[i % emojis.length];
+            return `
+                <div class="groep-card">
+                    <h3>${emoji} Groep ${i+1}</h3>
+                    <ul>
+                        ${groep.map(l => `<li>${l.naam}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }).join('');
+    }
+    
     // Start met laden van data
     laadData();
     console.log('🎯 Groepenmaker geladen!');
