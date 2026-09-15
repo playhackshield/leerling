@@ -695,6 +695,12 @@
     // ============================================================
     document.getElementById('btnStart').addEventListener('click', startTimer);
 
+    // Klik op de timer van speler 1 = stoppen
+    document.getElementById('speler1Timer').addEventListener('click', () => stopTimer(1));
+    
+    // Klik op de timer van speler 2 = stoppen
+    document.getElementById('speler2Timer').addEventListener('click', () => stopTimer(2));
+    
     document.getElementById('btnVolgende').addEventListener('click', () => {
         if (state.ronde === 1) {
             state.ronde = 2;
