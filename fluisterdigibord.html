@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluisterspel - Digibord</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #17202a;
+      min-height: 100vh;
+    }
+    .screen { min-height: 100vh; padding: 28px; display: flex; flex-direction: column; }
+    .hidden { display: none !important; }
+    h1 { font-size: clamp(36px, 5vw, 68px); margin: 0 0 28px; text-align: center; }
+    .start-card {
+      max-width: 900px; width: 100%; margin: auto; background: white; border-radius: 24px;
+      padding: 45px; box-shadow: 0 8px 30px rgba(0,0,0,.12); text-align: center;
+    }
+    .label { font-size: 30px; font-weight: bold; display:block; margin-bottom: 18px; }
+    .count-buttons { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .count-btn, .start-btn, .choice, .ready-btn, .next-btn {
+      border: 0; border-radius: 14px; cursor: pointer; font-weight: bold;
+      transition: transform .08s, opacity .15s, box-shadow .15s;
+    }
+    .count-btn { width: 78px; height: 68px; font-size: 30px; background:#e8edf2; }
+    .count-btn.selected { background:#2563eb; color:white; box-shadow:0 4px 0 #1749a6; }
+    .start-btn { margin-top:32px; padding:18px 52px; font-size:30px; background:#16a34a; color:white; }
+    button:active { transform: translateY(2px); }
+    .status { text-align:center; font-size:25px; margin-top:20px; min-height:32px; }
+    .game-title { text-align:center; font-size:clamp(30px,4vw,52px); margin:0 0 18px; }
+    .teams { display:grid; grid-template-columns:1fr 1fr; gap:22px; flex:1; }
+    .team {
+      background:white; border-radius:20px; padding:20px; box-shadow:0 5px 20px rgba(0,0,0,.1);
+      display:flex; flex-direction:column; min-width:0;
+    }
+    .team h2 { text-align:center; font-size:36px; margin:0 0 18px; }
+    .columns { display:grid; gap:12px; flex:1; }
+    .category { border:2px solid #dce1e6; border-radius:14px; padding:12px; }
+    .category h3 { margin:0 0 10px; text-align:center; font-size:22px; }
+    .choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .choice { padding:11px 7px; font-size:20px; background:#eef2f6; }
+    .choice.selected { background:#2563eb; color:white; box-shadow:inset 0 0 0 3px rgba(255,255,255,.35); }
+    .ready-btn { margin-top:14px; padding:15px; font-size:25px; background:#f59e0b; color:white; }
+    .ready-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .team-result { text-align:center; font-size:22px; font-weight:bold; min-height:28px; margin-top:8px; }
+    .overlay {
+      position:fixed; inset:0; background:rgba(20,28,38,.72); display:flex; align-items:center;
+      justify-content:center; z-index:20; padding:25px;
+    }
+    .result-card { background:white; border-radius:25px; padding:42px; text-align:center; max-width:700px; width:100%; }
+    .result-card h2 { font-size:48px; margin:0 0 15px; }
+    .result-card p { font-size:28px; margin:10px 0 25px; }
+    .next-btn { padding:17px 40px; font-size:25px; background:#2563eb; color:white; }
+    .connection { position:fixed; right:14px; bottom:10px; font-size:14px; opacity:.65; }
+    @media (max-width: 900px) {
+      .teams { grid-template-columns:1fr; }
+      .screen { padding:15px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="startScreen" class="screen">
+    <div class="start-card">
+      <h1>🤫 Fluisterspel</h1>
+      <span class="label">Aantal items</span>
+      <div class="count-buttons">
+        <button class="count-btn selected" data-count="1">1</button>
+        <button class="count-btn" data-count="2">2</button>
+        <button class="count-btn" data-count="3">3</button>
+        <button class="count-btn" data-count="4">4</button>
+        <button class="count-btn" data-count="5">5</button>
+      </div>
+      <button id="startBtn" class="start-btn">Start</button>
+      <div id="startStatus" class="status"></div>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="screen hidden">
+    <h1 class="game-title">🤫 Fluisterspel</h1>
+    <div class="teams">
+      <div class="team" id="team1">
+        <h2>Groep 1</h2>
+        <div class="columns" id="columns1"></div>
+        <button class="ready-btn" id="ready1" disabled>Klaar</button>
+        <div class="team-result" id="result1"></div>
+      </div>
+      <div class="team" id="team2">
+        <h2>Groep 2</h2>
+        <div class="columns" id="columns2"></div>
+        <button class="ready-btn" id="ready2" disabled>Klaar</button>
+        <div class="team-result" id="result2"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="resultOverlay" class="overlay hidden">
+    <div class="result-card">
+      <h2 id="resultTitle"></h2>
+      <p id="resultText"></p>
+      <button id="nextBtn" class="next-btn">Nieuwe ronde</button>
+    </div>
+  </div>
+
+  <div class="connection" id="connection">Verbinden…</div>
+
+<script>
+const categories = {
+  kleuren: { name: "Kleuren", items: ["Rood","Blauw","Groen","Geel","Oranje","Paars","Roze"] },
+  cijfers: { name: "Cijfers", items: ["1","2","3","4","5","6","7"] },
+  dieren: { name: "Dieren", items: ["Hond","Kat","Olifant","Leeuw","Aap","Giraf","Pinguïn"] },
+  weekdagen: { name: "Weekdagen", items: ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"] },
+  eten: { name: "Etenswaren", items: ["Pizza","Appel","Banaan","Friet","Brood","Kaas","IJs"] }
+};
+const categoryKeys = Object.keys(categories);
+let selectedCount = 1;
+let currentRoundId = null;
+let unsub = null;
+let submissions = {1:false, 2:false};
+let selected = {1:{}, 2:{}};
+let currentCategories = [];
+
+const db = firebase.firestore();
+const gameRef = db.collection("fluisterspel").doc("active");
+
+document.querySelectorAll(".count-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectedCount = Number(btn.dataset.count);
+    document.querySelectorAll(".count-btn").forEach(b => b.classList.toggle("selected", b === btn));
+  });
+});
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+function newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+async function startRound() {
+  const chosenKeys = shuffle(categoryKeys).slice(0, selectedCount);
+  const sequence = chosenKeys.map(key => {
+    const item = categories[key].items[Math.floor(Math.random() * 7)];
+    return { key, item };
+  });
+  currentRoundId = newId();
+  submissions = {1:false, 2:false};
+  selected = {1:{}, 2:{}};
+  currentCategories = chosenKeys;
+
+  document.getElementById("startStatus").textContent = "Ronde starten…";
+  try {
+    await gameRef.set({
+      roundId: currentRoundId,
+      state: "playing",
+      count: selectedCount,
+      sequence,
+      categories: chosenKeys,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      submissions: { "1": null, "2": null }
+    });
+    showGame(sequence);
+  } catch (e) {
+    console.error(e);
+    document.getElementById("startStatus").textContent = "Verbinding met Firebase mislukt.";
+  }
+}
+
+function showGame(sequence) {
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+  buildTeam(1); buildTeam(2);
+  document.getElementById("connection").textContent = "Verbonden";
+}
+
+function buildTeam(teamNo) {
+  const container = document.getElementById("columns" + teamNo);
+  container.innerHTML = "";
+  container.style.gridTemplateColumns = `repeat(${currentCategories.length}, minmax(0, 1fr))`;
+  currentCategories.forEach(key => {
+    const cat = categories[key];
+    const div = document.createElement("div");
+    div.className = "category";
+    const h = document.createElement("h3");
+    h.textContent = cat.name;
+    div.appendChild(h);
+    const choices = document.createElement("div");
+    choices.className = "choices";
+    cat.items.forEach(item => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = item;
+      b.addEventListener("click", () => choose(teamNo, key, item, b));
+      choices.appendChild(b);
+    });
+    div.appendChild(choices);
+    container.appendChild(div);
+  });
+  document.getElementById("ready" + teamNo).disabled = true;
+  document.getElementById("result" + teamNo).textContent = "";
+}
+
+function choose(teamNo, key, item, button) {
+  if (submissions[teamNo]) return;
+  selected[teamNo][key] = item;
+  button.parentElement.querySelectorAll(".choice").forEach(b => b.classList.remove("selected"));
+  button.classList.add("selected");
+  document.getElementById("ready" + teamNo).disabled =
+    Object.keys(selected[teamNo]).length !== currentCategories.length;
+}
+
+async function submit(teamNo) {
+  if (submissions[teamNo]) return;
+  if (Object.keys(selected[teamNo]).length !== currentCategories.length) return;
+  submissions[teamNo] = true;
+  document.getElementById("ready" + teamNo).disabled = true;
+  document.getElementById("result" + teamNo).textContent = "Antwoord ingediend…";
+  try {
+    await gameRef.update({ [`submissions.${teamNo}`]: { answers:selected[teamNo], submittedAt: firebase.firestore.FieldValue.serverTimestamp() } });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function resetUI() {
+  document.getElementById("resultOverlay").classList.add("hidden");
+  document.getElementById("gameScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  document.getElementById("startStatus").textContent = "";
+  selectedCount = 1;
+  document.querySelectorAll(".count-btn").forEach((b,i) => b.classList.toggle("selected", i===0));
+  submissions = {1:false,2:false};
+  selected = {1:{},2:{}};
+}
+
+function evaluate(data) {
+  if (data.roundId !== currentRoundId || !data.submissions) return;
+  const s1 = data.submissions["1"], s2 = data.submissions["2"];
+  if (!s1 && !s2) return;
+
+  // Determine the first submission by Firestore timestamp when both exist.
+  const entries = [];
+  if (s1) entries.push({team:1, sub:s1});
+  if (s2) entries.push({team:2, sub:s2});
+  entries.sort((a,b) => {
+    const ta = a.sub.submittedAt?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
+    const tb = b.sub.submittedAt?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
+    return ta - tb;
+  });
+
+  const correct = sub => currentCategories.every(key => sub.answers?.[key] === data.sequence.find(x=>x.key===key)?.item);
+
+  // First submission gets priority. If wrong, the other team may still submit.
+  const first = entries[0];
+  if (first && correct(first.sub)) {
+    finish(first.team, true, first.team === 1 ? 2 : 1);
+    return;
+  }
+  if (first) {
+    document.getElementById("result" + first.team).textContent = "❌ Fout — geen punt.";
+  }
+  if (entries.length >= 2) {
+    const second = entries[1];
+    if (correct(second.sub)) finish(second.team, true, second.team === 1 ? 2 : 1);
+    else finish(null, false, null);
+  }
+}
+
+function finish(winner, hasPoint, other) {
+  if (document.getElementById("resultOverlay").classList.contains("hidden") === false) return;
+  document.getElementById("resultOverlay").classList.remove("hidden");
+  if (hasPoint) {
+    document.getElementById("resultTitle").textContent = `🎉 Groep ${winner} wint!`;
+    document.getElementById("resultText").textContent = "Het antwoord is helemaal goed. Punt voor deze groep!";
+  } else {
+    document.getElementById("resultTitle").textContent = "Geen punt";
+    document.getElementById("resultText").textContent = "Beide groepen hadden een fout antwoord.";
+  }
+}
+
+document.getElementById("startBtn").addEventListener("click", startRound);
+document.getElementById("ready1").addEventListener("click", () => submit(1));
+document.getElementById("ready2").addEventListener("click", () => submit(2));
+document.getElementById("nextBtn").addEventListener("click", async () => {
+  try { await gameRef.update({state:"waiting", submissions:{"1":null,"2":null}}); } catch(e) {}
+  resetUI();
+});
+
+unsub = gameRef.onSnapshot(doc => {
+  document.getElementById("connection").textContent = doc.exists ? "Verbonden" : "Verbonden";
+  if (doc.exists) evaluate(doc.data());
+}, err => {
+  console.error(err);
+  document.getElementById("connection").textContent = "Firebase-fout";
+});
+</script>
+</body>
+</html>
