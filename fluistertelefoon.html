@@ -3,16 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluister Telefoon</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>De Geheime Code - Telefoon View</title>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Optioneel extern config bestand -->
+    <script src="firebase-config.js" onerror="console.log('Geen extern firebase-config.js bestand geladen')"></script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #090d16;
+            --accent-primary: #6366f1;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .font-fun {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Container styling for smartphone screen */
+        .phone-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px 20px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            min-height: 520px;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            color: white;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-input);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+        }
+
+        /* Secret Code Card */
+        .secret-card {
+            background: var(--bg-input);
+            border: 2px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin: 16px 0;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .code-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-row:last-child {
+            border-bottom: none;
+        }
+
+        .cat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-value {
+            color: var(--warning);
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .secret-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .waiting-box {
+            padding: 40px 10px;
+        }
+
+        .waiting-icon {
+            font-size: 3.5rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-white p-4 font-sans max-w-md mx-auto">
-    <!-- Telefoon Code Interface -->
-    <h1 class="text-xl font-bold text-center mb-4">De Geheime Code - Telefoon</h1>
-    <p class="text-center text-slate-400">Plaats dit bestand op je server naast firebase-config.js</p>
+<body>
+
+    <div class="phone-container">
+        <div>
+            <div class="status-badge">
+                <div id="statusDot" class="status-dot"></div>
+                <span id="statusText">Verbinden met Firebase...</span>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase;">Leerlingen Telefoon</p>
+            <h1 class="header-title font-fun">De Geheime Code</h1>
+        </div>
+
+        <!-- STATE 1: WAITING -->
+        <div id="viewWaiting" class="waiting-box">
+            <i class="fa-solid fa-clock waiting-icon"></i>
+            <h2 class="font-fun" style="margin-bottom: 8px; font-size: 1.4rem;">Wachten op de leraar...</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4;">
+                De leerkracht start zo meteen een nieuwe ronde op het digibord.
+            </p>
+        </div>
+
+        <!-- STATE 2: PLAYING / SHOWING SECRET CODE -->
+        <div id="viewPlaying" class="hidden">
+            <div class="secret-warning">
+                <i class="fa-solid fa-lock"></i> GEHEIM - NIET LATEN ZIEN!
+            </div>
+            
+            <div id="codeList" class="secret-card">
+                <!-- Dynamically generated code rows -->
+            </div>
+
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                Laat deze code zien aan de eerste 2 leerlingen en start met doorfluisteren!
+            </p>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 16px;">
+            <i class="fa-solid fa-wifi"></i> Live verbonden met het Digibord
+        </div>
+    </div>
+
+    <script>
+        // Categorie iconen
+        const CATEGORY_ICONS = {
+            kleuren: "fa-palette",
+            cijfers: "fa-arrow-1-9",
+            dieren: "fa-hippo",
+            weekdagen: "fa-calendar-days",
+            etenswaren: "fa-utensils"
+        };
+
+        const CATEGORY_NAMES = {
+            kleuren: "Kleuren",
+            cijfers: "Cijfers",
+            dieren: "Dieren",
+            weekdagen: "Weekdagen",
+            etenswaren: "Etenswaren"
+        };
+
+        // Standard fallback config (als firebase-config.js niet aanwezig is)
+        const defaultConfig = {
+            apiKey: "AIzaSyCO2ndD-lTBZpRrs-ZxIsBTVjPVza2sFXU",
+            authDomain: "schoolquizapp-28abf.firebaseapp.com",
+            projectId: "schoolquizapp-28abf",
+            storageBucket: "schoolquizapp-28abf.firebasestorage.app",
+            messagingSenderId: "921022621334",
+            appId: "1:921022621334:web:ef582f1e067a77a41284b7"
+        };
+
+        let dbInstance = null;
+
+        // Sync via BroadcastChannel (als de applicatie in hetzelfde tabblad/browser draait)
+        const syncChannel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('geheime_code_sync') : null;
+        if (syncChannel) {
+            syncChannel.onmessage = (event) => {
+                if (event.data) {
+                    renderGameData(event.data);
+                }
+            };
+        }
+
+        // Firebase initialisatie
+        function initFirebase() {
+            try {
+                if (typeof db !== 'undefined') {
+                    // Reeds geïnitialiseerd via firebase-config.js
+                    dbInstance = db;
+                } else if (typeof firebase !== 'undefined') {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(typeof firebaseConfig !== 'undefined' ? firebaseConfig : defaultConfig);
+                    }
+                    dbInstance = firebase.firestore();
+                }
+
+                if (dbInstance) {
+                    document.getElementById('statusDot').classList.add('online');
+                    document.getElementById('statusText').innerText = "Firebase Live Direct";
+                    listenToUpdates();
+                } else {
+                    document.getElementById('statusText').innerText = "Lokale Modus";
+                }
+            } catch (err) {
+                console.warn("Firebase initialisatie fout:", err);
+                document.getElementById('statusText').innerText = "Lokale Modus (Offline)";
+            }
+        }
+
+        // Luisteren naar wijzigingen op Firestore
+        function listenToUpdates() {
+            if (!dbInstance) return;
+
+            dbInstance.collection("game").doc("secret_code").onSnapshot(
+                (doc) => {
+                    if (doc.exists) {
+                        renderGameData(doc.data());
+                    }
+                },
+                (error) => {
+                    console.warn("Firestore listener fout:", error);
+                    document.getElementById('statusDot').classList.remove('online');
+                    document.getElementById('statusText').innerText = "Lokale Modus (Sync Channel)";
+                }
+            );
+        }
+
+        function renderGameData(data) {
+            if (!data) return;
+
+            const viewWaiting = document.getElementById('viewWaiting');
+            const viewPlaying = document.getElementById('viewPlaying');
+            const codeList = document.getElementById('codeList');
+
+            if (data.status === "PLAYING" && data.sequence && data.sequence.length > 0) {
+                viewWaiting.classList.add('hidden');
+                viewPlaying.classList.remove('hidden');
+
+                codeList.innerHTML = data.sequence.map((item, index) => {
+                    const icon = CATEGORY_ICONS[item.category] || "fa-list";
+                    const name = CATEGORY_NAMES[item.category] || item.category;
+                    return `
+                        <div class="code-row">
+                            <div class="cat-label">
+                                <i class="fa-solid ${icon}"></i>
+                                <span>${index + 1}. ${name}</span>
+                            </div>
+                            <span class="item-value font-fun">${item.item}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                viewWaiting.classList.remove('hidden');
+                viewPlaying.classList.add('hidden');
+            }
+        }
+
+        // Starten bij het laden van de pagina
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+        });
+    </script>
 </body>
 </html>
