@@ -12,6 +12,7 @@
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
+            cursor: none !important; /* Verberg de standaard muisaanwijzer overal */
         }
 
         body, html {
@@ -23,6 +24,33 @@
             background-size: 400% 400%;
             animation: gradientBG 20s ease infinite;
             color: #f8fafc;
+        }
+
+        /* --- Optie 3: Aangepaste Volgcirkel Cursor --- */
+        #custom-cursor {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.25);
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            pointer-events: none; /* Zorgt dat het geen knoppen blokkeert */
+            transform: translate(-50%, -50%);
+            transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            z-index: 9999;
+            opacity: 0;
+        }
+
+        /* Status wanneer de vinger/muis op het doelwitinstrument zit */
+        #custom-cursor.active-touch {
+            background: rgba(74, 222, 128, 0.35);
+            border-color: #4ade80;
+            box-shadow: 0 0 25px rgba(74, 222, 128, 0.8);
+            width: 46px;
+            height: 46px;
         }
 
         @keyframes gradientBG {
@@ -110,7 +138,6 @@
             border-radius: 16px;
             font-size: 1.1rem;
             font-weight: 600;
-            cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
             display: flex;
@@ -265,6 +292,9 @@
 </head>
 <body>
 
+    <!-- Aangepaste Volgcirkel Cursor Element -->
+    <div id="custom-cursor"></div>
+
     <canvas id="canvas"></canvas>
 
     <div class="ui-layer">
@@ -362,6 +392,7 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const customCursor = document.getElementById('custom-cursor');
 
         // UI Elements
         const timerEl = document.getElementById('timer');
@@ -489,7 +520,7 @@
             circuitNameEl.textContent = `Circuit: ${activeCircuit.name}`;
         }
 
-        // Pointer Handling
+        // Pointer & Custom Cursor Handling
         function updatePointer(e) {
             let x, y;
             if (e.touches && e.touches.length > 0) {
@@ -500,10 +531,16 @@
                 y = e.clientY;
             }
             currentPointer = { x, y };
+
+            // Verplaats de aangepaste volgcirkel
+            customCursor.style.left = x + 'px';
+            customCursor.style.top = y + 'px';
+            customCursor.style.opacity = '1';
         }
 
         function clearPointer() {
             currentPointer = { x: -1000, y: -1000 };
+            customCursor.style.opacity = '0';
         }
 
         window.addEventListener('mousemove', updatePointer);
@@ -633,7 +670,6 @@
         // Calculate dynamic speed factor if speed is set to 'random'
         function getCurrentSpeedMultiplier(t) {
             if (config.speedSetting === 'random') {
-                // Smooth sine wave variations between 0.55x and 1.45x speed
                 return 1.0 + Math.sin(t * 0.8) * 0.45;
             } else {
                 return parseFloat(config.speedSetting);
@@ -672,9 +708,11 @@
                     trackedTime += delta;
                     statusIndicator.textContent = "Je zit er op! Blijf zo doorgaan ✨";
                     statusIndicator.className = "status-indicator touching";
+                    customCursor.classList.add('active-touch'); // Muisvolgcirkel kleurt groen
                 } else {
                     statusIndicator.textContent = "Volg het symbool met je vinger";
                     statusIndicator.className = "status-indicator not-touching";
+                    customCursor.classList.remove('active-touch');
                 }
 
                 // Update UI Timer
@@ -709,6 +747,7 @@
 
         function endGame() {
             isRunning = false;
+            customCursor.classList.remove('active-touch');
             const accuracy = Math.min(100, (trackedTime / config.duration) * 100).toFixed(1);
 
             finalScoreEl.textContent = `${trackedTime.toFixed(1)}s`;
