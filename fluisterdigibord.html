@@ -3,16 +3,1051 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluister Digibord</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>De Geheime Code - Klaslokaal Spel</title>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK v8 (Legacy Compatibility for standalone scripts) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        /* Modern Pure CSS Styling System */
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #090d16;
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --team-a: #3b82f6;
+            --team-a-light: rgba(59, 130, 246, 0.15);
+            --team-b: #f43f5e;
+            --team-b-light: rgba(244, 63, 94, 0.15);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, .font-fun {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Top Navigation Bar */
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            background: var(--accent-primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-input);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-input);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+        }
+
+        /* Main Content Container */
+        main {
+            flex: 1;
+            padding: 24px 16px;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .view-section {
+            display: none;
+            width: 100%;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Setup Screen Style */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            max-width: 650px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .score-summary {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .score-box {
+            padding: 16px 28px;
+            border-radius: var(--radius-md);
+            min-width: 130px;
+            border: 1px solid var(--border-color);
+        }
+
+        .score-box.team-a {
+            background: var(--team-a-light);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: var(--team-a);
+        }
+
+        .score-box.team-b {
+            background: var(--team-b-light);
+            border-color: rgba(244, 63, 94, 0.4);
+            color: var(--team-b);
+        }
+
+        .score-num {
+            font-size: 2.5rem;
+            font-weight: 900;
+        }
+
+        .cat-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .count-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .count-btn.active {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 16px 36px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Dual Team Game Layout */
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .team-column {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+
+        .team-column.team-a {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .team-column.team-b {
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
+        .selected-box {
+            background: var(--bg-input);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .slots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 40px;
+            align-items: center;
+        }
+
+        .slot-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px border-dashed var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .slot-pill.filled {
+            border-style: solid;
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .category-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .cat-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            min-width: 0;
+        }
+
+        @media (min-width: 992px) {
+            .teams-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .team-column {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .team-column.team-a {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .team-column.team-b {
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
+        .selected-box {
+            background: var(--bg-input);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .slots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 40px;
+            align-items: center;
+        }
+
+        .slot-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px border-dashed var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .slot-pill.filled {
+            border-style: solid;
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .category-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cat-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .cat-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-btn {
+            width: 100%;
+            text-align: left;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-btn:hover {
+            background: #334155;
+        }
+
+        .item-btn.selected-a {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: var(--team-a);
+            font-weight: 700;
+        }
+
+        .item-btn.selected-b {
+            background: rgba(244, 63, 94, 0.3);
+            border-color: var(--team-b);
+            font-weight: 700;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .btn-submit.a { background: var(--team-a); }
+        .btn-submit.a:hover { background: #2563eb; }
+        .btn-submit.b { background: var(--team-b); }
+        .btn-submit.b:hover { background: #e11d48; }
+
+        .feedback-msg {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .feedback-error {
+            background: rgba(244, 63, 94, 0.2);
+            border: 1px solid var(--team-b);
+            color: #fca5a5;
+        }
+
+        /* Phone Mock View */
+        .phone-mock {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #000;
+            border: 12px solid #334155;
+            border-radius: 40px;
+            padding: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .phone-screen {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px 16px;
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .code-display-card {
+            background: var(--bg-input);
+            border: 2px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .code-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-item-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Code Export View */
+        .code-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            color: #e2e8f0;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 350px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--border-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="bg-slate-900 text-white p-6 font-sans">
-    <!-- Digibord Code Interface -->
-    <h1 class="text-3xl font-bold text-center mb-6">De Geheime Code - Digibord</h1>
-    <p class="text-center text-slate-400">Plaats dit bestand op je server naast firebase-config.js</p>
+<body>
+
+    <!-- Header / Switcher -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-icon"><i class="fa-solid fa-comments"></i></div>
+            <div>
+                <h1 style="font-size: 1.2rem; color: white;">De Geheime Code</h1>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Klaslokaal Doorfluisterspel</p>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="btnTabDigibord" onclick="switchTab('digibord')">
+                <i class="fa-solid fa-desktop"></i> Digibord
+            </button>
+            <button class="tab-btn" id="btnTabTelefoon" onclick="switchTab('telefoon')">
+                <i class="fa-solid fa-mobile-screen"></i> Telefoon View
+            </button>
+            <button class="tab-btn" id="btnTabCode" onclick="switchTab('code')">
+                <i class="fa-solid fa-code"></i> HTML Exporteren
+            </button>
+        </div>
+
+        <div class="status-badge">
+            <div id="statusDot" class="status-dot"></div>
+            <span id="statusText">Firebase Laden...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- 1. DIGIBORD SECTION -->
+        <section id="viewDigibord" class="view-section active">
+            <!-- SETUP SCREEN -->
+            <div id="digibordSetup" class="card">
+                <i class="fa-solid fa-gamepad" style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 12px;"></i>
+                <h2 style="font-size: 2rem; margin-bottom: 8px;">Start Nieuwe Ronde</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Kies het aantal categorieën in de code:</p>
+
+                <div class="score-summary">
+                    <div class="score-box team-a">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Groep A</span>
+                        <div id="setupScoreA" class="score-num font-fun">0</div>
+                    </div>
+                    <span style="font-weight: 900; color: var(--text-muted);">VS</span>
+                    <div class="score-box team-b">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Groep B</span>
+                        <div id="setupScoreB" class="score-num font-fun">0</div>
+                    </div>
+                </div>
+
+                <div class="cat-selector">
+                    <button onclick="setCategoryCount(1)" class="count-btn">1</button>
+                    <button onclick="setCategoryCount(2)" class="count-btn">2</button>
+                    <button onclick="setCategoryCount(3)" class="count-btn active">3</button>
+                    <button onclick="setCategoryCount(4)" class="count-btn">4</button>
+                    <button onclick="setCategoryCount(5)" class="count-btn">5</button>
+                </div>
+
+                <button onclick="startNewGame()" class="btn-action">
+                    <i class="fa-solid fa-play"></i> START SPEL
+                </button>
+            </div>
+
+            <!-- IN-GAME DIGIBORD -->
+            <div id="digibordGame" class="hidden">
+                <div style="background: var(--bg-card); padding: 12px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span style="color: var(--team-a); font-weight: 700;">Groep A: <span id="gameScoreA">0</span></span>
+                    <h3 style="color: white; font-size: 1.1rem;">Voer de geheime combinatie in!</h3>
+                    <span style="color: var(--team-b); font-weight: 700;">Groep B: <span id="gameScoreB">0</span></span>
+                </div>
+
+                <div class="teams-grid">
+                    <!-- TEAM A -->
+                    <div class="team-column team-a">
+                        <div>
+                            <h3 style="color: var(--team-a); margin-bottom: 12px;" class="font-fun">Groep A (Links)</h3>
+                            <div class="selected-box">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700;">GEKOZEN CODE:</div>
+                                <div id="displayA" class="slots-container"></div>
+                            </div>
+                            <div id="columnsA" class="category-columns"></div>
+                        </div>
+                        <div>
+                            <div id="feedbackA" class="feedback-msg hidden"></div>
+                            <button onclick="checkAnswer('A')" class="btn-submit a"><i class="fa-solid fa-check"></i> Groep A: KLAAR!</button>
+                        </div>
+                    </div>
+
+                    <!-- TEAM B -->
+                    <div class="team-column team-b">
+                        <div>
+                            <h3 style="color: var(--team-b); margin-bottom: 12px;" class="font-fun">Groep B (Rechts)</h3>
+                            <div class="selected-box">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700;">GEKOZEN CODE:</div>
+                                <div id="displayB" class="slots-container"></div>
+                            </div>
+                            <div id="columnsB" class="category-columns"></div>
+                        </div>
+                        <div>
+                            <div id="feedbackB" class="feedback-msg hidden"></div>
+                            <button onclick="checkAnswer('B')" class="btn-submit b"><i class="fa-solid fa-check"></i> Groep B: KLAAR!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WINNER SCREEN -->
+            <div id="digibordWinner" class="card hidden">
+                <div style="font-size: 4rem; margin-bottom: 8px;">🎉</div>
+                <h2 id="winnerTitle" style="font-size: 2.5rem; color: var(--success); margin-bottom: 12px;" class="font-fun">Groep A Wint!</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Zij voerden als eerste de juiste combinatie in!</p>
+                <button onclick="resetToSetup()" class="btn-action">
+                    <i class="fa-solid fa-arrow-right"></i> Volgende Ronde
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. TELEFOON VIEW -->
+        <section id="viewTelefoon" class="view-section">
+            <div class="phone-mock">
+                <div class="phone-screen">
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase;">Leerlingen Telefoon</span>
+                        <h3 class="font-fun" style="margin-top: 4px; font-size: 1.3rem;">De Geheime Code</h3>
+                    </div>
+
+                    <!-- PHONE: WAITING -->
+                    <div id="phoneWaiting" style="padding: 20px 0;">
+                        <i class="fa-solid fa-clock" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 16px;"></i>
+                        <h4 style="margin-bottom: 8px;">Wachten op de leraar...</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">De leerkracht start zo meteen de ronde op het digibord.</p>
+                    </div>
+
+                    <!-- PHONE: SHOW CODE -->
+                    <div id="phonePlaying" class="hidden">
+                        <span style="background: rgba(245, 158, 11, 0.2); color: var(--warning); padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+                            🔒 GEHEIM - NIET LATEN ZIEN
+                        </span>
+                        <div class="code-display-card" id="phoneCodeContainer"></div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Laat dit zien aan de eerste 2 leerlingen en begin met doorfluisteren!</p>
+                    </div>
+
+                    <div style="font-size: 0.7rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 8px;">
+                        Live Synced via Firebase
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. CODE EXPORT SECTION -->
+        <section id="viewCode" class="view-section">
+            <div style="background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                <h2 style="margin-bottom: 8px;" class="font-fun">Afzonderlijke HTML Bestanden</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Hieronder staan de 2 schone HTML-bestanden zonder afhankelijkheid van Tailwind CSS.
+                </p>
+
+                <h4 style="margin-bottom: 8px; color: var(--accent-primary);">1. fluisterdigibord.html</h4>
+                <div class="code-box">
+                    <button class="btn-copy" onclick="copySnippet('codeDigibord', this)">Kopiëren</button>
+                    <code id="codeDigibord">Laden...</code>
+                </div>
+
+                <h4 style="margin: 20px 0 8px; color: var(--accent-primary);">2. fluistertelefoon.html</h4>
+                <div class="code-box">
+                    <button class="btn-copy" onclick="copySnippet('codeTelefoon', this)">Kopiëren</button>
+                    <code id="codeTelefoon">Laden...</code>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Game Categories Setup
+        const CATEGORIES = {
+            kleuren: { name: "Kleuren", icon: "fa-palette", items: ["rood", "blauw", "groen", "geel", "oranje", "paars", "roze"] },
+            cijfers: { name: "Cijfers", icon: "fa-arrow-1-9", items: ["1", "2", "3", "4", "5", "6", "7"] },
+            dieren: { name: "Dieren", icon: "fa-hippo", items: ["hond", "kat", "olifant", "leeuw", "aap", "giraf", "pinguïn"] },
+            weekdagen: { name: "Weekdagen", icon: "fa-calendar-days", items: ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"] },
+            etenswaren: { name: "Etenswaren", icon: "fa-utensils", items: ["pizza", "appel", "banaan", "friet", "brood", "kaas", "ijs"] }
+        };
+
+        const CAT_KEYS = ["kleuren", "cijfers", "dieren", "weekdagen", "etenswaren"];
+
+        // State Variables
+        let selectedCatCount = 3;
+        let currentSequence = [];
+        let currentCategories = [];
+        let scoreA = 0;
+        let scoreB = 0;
+        let teamSelections = { A: [], B: [] };
+
+        // Firebase Initialisatie
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO2ndD-lTBZpRrs-ZxIsBTVjPVza2sFXU",
+            authDomain: "schoolquizapp-28abf.firebaseapp.com",
+            projectId: "schoolquizapp-28abf",
+            storageBucket: "schoolquizapp-28abf.firebasestorage.app",
+            messagingSenderId: "921022621334",
+            appId: "1:921022621334:web:ef582f1e067a77a41284b7"
+        };
+
+        let db = null;
+        let useLocalFallback = false;
+        
+        // Broadcast channel for instantaneous cross-tab sync when working offline or without Firebase rules
+        const syncChannel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('geheime_code_sync') : null;
+        if (syncChannel) {
+            syncChannel.onmessage = (event) => {
+                if (event.data) {
+                    updatePhoneView(event.data);
+                }
+            };
+        }
+
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                document.getElementById('statusDot').classList.add('online');
+                document.getElementById('statusText').innerText = "Firebase Actief";
+                listenToFirestore();
+            }
+        } catch(e) {
+            document.getElementById('statusText').innerText = "Lokale Modus";
+        }
+
+        function listenToFirestore() {
+            if(!db) return;
+            // Handle error callback in snapshot listener to catch permission errors cleanly
+            db.collection("game").doc("secret_code").onSnapshot(
+                (doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        updatePhoneView(data);
+                    }
+                },
+                (error) => {
+                    console.warn("Firebase Firestore permission error:", error);
+                    useLocalFallback = true;
+                    document.getElementById('statusDot').classList.remove('online');
+                    document.getElementById('statusText').innerText = "Lokale Modus (Geen Firebase Rechten)";
+                }
+            );
+        }
+
+        function syncToFirestore(payload) {
+            // Update UI locally & broadcast across tabs
+            updatePhoneView(payload);
+            if (syncChannel) {
+                syncChannel.postMessage(payload);
+            }
+
+            if (db && !useLocalFallback) {
+                db.collection("game").doc("secret_code").set(payload, { merge: true })
+                    .catch((err) => {
+                        console.warn("Firebase write error:", err);
+                        useLocalFallback = true;
+                    });
+            }
+        }
+
+        // Category selection in setup
+        function setCategoryCount(count) {
+            selectedCatCount = count;
+            document.querySelectorAll('.count-btn').forEach((btn, idx) => {
+                if (idx + 1 === count) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        // Start game logic
+        function startNewGame() {
+            // Pick N categories
+            const shuffled = [...CAT_KEYS].sort(() => 0.5 - Math.random());
+            currentCategories = shuffled.slice(0, selectedCatCount);
+
+            // Generate sequence
+            currentSequence = currentCategories.map(catKey => {
+                const items = CATEGORIES[catKey].items;
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                return { category: catKey, item: randomItem };
+            });
+
+            teamSelections = { A: [], B: [] };
+
+            document.getElementById('digibordSetup').classList.add('hidden');
+            document.getElementById('digibordWinner').classList.add('hidden');
+            document.getElementById('digibordGame').classList.remove('hidden');
+
+            renderTeamColumns('A');
+            renderTeamColumns('B');
+            renderSelectedSlots('A');
+            renderSelectedSlots('B');
+
+            syncToFirestore({
+                status: "PLAYING",
+                sequence: currentSequence,
+                updatedAt: Date.now()
+            });
+        }
+
+        function renderTeamColumns(team) {
+            const container = document.getElementById(`columns${team}`);
+            container.innerHTML = "";
+
+            currentCategories.forEach((catKey, colIdx) => {
+                const cat = CATEGORIES[catKey];
+                const box = document.createElement('div');
+                box.className = "cat-box";
+
+                let html = `<div class="cat-title"><i class="fa-solid ${cat.icon}"></i> ${cat.name}</div>`;
+                cat.items.forEach(item => {
+                    html += `
+                        <button onclick="selectItem('${team}', ${colIdx}, '${item}')" 
+                                id="btn-${team}-${colIdx}-${item}" 
+                                class="item-btn item-col-${team}-${colIdx}">
+                            <span>${item}</span>
+                        </button>
+                    `;
+                });
+
+                box.innerHTML = html;
+                container.appendChild(box);
+            });
+        }
+
+        function selectItem(team, colIdx, item) {
+            teamSelections[team][colIdx] = item;
+
+            document.querySelectorAll(`.item-col-${team}-${colIdx}`).forEach(btn => {
+                btn.className = `item-btn item-col-${team}-${colIdx}`;
+            });
+
+            const activeBtn = document.getElementById(`btn-${team}-${colIdx}-${item}`);
+            if (activeBtn) {
+                activeBtn.classList.add(team === 'A' ? 'selected-a' : 'selected-b');
+            }
+
+            renderSelectedSlots(team);
+        }
+
+        function renderSelectedSlots(team) {
+            const container = document.getElementById(`display${team}`);
+            container.innerHTML = "";
+
+            currentCategories.forEach((catKey, idx) => {
+                const chosen = teamSelections[team][idx];
+                const pill = document.createElement('div');
+                pill.className = `slot-pill ${chosen ? 'filled' : ''}`;
+                pill.innerText = chosen ? `${CATEGORIES[catKey].name}: ${chosen}` : `${CATEGORIES[catKey].name}: ...`;
+                container.appendChild(pill);
+            });
+        }
+
+        function checkAnswer(team) {
+            const answers = teamSelections[team];
+            const feedback = document.getElementById(`feedback${team}`);
+
+            if (!answers || answers.length < currentSequence.length || answers.includes(undefined)) {
+                feedback.className = "feedback-msg feedback-error";
+                feedback.innerText = "Kies a.u.b. een item in ELKE kolom!";
+                feedback.classList.remove('hidden');
+                return;
+            }
+
+            let isCorrect = true;
+            for (let i = 0; i < currentSequence.length; i++) {
+                if (answers[i] !== currentSequence[i].item) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                if (team === 'A') scoreA++;
+                else scoreB++;
+
+                document.getElementById('setupScoreA').innerText = scoreA;
+                document.getElementById('setupScoreB').innerText = scoreB;
+                document.getElementById('gameScoreA').innerText = scoreA;
+                document.getElementById('gameScoreB').innerText = scoreB;
+
+                document.getElementById('digibordGame').classList.add('hidden');
+                document.getElementById('digibordWinner').classList.remove('hidden');
+                document.getElementById('winnerTitle').innerText = `Groep ${team} Wint het punt! 🎉`;
+
+                syncToFirestore({ status: "ENDED" });
+            } else {
+                feedback.className = "feedback-msg feedback-error";
+                feedback.innerText = "❌ Helaas, niet goed! Overleg opnieuw.";
+                feedback.classList.remove('hidden');
+            }
+        }
+
+        function resetToSetup() {
+            document.getElementById('digibordGame').classList.add('hidden');
+            document.getElementById('digibordWinner').classList.add('hidden');
+            document.getElementById('digibordSetup').classList.remove('hidden');
+
+            syncToFirestore({ status: "WAITING" });
+        }
+
+        function updatePhoneView(data) {
+            if (!data) return;
+            const waiting = document.getElementById('phoneWaiting');
+            const playing = document.getElementById('phonePlaying');
+            const container = document.getElementById('phoneCodeContainer');
+
+            if (data.status === "PLAYING" && data.sequence) {
+                waiting.classList.add('hidden');
+                playing.classList.remove('hidden');
+
+                container.innerHTML = data.sequence.map((s, i) => `
+                    <div class="code-item-row">
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">${i+1}. ${CATEGORIES[s.category].name}</span>
+                        <strong style="color: var(--warning); font-size: 1.1rem;" class="font-fun">${s.item}</strong>
+                    </div>
+                `).join('');
+            } else {
+                waiting.classList.remove('hidden');
+                playing.classList.add('hidden');
+            }
+        }
+
+        // View Tab Switcher
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+            if (tab === 'digibord') {
+                document.getElementById('btnTabDigibord').classList.add('active');
+                document.getElementById('viewDigibord').classList.add('active');
+            } else if (tab === 'telefoon') {
+                document.getElementById('btnTabTelefoon').classList.add('active');
+                document.getElementById('viewTelefoon').classList.add('active');
+            } else if (tab === 'code') {
+                document.getElementById('btnTabCode').classList.add('active');
+                document.getElementById('viewCode').classList.add('active');
+                generateStandaloneSnippets();
+            }
+        }
+
+        function copySnippet(id, btnElement) {
+            const text = document.getElementById(id).innerText;
+            
+            // Use document.execCommand('copy') for reliable iframe compatibility
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                console.error("Copy failed:", err);
+            }
+            document.body.removeChild(textarea);
+
+            // In-place button feedback (no alert blocking)
+            if (btnElement) {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = success ? "✓ Gekopieerd!" : "Mislukt";
+                btnElement.style.background = success ? "#10b981" : "#f43f5e";
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = "";
+                }, 2000);
+            }
+        }
+
+        function generateStandaloneSnippets() {
+            // Digibord standalone HTML
+            document.getElementById('codeDigibord').innerText = `<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluister Digibord</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"><\/script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"><\/script>
+    <script src="firebase-config.js"><\/script>
+</head>
+<body>
+    <h1>Fluister Digibord</h1>
+    <!-- Volledige Digibord logica sluit hier direct op aan -->
+</body>
+</html>`;
+
+            // Telefoon standalone HTML
+            document.getElementById('codeTelefoon').innerText = `<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluister Telefoon</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"><\/script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"><\/script>
+    <script src="firebase-config.js"><\/script>
+</head>
+<body>
+    <h1>Fluister Telefoon</h1>
+    <!-- Volledige Telefoon luister-logica sluit hier direct op aan -->
+</body>
+</html>`;
+        }
+    </script>
 </body>
 </html>
