@@ -430,20 +430,20 @@ async function laadData() {
     // ============================================================
     // INIT
     // ============================================================
-    function init() {
-        if (!DATA) return; // Wacht tot data geladen is
-        state.leerlingen = DATA.leerlingen.map(l => ({ ...l }));        
-        const maxGroep = state.leerlingen.reduce((max, l) => Math.max(max, l.groep), 0);
-        state.aantalGroepen = maxGroep;
-        state.groepen = Array.from({ length: state.aantalGroepen }, () => []);
-        state.rondeScores = [];
-        state.totaalScores = Array(state.aantalGroepen).fill(0);
-        state.rondeIndex = 0;
+function init() {
+    if (!DATA) return; // Wacht tot data geladen is
+    state.leerlingen = DATA.leerlingen.map(l => ({ ...l }));        
+    const maxGroep = state.leerlingen.reduce((max, l) => Math.max(max, l.groep), 0);
+    state.aantalGroepen = Math.max(maxGroep, 2);  // ✅ Minimaal 2 groepen
+    state.groepen = Array.from({ length: state.aantalGroepen }, () => []);
+    state.rondeScores = [];
+    state.totaalScores = Array(state.aantalGroepen).fill(0);
+    state.rondeIndex = 0;
 
-        showScreen('overzicht');
-        renderOverzicht();
-    }
-
+    showScreen('overzicht');
+    renderOverzicht();
+}
+    
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         const el = document.getElementById('screen-' + screenId);
