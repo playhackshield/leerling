@@ -367,20 +367,33 @@
         </div>
     </div>
 
-    <!-- ===== 2. GROEPEN BEPALEN ===== -->
-    <div class="screen" id="screen-bepaal">
-        <div class="text-center">
-            <h1>🎉 Alle leerlingen hebben het spel gespeeld!</h1>
-            <div class="subhead" style="display:inline-block; background:#f2e3d4; border-left-color:#6fcf97; padding:8px 32px; border-radius:80px;">
-                🤖 De computer gaat nu de groepen bepalen op basis van de spelresultaten
-            </div>
-            <div style="margin:30px 0;">
-                <span style="font-size:6rem;">🧠</span>
-            </div>
-            <button class="btn btn-success" id="btnBepaalGroepen">🔮 Bepaal groepen</button>
+<!-- ===== 2. GROEPEN BEPALEN ===== -->
+<div class="screen" id="screen-bepaal">
+    <div class="text-center">
+        <h1>🎉 Alle leerlingen hebben het spel gespeeld!</h1>
+        <div class="subhead" style="display:inline-block; background:#f2e3d4; border-left-color:#6fcf97; padding:8px 32px; border-radius:80px;">
+            🤖 De computer gaat nu de groepen bepalen op basis van de spelresultaten
         </div>
-    </div>
 
+        <!-- ✅ Aantal groepen invoeren -->
+        <div class="flex-center" style="margin:25px 0 10px; gap:18px;">
+            <label for="aantalGroepenInput" style="font-size:1.8rem; font-weight:700; color:#2d1f0f;">
+                🔢 Aantal groepen:
+            </label>
+            <input type="number" id="aantalGroepenInput" min="2" max="9" value="2"
+                   style="width:110px; font-size:2.2rem; text-align:center; font-weight:800;
+                          border:4px solid #d6c6b5; border-radius:30px; padding:6px 0;
+                          background:#fcf8f2; color:#2d1f0f;" />
+        </div>
+
+        <div style="margin:20px 0;">
+            <span style="font-size:6rem;">🧠</span>
+        </div>
+
+        <button class="btn btn-success" id="btnBepaalGroepen">🔮 Bepaal groepen</button>
+    </div>
+</div>
+    
     <!-- ===== 3. GROEPEN TONEN ===== -->
     <div class="screen" id="screen-groepen">
         <div class="text-center">
@@ -525,39 +538,66 @@ function init() {
         showScreen('bepaal');
     });
 
-    // ===== GROEPEN BEPALEN =====
-    document.getElementById('btnBepaalGroepen').addEventListener('click', function() {
-        // Verdeel groep:0 leerlingen random
-        const zonderGroep = state.leerlingen.filter(l => l.groep === 0);
-        // Random schudden
-        for (let i = zonderGroep.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [zonderGroep[i], zonderGroep[j]] = [zonderGroep[j], zonderGroep[i]];
-        }
+// ===== GROEPEN BEPALEN =====
+document.getElementById('btnBepaalGroepen').addEventListener('click', function() {
+    // ✅ Lees het aantal groepen uit het invoerveld
+    const input = document.getElementById('aantalGroepenInput');
+    let aantal = parseInt(input.value);
 
-        let groepIndex = 0;
-        zonderGroep.forEach(l => {
-            const g = groepIndex % state.aantalGroepen;
-            l.groep = g + 1;
-            groepIndex++;
-        });
+    // Validatie: tussen 2 en 9
+    if (isNaN(aantal) || aantal < 2) aantal = 2;
+    if (aantal > 9) aantal = 9;
 
-        // Bouw groepen
-        state.groepen = Array.from({ length: state.aantalGroepen }, () => []);
-        state.leerlingen.forEach(l => {
-            if (l.groep > 0 && l.groep <= state.aantalGroepen) {
-                state.groepen[l.groep - 1].push(l);
-            }
-        });
+    // Zet terug in het veld (voor de zekerheid)
+    input.value = aantal;
 
-        showScreen('groepen');
-        renderGroepen();
+    // Update state
+    state.aantalGroepen = aantal;
+    state.groepen = Array.from({ length: aantal }, () => []);
+    state.totaalScores = Array(aantal).fill(0);
+
+    // Verdeel groep:0 leerlingen random
+    const zonderGroep = state.leerlingen.filter(l => l.groep === 0);
+
+    // Random schudden
+    for (let i = zonderGroep.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [zonderGroep[i], zonderGroep[j]] = [zonderGroep[j], zonderGroep[i]];
+    }
+
+    // Reset alle leerlingen die geen vaste groep hadden
+    zonderGroep.forEach(l => { l.groep = 0; });
+
+    // Verdeel om en om over de groepen
+    let groepIndex = 0;
+    zonderGroep.forEach(l => {
+        const g = groepIndex % aantal;
+        l.groep = g + 1;
+        groepIndex++;
     });
 
+    // Leerlingen met een vaste groep > aantal? Zet ze in een geldige groep
+    state.leerlingen.forEach(l => {
+        if (l.groep > aantal) l.groep = aantal;
+        if (l.groep < 1) l.groep = 0;
+    });
+
+    // Bouw groepen
+    state.groepen = Array.from({ length: aantal }, () => []);
+    state.leerlingen.forEach(l => {
+        if (l.groep > 0 && l.groep <= aantal) {
+            state.groepen[l.groep - 1].push(l);
+        }
+    });
+
+    showScreen('groepen');
+    renderGroepen();
+});
+    
     // ===== GROEPEN TONEN =====
     function renderGroepen() {
         const container = document.getElementById('groepContainer');
-        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨'];
+        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨', '🐸', '🦉', '🐢'];
         container.innerHTML = state.groepen.map((groep, i) => {
             const emoji = emojis[i % emojis.length];
             return `
@@ -594,7 +634,7 @@ function init() {
         }
 
         const grid = document.getElementById('rondeScoreGrid');
-        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨'];
+        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨', '🐸', '🦉', '🐢'];
 
         grid.innerHTML = state.groepen.map((groep, i) => {
             const score = state.rondeScores[ronde][i] || 0;
@@ -664,8 +704,8 @@ function init() {
         const scores = state.totaalScores.map((totaal, i) => ({ index: i, totaal }));
         scores.sort((a, b) => b.totaal - a.totaal);
 
-        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨'];
-        const medailles = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
+        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨', '🐸', '🦉', '🐢'];
+        const medailles = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
 
         grid.innerHTML = scores.map((item, pos) => {
             const i = item.index;
@@ -725,7 +765,7 @@ function init() {
     
     function renderPopupGroepen() {
         const container = document.getElementById('popupGroepenContainer');
-        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨'];
+        const emojis = ['🦁', '🐧', '🐬', '🦊', '🐼', '🐨', '🐸', '🦉', '🐢'];
         
         if (!state.groepen || state.groepen.length === 0) {
             container.innerHTML = '<p style="color:#a08f7e;">Nog geen groepen gemaakt.</p>';
