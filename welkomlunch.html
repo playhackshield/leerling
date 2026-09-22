@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welkom in de klas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f111a;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .header-banner {
+      text-align: center;
+    }
+
+    .header-banner h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #f1f5f9;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      width: 100%;
+    }
+
+    .card {
+      background: #181c2b;
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card.welcome {
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .card.lunch {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .card.laptop {
+      border-color: rgba(236, 72, 153, 0.4);
+    }
+
+    .image-wrapper {
+      width: 100%;
+      height: 240px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      background: #0f121d;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .card p {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    @media (max-width: 900px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .image-wrapper {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <header class="header-banner">
+      <h1>Goedemiddag</h1>
+    </header>
+
+    <div class="cards-grid">
+      <!-- Kader 1: Welkom -->
+      <section class="card welcome">
+        <div class="image-wrapper">
+          <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80" alt="Leerlingen die rustig de klas binnenkomen">
+        </div>
+        <h2>Welkom</h2>
+        <p>Fijn dat je er bent. Zoek rustig je plek.</p>
+      </section>
+
+      <!-- Kader 2: Eet smakelijk -->
+      <section class="card lunch">
+        <div class="image-wrapper">
+          <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" alt="Gezonde lunch en vers fruit">
+        </div>
+        <h2>Eet smakelijk</h2>
+        <p>Tijd voor je lunch, fruit en drinken.</p>
+      </section>
+
+      <!-- Kader 3: Sluit laptops -->
+      <section class="card laptop">
+        <div class="image-wrapper">
+          <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80" alt="Dichtgeklapte laptop op tafel">
+        </div>
+        <h2>Sluit laptops</h2>
+        <p>Schermen blijven dicht tot de les start.</p>
+      </section>
+    </div>
+  </main>
+
+</body>
+</html>
