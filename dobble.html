@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Dobble Digibord Spel</title>
+    <style>
+        /* ===== Reset & basis ===== */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #f5f0eb;
+            touch-action: manipulation;
+        }
+
+        /* ===== Hoofdcontainer ===== */
+        #game {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: 1vmin;
+            gap: 1vmin;
+            background: linear-gradient(145deg, #f5f0eb 0%, #e8e0d8 100%);
+        }
+
+        /* ===== Boven: referentiekaart ===== */
+        #reference-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 0 0 auto;
+            height: 22vh;
+            min-height: 80px;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 3vmin;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 3px solid #2c3e50;
+            padding: 1vmin;
+        }
+        #reference-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2vmin;
+            flex-wrap: wrap;
+            width: 100%;
+            height: 100%;
+        }
+        .ref-symbol {
+            font-size: 6vmin;
+            line-height: 1;
+            width: 10vmin;
+            height: 10vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ecf0f1;
+            border-radius: 2vmin;
+            box-shadow: inset 0 0 0 2px #bdc3c7;
+            transition: transform 0.15s;
+        }
+        .ref-symbol.highlight {
+            box-shadow: 0 0 0 4px #f1c40f, inset 0 0 0 2px #f39c12;
+            transform: scale(1.05);
+        }
+
+        /* ===== Midden: twee spelers ===== */
+        #players {
+            display: flex;
+            flex: 1 1 auto;
+            gap: 1vmin;
+            min-height: 0;
+        }
+        .player-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 3vmin;
+            padding: 1.5vmin 1vmin;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 4px solid transparent;
+            transition: border-color 0.3s, background 0.3s;
+            position: relative;
+            min-width: 0;
+        }
+        .player-zone.left {
+            border-color: #3498db;
+        }
+        .player-zone.right {
+            border-color: #e74c3c;
+        }
+        .player-zone.fault {
+            border-color: #e74c3c !important;
+            background: #fde8e8cc !important;
+            animation: shake 0.4s ease;
+        }
+        .player-zone.winner-pop {
+            border-color: #2ecc71 !important;
+            background: #e8f8e8cc !important;
+            box-shadow: 0 0 0 6px #2ecc7180;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-8px);
+            }
+            75% {
+                transform: translateX(8px);
+            }
+        }
+
+        .player-label {
+            font-size: 2.8vmin;
+            font-weight: 700;
+            margin-bottom: 0.5vmin;
+            letter-spacing: 0.5px;
+        }
+        .player-zone.left .player-label {
+            color: #2980b9;
+        }
+        .player-zone.right .player-label {
+            color: #c0392b;
+        }
+        .player-score {
+            font-size: 2.2vmin;
+            font-weight: 600;
+            background: #2c3e50;
+            color: #fff;
+            padding: 0.2vmin 2vmin;
+            border-radius: 4vmin;
+            margin-bottom: 0.5vmin;
+            display: inline-block;
+        }
+
+        /* ===== Foutmelding in de zone ===== */
+        .fault-msg {
+            font-size: 3vmin;
+            font-weight: 700;
+            color: #e74c3c;
+            background: #fde8e8;
+            padding: 0.3vmin 2vmin;
+            border-radius: 2vmin;
+            margin-top: 0.3vmin;
+            min-height: 5vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            border: 2px solid #e74c3c;
+        }
+        .fault-msg.show {
+            visibility: visible;
+        }
+
+        /* ===== Kaart met symbolen (de keuzekaart) ===== */
+        .choice-card {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.2vmin;
+            width: 100%;
+            max-width: 70vmin;
+            aspect-ratio: 5 / 1.2;
+            padding: 0.5vmin;
+        }
+        .choice-symbol {
+            font-size: 5vmin;
+            line-height: 1;
+            background: #f8f9fa;
+            border-radius: 2vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 3px solid #d5dbdb;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            touch-action: manipulation;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            height: auto;
+        }
+        .choice-symbol:active {
+            transform: scale(0.92);
+        }
+        .choice-symbol.selected {
+            border-color: #2ecc71;
+            background: #d5f5e3;
+            box-shadow: 0 0 0 4px #2ecc7180;
+            transform: scale(0.95);
+        }
+        .choice-symbol.correct-highlight {
+            border-color: #2ecc71;
+            background: #a9dfbf;
+        }
+        .choice-symbol.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* ===== Indienknop ===== */
+        .submit-btn {
+            margin-top: 1vmin;
+            padding: 1vmin 4vmin;
+            font-size: 2.8vmin;
+            font-weight: 700;
+            border: none;
+            border-radius: 4vmin;
+            background: #2c3e50;
+            color: #fff;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 0 #1a2632;
+            letter-spacing: 0.5px;
+        }
+        .submit-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #1a2632;
+        }
+        .submit-btn:disabled {
+            opacity: 0.4;
+            transform: translateY(0);
+            box-shadow: 0 4px 0 #1a2632;
+            pointer-events: none;
+        }
+        .player-zone.left .submit-btn {
+            background: #3498db;
+            box-shadow: 0 4px 0 #1f618d;
+        }
+        .player-zone.right .submit-btn {
+            background: #e74c3c;
+            box-shadow: 0 4px 0 #922b21;
+        }
+
+        /* ===== Onder: ronde & score-overzicht ===== */
+        #footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 0 0 auto;
+            height: 7vh;
+            min-height: 44px;
+            background: #2c3e50;
+            border-radius: 3vmin;
+            padding: 0 3vmin;
+            color: #fff;
+            font-weight: 600;
+            font-size: 2.2vmin;
+            gap: 1vmin;
+        }
+        #round-info {
+            background: #34495e;
+            padding: 0.4vmin 2.4vmin;
+            border-radius: 4vmin;
+        }
+        #footer-scores {
+            display: flex;
+            gap: 3vmin;
+        }
+        #footer-scores span {
+            background: #1a2632;
+            padding: 0.2vmin 2vmin;
+            border-radius: 4vmin;
+        }
+        #footer-scores .left-score {
+            color: #5dade2;
+        }
+        #footer-scores .right-score {
+            color: #ec7063;
+        }
+        #reset-game {
+            background: #e67e22;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.4vmin 2.4vmin;
+            border-radius: 4vmin;
+            font-size: 2vmin;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 3px 0 #b85e0e;
+            transition: 0.1s;
+        }
+        #reset-game:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #b85e0e;
+        }
+
+        /* ===== Responsive ===== */
+        @media (orientation: portrait) {
+            .choice-card {
+                max-width: 90vmin;
+                gap: 1.5vmin;
+            }
+            .choice-symbol {
+                font-size: 8vmin;
+            }
+            .ref-symbol {
+                font-size: 8vmin;
+                width: 12vmin;
+                height: 12vmin;
+            }
+            .player-label {
+                font-size: 3.2vmin;
+            }
+            .player-score {
+                font-size: 2.6vmin;
+            }
+            .submit-btn {
+                font-size: 3.2vmin;
+                padding: 1.2vmin 5vmin;
+            }
+            #footer {
+                font-size: 2.6vmin;
+                height: 8vh;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0.5vmin 2vmin;
+            }
+            #footer-scores {
+                gap: 2vmin;
+            }
+        }
+        @media (max-width: 600px) {
+            .ref-symbol {
+                font-size: 5vmin;
+                width: 8vmin;
+                height: 8vmin;
+            }
+            .choice-symbol {
+                font-size: 4vmin;
+            }
+            .player-label {
+                font-size: 2.4vmin;
+            }
+            .submit-btn {
+                font-size: 2.4vmin;
+                padding: 0.8vmin 3vmin;
+            }
+            #footer {
+                font-size: 1.8vmin;
+                height: 6vh;
+            }
+        }
+        @media (min-width: 1200px) {
+            .ref-symbol {
+                font-size: 5vmin;
+                width: 8vmin;
+                height: 8vmin;
+            }
+            .choice-symbol {
+                font-size: 4.5vmin;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== GAME ===== -->
+    <div id="game">
+
+        <!-- REFERENTIE -->
+        <div id="reference-area">
+            <div id="reference-card"></div>
+        </div>
+
+        <!-- SPELERS -->
+        <div id="players">
+            <div class="player-zone left" id="player-left">
+                <div class="player-label">👦 Links</div>
+                <div class="player-score">⭐ <span id="score-left">0</span></div>
+                <div class="choice-card" id="choices-left"></div>
+                <div class="fault-msg" id="fault-left">❌ Fout!</div>
+                <button class="submit-btn" id="submit-left">✅ Indienen</button>
+            </div>
+            <div class="player-zone right" id="player-right">
+                <div class="player-label">👧 Rechts</div>
+                <div class="player-score">⭐ <span id="score-right">0</span></div>
+                <div class="choice-card" id="choices-right"></div>
+                <div class="fault-msg" id="fault-right">❌ Fout!</div>
+                <button class="submit-btn" id="submit-right">✅ Indienen</button>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div id="footer">
+            <span id="round-info">Ronde 1 / 10</span>
+            <span id="match-info">1 match</span>
+            <div id="footer-scores">
+                <span class="left-score">👦 <span id="footer-left">0</span></span>
+                <span class="right-score">👧 <span id="footer-right">0</span></span>
+            </div>
+            <button id="reset-game">🔄 Nieuw spel</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  CONFIGURATIE – pas hier de symbolen aan naar wens!
+        // ============================================================
+        const SYMBOL_SET = [
+            '🐶', '🐱', '🐭', '🐹', '🐰',
+            '🦊', '🐻', '🐼', '🐨', '🐯',
+            '🦁', '🐮', '🐷', '🐸', '🐵',
+            '🐔', '🐧', '🐦', '🐤', '🐣',
+            '🦋', '🐛', '🐝', '🐞', '🦄',
+            '🐴', '🦒', '🐘', '🦏', '🐪'
+        ];
+        const CARD_SIZE = 5;
+        const TOTAL_ROUNDS = 10;
+        const MATCHES_PER_ROUND = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3];
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let state = {
+            round: 0,
+            scoreLeft: 0,
+            scoreRight: 0,
+            selectedLeft: [],
+            selectedRight: [],
+            referenceSymbols: [],
+            choiceSymbols: [],
+            matchIndices: [],
+            roundActive: true,
+            // bijhouden wie er al fout heeft ingediend (zodat we niet dubbel tellen)
+            leftFaulted: false,
+            rightFaulted: false,
+        };
+
+        // DOM-referenties
+        const refCard = document.getElementById('reference-card');
+        const leftChoices = document.getElementById('choices-left');
+        const rightChoices = document.getElementById('choices-right');
+        const submitLeft = document.getElementById('submit-left');
+        const submitRight = document.getElementById('submit-right');
+        const faultLeft = document.getElementById('fault-left');
+        const faultRight = document.getElementById('fault-right');
+        const scoreLeftEl = document.getElementById('score-left');
+        const scoreRightEl = document.getElementById('score-right');
+        const footerLeft = document.getElementById('footer-left');
+        const footerRight = document.getElementById('footer-right');
+        const roundInfo = document.getElementById('round-info');
+        const matchInfo = document.getElementById('match-info');
+        const resetBtn = document.getElementById('reset-game');
+
+        // ============================================================
+        //  HULPFUNCTIES
+        // ============================================================
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function pickRandomSymbols(n) {
+            const shuffled = shuffleArray([...SYMBOL_SET]);
+            return shuffled.slice(0, n);
+        }
+
+        function generateRound(matchCount) {
+            const ref = pickRandomSymbols(CARD_SIZE);
+            const indices = [];
+            const available = [0, 1, 2, 3, 4];
+            for (let i = 0; i < matchCount; i++) {
+                const idx = Math.floor(Math.random() * available.length);
+                indices.push(available[idx]);
+                available.splice(idx, 1);
+            }
+            indices.sort((a, b) => a - b);
+            const choice = [...ref];
+            const used = new Set(ref);
+            const alternatives = SYMBOL_SET.filter(s => !used.has(s));
+            const shuffledAlt = shuffleArray([...alternatives]);
+            let altIdx = 0;
+            for (let i = 0; i < CARD_SIZE; i++) {
+                if (!indices.includes(i)) {
+                    choice[i] = shuffledAlt[altIdx % shuffledAlt.length];
+                    altIdx++;
+                }
+            }
+            return { reference: ref, choice: choice, matchIndices: indices };
+        }
+
+        // ============================================================
+        //  RENDER FUNCTIES
+        // ============================================================
+        function renderCard(container, symbols, selectedIndices, highlightMode) {
+            container.innerHTML = '';
+            symbols.forEach((sym, idx) => {
+                const div = document.createElement('div');
+                div.className = 'choice-symbol';
+                if (selectedIndices.includes(idx)) div.classList.add('selected');
+                if (highlightMode === 'correct' && state.matchIndices.includes(idx)) {
+                    div.classList.add('correct-highlight');
+                }
+                if (highlightMode === 'correct' && !state.matchIndices.includes(idx)) {
+                    div.classList.add('disabled');
+                }
+                if (highlightMode === 'fault') {
+                    div.classList.add('disabled');
+                }
+                div.textContent = sym;
+                div.dataset.index = idx;
+                container.appendChild(div);
+            });
+        }
+
+        // Referentiekaart: alleen highlighten als we dat willen (na een juist antwoord)
+        function renderReference(symbols, highlightIndices) {
+            refCard.innerHTML = '';
+            symbols.forEach((sym, idx) => {
+                const div = document.createElement('div');
+                div.className = 'ref-symbol';
+                if (highlightIndices && highlightIndices.includes(idx)) {
+                    div.classList.add('highlight');
+                }
+                div.textContent = sym;
+                refCard.appendChild(div);
+            });
+        }
+
+        function updateScores() {
+            scoreLeftEl.textContent = state.scoreLeft;
+            scoreRightEl.textContent = state.scoreRight;
+            footerLeft.textContent = state.scoreLeft;
+            footerRight.textContent = state.scoreRight;
+        }
+
+        function updateRoundInfo() {
+            const r = state.round + 1;
+            roundInfo.textContent = `Ronde ${r} / ${TOTAL_ROUNDS}`;
+            const matches = MATCHES_PER_ROUND[state.round];
+            matchInfo.textContent = `${matches} match${matches > 1 ? 'en' : ''}`;
+        }
+
+        function resetPlayerZones() {
+            document.getElementById('player-left').classList.remove('fault', 'winner-pop');
+            document.getElementById('player-right').classList.remove('fault', 'winner-pop');
+            faultLeft.classList.remove('show');
+            faultRight.classList.remove('show');
+            state.leftFaulted = false;
+            state.rightFaulted = false;
+        }
+
+        // ============================================================
+        //  EVENT DELEGATION – klik op symbolen
+        // ============================================================
+        function handleSymbolClick(e, player) {
+            const target = e.target.closest('.choice-symbol');
+            if (!target) return;
+            if (!state.roundActive) return;
+            if (target.classList.contains('disabled')) return;
+            // Als deze speler al fout heeft, mag hij niet meer klikken
+            if (player === 'left' && state.leftFaulted) return;
+            if (player === 'right' && state.rightFaulted) return;
+            const idx = parseInt(target.dataset.index);
+            toggleSelection(player, idx);
+        }
+
+        function toggleSelection(player, idx) {
+            const key = player === 'left' ? 'selectedLeft' : 'selectedRight';
+            const arr = state[key];
+            const pos = arr.indexOf(idx);
+            if (pos === -1) {
+                arr.push(idx);
+            } else {
+                arr.splice(pos, 1);
+            }
+            arr.sort((a, b) => a - b);
+            if (player === 'left') {
+                renderCard(leftChoices, state.choiceSymbols, state.selectedLeft, null);
+            } else {
+                renderCard(rightChoices, state.choiceSymbols, state.selectedRight, null);
+            }
+        }
+
+        // ============================================================
+        //  START RONDE
+        // ============================================================
+        function startRound() {
+            const matchCount = MATCHES_PER_ROUND[state.round];
+            const data = generateRound(matchCount);
+            state.referenceSymbols = data.reference;
+            state.choiceSymbols = data.choice;
+            state.matchIndices = data.matchIndices;
+            state.selectedLeft = [];
+            state.selectedRight = [];
+            state.roundActive = true;
+            state.leftFaulted = false;
+            state.rightFaulted = false;
+            resetPlayerZones();
+
+            // Geen highlight op de referentiekaart tijdens de ronde
+            renderReference(state.referenceSymbols, null);
+            renderCard(leftChoices, state.choiceSymbols, state.selectedLeft, null);
+            renderCard(rightChoices, state.choiceSymbols, state.selectedRight, null);
+
+            submitLeft.disabled = false;
+            submitRight.disabled = false;
+            updateRoundInfo();
+            updateScores();
+        }
+
+        // ============================================================
+        //  INDIENEN
+        // ============================================================
+        function handleSubmit(player) {
+            if (!state.roundActive) return;
+            // Als deze speler al fout heeft, mag hij niet nogmaals indienen
+            if (player === 'left' && state.leftFaulted) return;
+            if (player === 'right' && state.rightFaulted) return;
+
+            const selected = player === 'left' ? state.selectedLeft : state.selectedRight;
+            const matchIndices = state.matchIndices;
+
+            const allMatchesSelected = matchIndices.every(idx => selected.includes(idx));
+            const noExtra = selected.every(idx => matchIndices.includes(idx));
+            const isCorrect = allMatchesSelected && noExtra && selected.length === matchIndices.length;
+
+            if (isCorrect) {
+                // JUIST – deze speler wint de ronde
+                state.roundActive = false;
+                if (player === 'left') {
+                    state.scoreLeft++;
+                } else {
+                    state.scoreRight++;
+                }
+                updateScores();
+
+                // Toon de juiste symbolen op beide kaarten en highlight de referentie
+                renderCard(leftChoices, state.choiceSymbols, state.selectedLeft, 'correct');
+                renderCard(rightChoices, state.choiceSymbols, state.selectedRight, 'correct');
+                renderReference(state.referenceSymbols, state.matchIndices);
+
+                submitLeft.disabled = true;
+                submitRight.disabled = true;
+
+                // Ga naar volgende ronde na een korte pauze
+                setTimeout(() => {
+                    if (state.round < TOTAL_ROUNDS - 1) {
+                        state.round++;
+                        startRound();
+                    } else {
+                        endGame();
+                    }
+                }, 1200);
+            } else {
+                // FOUT – markeer deze speler
+                if (player === 'left') {
+                    state.leftFaulted = true;
+                    faultLeft.classList.add('show');
+                    document.getElementById('player-left').classList.add('fault');
+                    submitLeft.disabled = true;
+                    // Maak zijn symbolen inactief (visueel)
+                    leftChoices.querySelectorAll('.choice-symbol').forEach(el => el.classList.add('disabled'));
+                } else {
+                    state.rightFaulted = true;
+                    faultRight.classList.add('show');
+                    document.getElementById('player-right').classList.add('fault');
+                    submitRight.disabled = true;
+                    rightChoices.querySelectorAll('.choice-symbol').forEach(el => el.classList.add('disabled'));
+                }
+
+                // Controleer of beide spelers nu fout hebben
+                if (state.leftFaulted && state.rightFaulted) {
+                    // Beiden fout -> niemand krijgt een punt, ga door naar volgende ronde
+                    state.roundActive = false;
+                    setTimeout(() => {
+                        if (state.round < TOTAL_ROUNDS - 1) {
+                            state.round++;
+                            startRound();
+                        } else {
+                            endGame();
+                        }
+                    }, 1200);
+                }
+                // Anders blijft de ronde actief voor de andere speler
+            }
+        }
+
+        // ============================================================
+        //  EINDE SPEL
+        // ============================================================
+        function endGame() {
+            state.roundActive = false;
+            submitLeft.disabled = true;
+            submitRight.disabled = true;
+            let msg = '';
+            if (state.scoreLeft > state.scoreRight) msg = '🎉 Links wint! 🎉';
+            else if (state.scoreRight > state.scoreLeft) msg = '🎉 Rechts wint! 🎉';
+            else msg = '🤝 Gelijkspel! 🤝';
+            roundInfo.textContent = `🏁 ${msg}`;
+            matchInfo.textContent = 'Einde!';
+            // Maak alle symbolen inactief
+            leftChoices.querySelectorAll('.choice-symbol').forEach(el => el.classList.add('disabled'));
+            rightChoices.querySelectorAll('.choice-symbol').forEach(el => el.classList.add('disabled'));
+            // Toon de juiste matches op de referentie (voor de duidelijkheid)
+            renderReference(state.referenceSymbols, state.matchIndices);
+        }
+
+        // ============================================================
+        //  RESET
+        // ============================================================
+        resetBtn.addEventListener('click', function() {
+            state.round = 0;
+            state.scoreLeft = 0;
+            state.scoreRight = 0;
+            state.selectedLeft = [];
+            state.selectedRight = [];
+            state.leftFaulted = false;
+            state.rightFaulted = false;
+            resetPlayerZones();
+            updateScores();
+            startRound();
+        });
+
+        // ============================================================
+        //  SUBMIT KNOPPEN
+        // ============================================================
+        submitLeft.addEventListener('click', function() { handleSubmit('left'); });
+        submitRight.addEventListener('click', function() { handleSubmit('right'); });
+
+        // ============================================================
+        //  KLIK LISTENERS OP DE CHOICE-KAARTEN (event delegation)
+        // ============================================================
+        leftChoices.addEventListener('click', function(e) {
+            handleSymbolClick(e, 'left');
+        });
+        rightChoices.addEventListener('click', function(e) {
+            handleSymbolClick(e, 'right');
+        });
+
+        // ============================================================
+        //  START
+        // ============================================================
+        startRound();
+    </script>
+</body>
+</html>
