@@ -281,7 +281,7 @@
         function listenToUpdates() {
             if (!dbInstance) return;
 
-            dbInstance.collection("game").doc("secret_code").onSnapshot(
+            dbInstance.collection("fluistergame").doc("secret_code").onSnapshot(
                 (doc) => {
                     if (doc.exists) {
                         renderGameData(doc.data());
