@@ -378,43 +378,50 @@
 
         .category-columns {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
+            gap: 6px;
             margin-bottom: 20px;
+            width: 100%;
         }
 
         .cat-box {
             background: rgba(0,0,0,0.2);
-            padding: 10px;
+            padding: 6px 4px;
             border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
+            min-width: 0;
+            overflow: hidden;
         }
 
         .cat-title {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             padding-bottom: 4px;
             border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
         }
 
         .item-btn {
             width: 100%;
-            text-align: left;
+            text-align: center;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 8px 10px;
-            margin-bottom: 6px;
+            padding: 6px 2px;
+            margin-bottom: 4px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.15s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .item-btn:hover {
@@ -844,6 +851,8 @@
         function renderTeamColumns(team) {
             const container = document.getElementById(`columns${team}`);
             container.innerHTML = "";
+            // Zorg dat er altijd exact N gelijke kolommen naast elkaar staan zonder inpakken
+            container.style.gridTemplateColumns = `repeat(${currentCategories.length}, minmax(0, 1fr))`;
 
             currentCategories.forEach((catKey, colIdx) => {
                 const cat = CATEGORIES[catKey];
