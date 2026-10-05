@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>De Wachtwoord Meester! 🔐</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti voor kindvriendelijke animaties -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Inter & Fredoka / Comic-achtige moderne kindvriendelijke fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          },
+          colors: {
+            heroBlue: '#38bdf8',
+            mintGreen: '#4ade80',
+            sunYellow: '#fde047',
+            funPurple: '#a855f7',
+            bubblePink: '#f472b6'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Fredoka', 'Inter', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bubbly-card {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bubbly-card:hover {
+      transform: translateY(-4px) scale(1.01);
+    }
+    .bubbly-btn {
+      transition: all 0.15s ease-out;
+    }
+    .bubbly-btn:active {
+      transform: scale(0.95);
+    }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-3deg); }
+      75% { transform: rotate(3deg); }
+    }
+    .animate-wiggle {
+      animation: wiggle 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-sky-100 via-indigo-50 to-purple-100 text-slate-800 flex flex-col justify-between p-3 sm:p-6">
+
+  <header class="max-w-3xl w-full mx-auto text-center pt-3 pb-4">
+    <div class="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md px-5 py-2 rounded-full shadow-sm border-2 border-indigo-200 mb-3">
+      <span class="text-2xl animate-bounce">🤖</span>
+      <span class="text-sm font-semibold tracking-wide text-indigo-700 uppercase">Cyber Detective Club</span>
+      <span class="text-2xl animate-bounce">🛡️</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-indigo-950 tracking-tight flex items-center justify-center gap-3">
+      <span>🔐</span>
+      <span>De Wachtwoord Meester!</span>
+    </h1>
+    <p class="text-base sm:text-lg text-indigo-800/80 font-medium mt-1">
+      Leer geheime codes bouwen & trap nooit in digitale trucjes!
+    </p>
+  </header>
+
+  <main class="max-w-2xl w-full mx-auto flex-grow flex flex-col justify-center items-center">
+
+    <!-- VIEW 1: HOOFDMENU / START -->
+    <section id="view-menu" class="w-full flex flex-col gap-5">
+      <!-- Waarschuwingsbanner -->
+      <div class="bg-amber-100/90 border-2 border-amber-300 rounded-3xl p-4 text-amber-950 flex items-start gap-3 shadow-sm">
+        <span class="text-3xl">⚠️</span>
+        <div class="text-sm sm:text-base leading-snug">
+          <strong class="font-bold text-amber-900">Belangrijke spelregel:</strong>
+          Gebruik <span class="underline decoration-wavy font-bold">nóóit</span> een echt wachtwoord van thuis (zoals van Roblox, Brawl Stars of je schoolaccount). Verzin vandaag een gloednieuw nep-wachtwoord!
+        </div>
+      </div>
+
+      <!-- Status indicator -->
+      <div id="storage-status-card" class="bg-white rounded-2xl p-4 text-center border-2 border-indigo-100 shadow-sm flex items-center justify-center gap-3">
+        <span id="storage-status-icon" class="text-2xl">⏳</span>
+        <span id="storage-status-text" class="text-sm sm:text-base font-bold text-slate-700">Controleren...</span>
+      </div>
+
+      <!-- Twee grote Keuzekaarten -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Knop 1: Wachtwoord Maken -->
+        <button onclick="navigeerNaar('create')" class="bubbly-card group bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-3xl p-6 shadow-lg shadow-emerald-200 border-4 border-white flex flex-col items-center text-center">
+          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl mb-3 group-hover:scale-110 transition-transform">
+            ✨
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold">1. Maak Wachtwoord</h2>
+          <p class="text-xs sm:text-sm text-emerald-50 mt-1">Bouw een supersterke geheime code met alle vinkjes!</p>
+          <div class="mt-4 bg-white text-emerald-800 font-bold px-4 py-2 rounded-xl text-sm shadow">
+            Begin hier! 🚀
+          </div>
+        </button>
+
+        <!-- Knop 2: Inloggen -->
+        <button onclick="navigeerNaar('login')" class="bubbly-card group bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl p-6 shadow-lg shadow-indigo-200 border-4 border-white flex flex-col items-center text-center">
+          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl mb-3 group-hover:scale-110 transition-transform">
+            🔑
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold">2. Log In met Code</h2>
+          <p class="text-xs sm:text-sm text-indigo-100 mt-1">Weet jij jouw code nog uit je hoofd aan het eind van de les?</p>
+          <div class="mt-4 bg-white text-indigo-800 font-bold px-4 py-2 rounded-xl text-sm shadow">
+            Test je geheugen! 🧠
+          </div>
+        </button>
+      </div>
+
+      <!-- Kleine tip onderaan -->
+      <div class="text-center text-xs text-indigo-700/70 font-sans font-medium">
+        💡 Tip van Detective Robot: Een wachtwoordzin met meerdere woorden is vaak véél makkelijker te onthouden!
+      </div>
+    </section>
+
+    <!-- VIEW 2: WACHTWOORD MAKEN -->
+    <section id="view-create" class="hidden w-full bg-white rounded-3xl p-5 sm:p-7 shadow-xl border-4 border-emerald-300">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-3xl">🛠️</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-800">Bedenk je Wachtwoord</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Zorg dat alle 5 de vinkjes groen worden!</p>
+          </div>
+        </div>
+        <button onclick="navigeerNaar('menu')" class="bubbly-btn bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold">
+          ✕ Sluiten
+        </button>
+      </div>
+
+      <!-- Invoerveld met zichtbaar-oogje -->
+      <div class="mt-4">
+        <label for="create-pwd" class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+          Typ hier je nieuwe oefen-wachtwoord of wachtwoordzin:
+        </label>
+        <div class="relative flex items-center">
+          <input 
+            type="password" 
+            id="create-pwd"
+            autocomplete="off"
+            placeholder="Bijv. Gele-Giraf-Eet-Pizza!42" 
+            class="w-full text-base sm:text-lg font-mono px-4 py-3 pr-12 rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+            oninput="valideerWachtwoord()"
+          />
+          <button 
+            type="button" 
+            onclick="toggleZichtbaarheid('create-pwd', this)" 
+            class="absolute right-3 p-2 text-slate-400 hover:text-slate-700 text-xl focus:outline-none"
+            title="Wachtwoord tonen of verbergen">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Sterktebalk -->
+      <div class="mt-4 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+        <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1">
+          <span class="text-slate-600">Hoe sterk is jouw code?</span>
+          <span id="strength-label" class="text-rose-500">😴 Nog te zwak</span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden p-0.5">
+          <div id="strength-bar" class="h-full bg-rose-500 rounded-full transition-all duration-300 w-1/12"></div>
+        </div>
+      </div>
+
+      <!-- De 5 Checklist Vinkjes -->
+      <div class="mt-4 space-y-2">
+        <div id="rule-length" class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-colors">
+          <span class="text-lg">⚪</span>
+          <span>Minstens <strong>8 tekens</strong> (of een lange zin)</span>
+        </div>
+        <div id="rule-upper" class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-colors">
+          <span class="text-lg">⚪</span>
+          <span>Minstens 1 <strong>HOOFDLETTER</strong> (A - Z)</span>
+        </div>
+        <div id="rule-lower" class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-colors">
+          <span class="text-lg">⚪</span>
+          <span>Minstens 1 <strong>kleine letter</strong> (a - z)</span>
+        </div>
+        <div id="rule-number" class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-colors">
+          <span class="text-lg">⚪</span>
+          <span>Minstens 1 <strong>cijfer</strong> (0 - 9)</span>
+        </div>
+        <div id="rule-special" class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-colors">
+          <span class="text-lg">⚪</span>
+          <span>Minstens 1 <strong>speciaal leesteken</strong> (!, ?, @, #, etc.)</span>
+        </div>
+      </div>
+
+      <!-- Bewaar Knop -->
+      <button 
+        id="save-btn" 
+        disabled 
+        onclick="slaWachtwoordOp()" 
+        class="bubbly-btn w-full mt-6 bg-slate-300 cursor-not-allowed text-slate-500 font-bold py-3.5 px-4 rounded-2xl text-base sm:text-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>💾</span>
+        <span>Maak eerst alle 5 vinkjes groen!</span>
+      </button>
+    </section>
+
+    <!-- VIEW 3: SUCCES & ONTHOUDEN -->
+    <section id="view-success" class="hidden w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-4 border-mintGreen text-center">
+      <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-4 animate-bounce">
+        🎉
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-emerald-800">Super gedaan!</h2>
+      <p class="text-slate-600 mt-2 text-sm sm:text-base">
+        Jouw wachtwoord is goedgekeurd en nu klaargezet in het geheugen!
+      </p>
+
+      <div class="my-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-amber-900">
+        <p class="font-bold text-base sm:text-lg">🧠 Onthoud je geheime code goed!</p>
+        <p class="text-xs sm:text-sm mt-1">Schrijf hem niet op een briefje waar anderen het zien. Pas aan het <strong>einde van de les</strong> gaan we kijken of je hem nog weet.</p>
+      </div>
+
+      <button onclick="navigeerNaar('menu')" class="bubbly-btn w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3.5 px-6 rounded-2xl text-base sm:text-lg shadow-lg shadow-emerald-200">
+        👍 Ik heb hem in mijn hoofd! (Terug naar start)
+      </button>
+    </section>
+
+    <!-- VIEW 4: INLOGGEN & DE ONTKNOOPPING -->
+    <section id="view-login" class="hidden w-full bg-white rounded-3xl p-5 sm:p-7 shadow-xl border-4 border-purple-300">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-3xl">🔑</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-800">Inloggen met je Code</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Weet jij je geheime wachtwoord nog?</p>
+          </div>
+        </div>
+        <button onclick="navigeerNaar('menu')" class="bubbly-btn bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold">
+          ✕ Sluiten
+        </button>
+      </div>
+
+      <!-- INVOER FORMULIER (zichtbaar als er nog geen resultaat is) -->
+      <div id="login-form-box" class="mt-4">
+        <!-- Melding als er geen wachtwoord in opslag zit -->
+        <div id="login-empty-warning" class="hidden bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 text-center mb-4">
+          <div class="text-3xl mb-1">🤖❓</div>
+          <p class="text-base font-bold text-amber-900">Geen wachtwoord gevonden!</p>
+          <p class="text-xs sm:text-sm text-amber-800 mt-1">
+            Er is nog geen wachtwoord opgeslagen (of hij is na de vorige test al netjes gewist).
+          </p>
+          <button onclick="navigeerNaar('create')" class="bubbly-btn mt-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shadow">
+            ✨ Maak eerst een nieuw wachtwoord
+          </button>
+        </div>
+
+        <div id="login-input-section">
+          <!-- Inline herkansingsmelding bij typfout -->
+          <div id="login-try-again-msg" class="hidden mb-3 p-3 bg-rose-50 border-2 border-rose-300 rounded-2xl text-rose-900 text-xs sm:text-sm">
+            <span class="font-bold">❌ Oeps, dat klopt nog niet helemaal!</span> Let goed op hoofdletters en leestekens. Probeer het nog eens of klik hieronder op "Ik weet het niet meer".
+          </div>
+
+          <label for="login-pwd" class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+            Voer je wachtwoord in dat je eerder hebt bedacht:
+          </label>
+          <div class="relative flex items-center">
+            <input 
+              type="password" 
+              id="login-pwd" 
+              autocomplete="off"
+              placeholder="Typ hier precies wat je had bedacht..." 
+              class="w-full text-base sm:text-lg font-mono px-4 py-3 pr-12 rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all"
+            />
+            <button 
+              type="button" 
+              onclick="toggleZichtbaarheid('login-pwd', this)" 
+              class="absolute right-3 p-2 text-slate-400 hover:text-slate-700 text-xl focus:outline-none"
+              title="Wachtwoord tonen of verbergen">
+              👁️
+            </button>
+          </div>
+
+          <div class="mt-4 flex flex-col sm:flex-row gap-2">
+            <button 
+              onclick="controleerLogin()" 
+              class="bubbly-btn flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3.5 px-4 rounded-2xl text-base shadow-lg shadow-purple-200 flex items-center justify-center gap-2">
+              <span>🚀</span>
+              <span>Controleren</span>
+            </button>
+
+            <!-- Hulpknop voor als het kind het vergeten is -->
+            <button 
+              type="button"
+              onclick="onthulVergetenWachtwoord()" 
+              class="bubbly-btn bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-3.5 px-4 rounded-2xl text-xs sm:text-sm border-2 border-amber-300 flex items-center justify-center gap-1.5">
+              <span>🙈</span>
+              <span>Ik weet het echt niet meer!</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTAAT & DE GROTE CYBER DETECTIVE ONTHULLING -->
+      <div id="login-result-box" class="hidden mt-4 space-y-4">
+        <!-- Gelukt of mislukt melding -->
+        <div id="result-feedback" class="p-4 rounded-2xl text-center border-2"></div>
+
+        <!-- De Phishing / Waarschuwing Educatie Card -->
+        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-3xl border-4 border-yellow-400 shadow-xl relative overflow-hidden">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-3xl animate-wiggle">🕵️‍♂️</span>
+            <span class="text-yellow-300 font-black text-base sm:text-lg tracking-wide uppercase">Het Grote Cyber Geheim!</span>
+          </div>
+
+          <p class="text-sm sm:text-base font-semibold text-slate-100 leading-snug">
+            Wacht eens even... Hoe wist deze computer eigenlijk wat jouw geheime wachtwoord was?!
+          </p>
+
+          <div class="my-3 bg-white/10 rounded-2xl p-3 text-xs sm:text-sm text-slate-200 leading-relaxed border border-white/10">
+            🔍 <strong>Omdat deze website het stiekem heeft opgeslagen</strong> toen je het daarnet intypte! 
+            <br><br>
+            Als dit een nepsite was geweest van een hacker, had diegene nu jouw wachtwoord gehad. 
+            <strong>Les van vandaag:</strong> Vul nooit zomaar een wachtwoord in op een scherm of website die je niet 100% kent of vertrouwt! Dit noemen we <em>phishing</em> 🎣.
+          </div>
+
+          <div class="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-xs sm:text-sm text-emerald-200 flex items-center gap-2 font-mono">
+            <span>🗑️</span>
+            <span>Jouw oefen-wachtwoord is nu direct definitief uit het geheugen gewist!</span>
+          </div>
+        </div>
+
+        <button onclick="navigeerNaar('menu')" class="bubbly-btn w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-2xl text-base shadow flex items-center justify-center gap-2">
+          <span>🔄</span>
+          <span>Terug naar het Startscherm</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+  <footer class="max-w-2xl w-full mx-auto text-center pt-4 pb-2 text-xs font-semibold text-indigo-900/60">
+    Basisschool Digitale Veiligheid &bull; Oefenles Wachtwoorden & Phishing
+  </footer>
+
+  <script>
+    // Opslagsleutel voor deze browsersessie
+    const STORAGE_KEY = 'les_geheim_wachtwoord';
+
+    // Helper: wissel tussen schermen
+    function navigeerNaar(schermNaam) {
+      document.getElementById('view-menu').classList.add('hidden');
+      document.getElementById('view-create').classList.add('hidden');
+      document.getElementById('view-success').classList.add('hidden');
+      document.getElementById('view-login').classList.add('hidden');
+
+      if (schermNaam === 'menu') {
+        document.getElementById('view-menu').classList.remove('hidden');
+        updateMenuStatus();
+      } else if (schermNaam === 'create') {
+        document.getElementById('view-create').classList.remove('hidden');
+        const input = document.getElementById('create-pwd');
+        input.value = '';
+        valideerWachtwoord();
+        setTimeout(() => input.focus(), 100);
+      } else if (schermNaam === 'success') {
+        document.getElementById('view-success').classList.remove('hidden');
+      } else if (schermNaam === 'login') {
+        document.getElementById('view-login').classList.remove('hidden');
+        resetLoginScherm();
+      }
+    }
+
+    // Helper: Toon of verberg wachtwoord tekst (oogje)
+    function toggleZichtbaarheid(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+      }
+    }
+
+    // Update de badge op het startscherm
+    function updateMenuStatus() {
+      const opgeslagen = sessionStorage.getItem(STORAGE_KEY);
+      const icon = document.getElementById('storage-status-icon');
+      const text = document.getElementById('storage-status-text');
+      const card = document.getElementById('storage-status-card');
+
+      if (opgeslagen) {
+        icon.textContent = '✅';
+        text.innerHTML = '<span class="text-emerald-700">Er staat een geheim wachtwoord klaar in het geheugen!</span>';
+        card.className = 'bg-emerald-50 rounded-2xl p-4 text-center border-2 border-emerald-300 shadow-sm flex items-center justify-center gap-3';
+      } else {
+        icon.textContent = '⚪';
+        text.innerHTML = '<span class="text-slate-600">Nog geen wachtwoord opgeslagen. Begin bij stap 1!</span>';
+        card.className = 'bg-white rounded-2xl p-4 text-center border-2 border-indigo-100 shadow-sm flex items-center justify-center gap-3';
+      }
+    }
+
+    function updateRuleUI(elemId, isValid) {
+      const elem = document.getElementById(elemId);
+      if (isValid) {
+        elem.className = 'flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs sm:text-sm font-semibold text-emerald-800 transition-all';
+        elem.querySelector('span:first-child').textContent = '✅';
+      } else {
+        elem.className = 'flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm font-semibold text-slate-500 transition-all';
+        elem.querySelector('span:first-child').textContent = '⚪';
+      }
+    }
+
+    function valideerWachtwoord() {
+      const pwd = document.getElementById('create-pwd').value;
+
+      // De 5 regels
+      const hasLength = pwd.length >= 8;
+      const hasUpper = /[A-Z]/.test(pwd);
+      const hasLower = /[a-z]/.test(pwd);
+      const hasNumber = /[0-9]/.test(pwd);
+      const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+
+      updateRuleUI('rule-length', hasLength);
+      updateRuleUI('rule-upper', hasUpper);
+      updateRuleUI('rule-lower', hasLower);
+      updateRuleUI('rule-number', hasNumber);
+      updateRuleUI('rule-special', hasSpecial);
+
+      const score = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+
+      // Sterktebalk visueel bijwerken
+      const bar = document.getElementById('strength-bar');
+      const label = document.getElementById('strength-label');
+      const saveBtn = document.getElementById('save-btn');
+
+      if (score === 0) {
+        bar.style.width = '5%';
+        bar.className = 'h-full bg-slate-300 rounded-full transition-all duration-300';
+        label.textContent = '😴 Typ maar raak!';
+        label.className = 'text-slate-400';
+      } else if (score <= 2) {
+        bar.style.width = '30%';
+        bar.className = 'h-full bg-rose-500 rounded-full transition-all duration-300';
+        label.textContent = '😴 Nog te zwak';
+        label.className = 'text-rose-500';
+      } else if (score <= 4) {
+        bar.style.width = '65%';
+        bar.className = 'h-full bg-amber-500 rounded-full transition-all duration-300';
+        label.textContent = '⚡ Je bent al warm!';
+        label.className = 'text-amber-500';
+      } else {
+        bar.style.width = '100%';
+        bar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-300';
+        label.textContent = '🚀 SUPER STERK!';
+        label.className = 'text-emerald-600 font-black';
+      }
+
+      // Opslaan knop activeren als alles groen is
+      if (score === 5) {
+        saveBtn.disabled = false;
+        saveBtn.className = 'bubbly-btn w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-3.5 px-4 rounded-2xl text-base sm:text-lg shadow-lg shadow-emerald-200 cursor-pointer flex items-center justify-center gap-2';
+        saveBtn.innerHTML = '<span>💾</span><span>Ja! Sla dit sterke wachtwoord op</span>';
+      } else {
+        saveBtn.disabled = true;
+        saveBtn.className = 'bubbly-btn w-full mt-6 bg-slate-200 cursor-not-allowed text-slate-400 font-bold py-3.5 px-4 rounded-2xl text-base sm:text-lg shadow-none flex items-center justify-center gap-2';
+        saveBtn.innerHTML = '<span>💾</span><span>Maak eerst alle 5 vinkjes groen!</span>';
+      }
+    }
+
+    function slaWachtwoordOp() {
+      const pwd = document.getElementById('create-pwd').value;
+      if (!pwd) return;
+
+      // Bewaar lokaal in de sessie van het kind
+      sessionStorage.setItem(STORAGE_KEY, pwd);
+
+      // Vrolijke confetti voor het kind!
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch (e) {
+        // fallback
+      }
+
+      navigeerNaar('success');
+    }
+
+    function resetLoginScherm() {
+      const savedPwd = sessionStorage.getItem(STORAGE_KEY);
+      const warningBox = document.getElementById('login-empty-warning');
+      const inputSection = document.getElementById('login-input-section');
+      const resultBox = document.getElementById('login-result-box');
+      const tryAgainMsg = document.getElementById('login-try-again-msg');
+      const input = document.getElementById('login-pwd');
+
+      input.value = '';
+      resultBox.classList.add('hidden');
+      tryAgainMsg.classList.add('hidden');
+
+      // Controleer EERST of er überhaupt iets staat
+      if (!savedPwd) {
+        warningBox.classList.remove('hidden');
+        inputSection.classList.add('hidden');
+      } else {
+        warningBox.classList.add('hidden');
+        inputSection.classList.remove('hidden');
+        setTimeout(() => input.focus(), 100);
+      }
+    }
+
+    function controleerLogin() {
+      // 1. Eerst controleren of er een opgeslagen wachtwoord is
+      const savedPwd = sessionStorage.getItem(STORAGE_KEY);
+      if (!savedPwd) {
+        resetLoginScherm();
+        return;
+      }
+
+      const enteredPwd = document.getElementById('login-pwd').value;
+      const tryAgainMsg = document.getElementById('login-try-again-msg');
+      const resultBox = document.getElementById('login-result-box');
+      const resultFeedback = document.getElementById('result-feedback');
+      const inputSection = document.getElementById('login-input-section');
+
+      // 2. Vergelijken
+      if (enteredPwd === savedPwd) {
+        // Correct onthouden!
+        tryAgainMsg.classList.add('hidden');
+        inputSection.classList.add('hidden');
+        resultBox.classList.remove('hidden');
+
+        try {
+          confetti({
+            particleCount: 120,
+            spread: 90,
+            origin: { y: 0.5 }
+          });
+        } catch (e) {}
+
+        resultFeedback.className = 'p-5 rounded-2xl text-center border-3 border-emerald-400 bg-emerald-50 text-emerald-900';
+        resultFeedback.innerHTML = `
+          <div class="text-4xl mb-1">🎉 🏆</div>
+          <h3 class="text-xl sm:text-2xl font-black">YES! Je hebt het onthouden!</h3>
+          <p class="text-xs sm:text-sm mt-1">Je hebt jouw geheime code foutloos uit je hoofd ingevuld!</p>
+        `;
+
+        // Pas definitief wissen nádat het succesvol getoond is
+        sessionStorage.removeItem(STORAGE_KEY);
+      } else {
+        // Foutje getypt: NIET direct wissen, geef een herkansing!
+        tryAgainMsg.classList.remove('hidden');
+        document.getElementById('login-pwd').focus();
+      }
+    }
+
+    // Kind klikt op "Ik weet het niet meer"
+    function onthulVergetenWachtwoord() {
+      const savedPwd = sessionStorage.getItem(STORAGE_KEY);
+      if (!savedPwd) {
+        resetLoginScherm();
+        return;
+      }
+
+      const inputSection = document.getElementById('login-input-section');
+      const resultBox = document.getElementById('login-result-box');
+      const resultFeedback = document.getElementById('result-feedback');
+
+      inputSection.classList.add('hidden');
+      resultBox.classList.remove('hidden');
+
+      // Toon wat ze hadden ingevoerd en leg uit waarom het lastig kan zijn
+      resultFeedback.className = 'p-5 rounded-2xl text-center border-3 border-amber-400 bg-amber-50 text-amber-950';
+      resultFeedback.innerHTML = `
+        <div class="text-4xl mb-1">🙈 💡</div>
+        <h3 class="text-xl font-black">Geen zorgen, dat gebeurt iedereen!</h3>
+        <p class="text-xs sm:text-sm mt-1">Dit was jouw wachtwoord dat je had gemaakt:</p>
+        <div class="my-2 py-2 px-3 bg-white border border-amber-300 rounded-xl font-mono font-bold text-sm sm:text-base text-indigo-900 break-all select-all">
+          ${savedPwd}
+        </div>
+        <p class="text-xs text-amber-800">
+          Moeilijke wachtwoorden met willekeurige tekens vergeet je snel. Daarom is een <strong>wachtwoordzin</strong> (bijv. 4 grappige woorden aan elkaar) veel slimmer!
+        </p>
+      `;
+
+      // Nu de interactie getoond is: netjes wissen uit sessionStorage
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+
+    // Enter toets ondersteuning op invoervelden
+    document.getElementById('create-pwd').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const btn = document.getElementById('save-btn');
+        if (!btn.disabled) slaWachtwoordOp();
+      }
+    });
+
+    document.getElementById('login-pwd').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        controleerLogin();
+      }
+    });
+
+    // Startstatus bij openen van de pagina
+    updateMenuStatus();
+  </script>
+</body>
+</html>
