@@ -540,15 +540,13 @@ function init() {
 
 // ===== GROEPEN BEPALEN =====
 document.getElementById('btnBepaalGroepen').addEventListener('click', function() {
-    // ✅ Lees het aantal groepen uit het invoerveld
+    // Lees het aantal groepen uit het invoerveld
     const input = document.getElementById('aantalGroepenInput');
     let aantal = parseInt(input.value);
 
-    // Validatie: tussen 2 en 9
     if (isNaN(aantal) || aantal < 2) aantal = 2;
     if (aantal > 9) aantal = 9;
 
-    // Zet terug in het veld (voor de zekerheid)
     input.value = aantal;
 
     // Update state
@@ -556,7 +554,13 @@ document.getElementById('btnBepaalGroepen').addEventListener('click', function()
     state.groepen = Array.from({ length: aantal }, () => []);
     state.totaalScores = Array(aantal).fill(0);
 
-    // Verdeel groep:0 leerlingen random
+    // Stap 1: leerlingen met een vaste groep (groep > 0) plaatsen
+    const vasteLeerlingen = state.leerlingen.filter(l => l.groep > 0 && l.groep <= aantal);
+    vasteLeerlingen.forEach(l => {
+        state.groepen[l.groep - 1].push(l);
+    });
+
+    // Stap 2: leerlingen zonder groep (groep === 0) random verdelen
     const zonderGroep = state.leerlingen.filter(l => l.groep === 0);
 
     // Random schudden
@@ -565,29 +569,22 @@ document.getElementById('btnBepaalGroepen').addEventListener('click', function()
         [zonderGroep[i], zonderGroep[j]] = [zonderGroep[j], zonderGroep[i]];
     }
 
-    // Reset alle leerlingen die geen vaste groep hadden
-    zonderGroep.forEach(l => { l.groep = 0; });
-
-    // Verdeel om en om over de groepen
-    let groepIndex = 0;
+    // ✅ Verdeel de zonderGroep-leerlingen op basis van de huidige groepsgroottes
+    // Steeds de leerling toevoegen aan de groep die op dat moment het kleinste is
     zonderGroep.forEach(l => {
-        const g = groepIndex % aantal;
-        l.groep = g + 1;
-        groepIndex++;
-    });
-
-    // Leerlingen met een vaste groep > aantal? Zet ze in een geldige groep
-    state.leerlingen.forEach(l => {
-        if (l.groep > aantal) l.groep = aantal;
-        if (l.groep < 1) l.groep = 0;
-    });
-
-    // Bouw groepen
-    state.groepen = Array.from({ length: aantal }, () => []);
-    state.leerlingen.forEach(l => {
-        if (l.groep > 0 && l.groep <= aantal) {
-            state.groepen[l.groep - 1].push(l);
+        // Zoek de groep met het minste aantal leerlingen
+        let kleinsteGroep = 0;
+        let kleinsteAantal = state.groepen[0].length;
+        for (let i = 1; i < aantal; i++) {
+            if (state.groepen[i].length < kleinsteAantal) {
+                kleinsteAantal = state.groepen[i].length;
+                kleinsteGroep = i;
+            }
         }
+
+        // Voeg leerling toe aan die groep
+        l.groep = kleinsteGroep + 1;
+        state.groepen[kleinsteGroep].push(l);
     });
 
     showScreen('groepen');
