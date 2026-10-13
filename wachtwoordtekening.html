@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wachtwoordzin — Presentatie</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Trebuchet MS', 'Comic Sans MS', Verdana, sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    height: 100vh;
+    color: #fff;
+  }
+
+  .slide {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    padding: 4vh 5vw;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+  }
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  h1 { font-size: 4.5vw; margin-bottom: 2.5vh; line-height: 1.2; }
+  h2 { font-size: 3.2vw; margin-bottom: 2.5vh; line-height: 1.2; }
+  p  { font-size: 2vw; line-height: 1.5; max-width: 85vw; }
+  .big-emoji { font-size: 11vw; margin-bottom: 1.5vh; line-height: 1; }
+
+  /* Kleurvarianten per slide */
+  .s1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .s2 { background: linear-gradient(135deg, #f7971e, #ffd200); color: #2c2c2c; }
+  .s3 { background: linear-gradient(135deg, #eb3349, #f45c43); }
+  .s4 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+  .s5 { background: linear-gradient(135deg, #00b09b, #96c93d); }
+  .s6 { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
+  .s7 { background: linear-gradient(135deg, #fc5c7d, #6a82fb); }
+  .s8 { background: linear-gradient(135deg, #283c86, #45a247); }
+
+  /* Voortgang + navigatie */
+  .progress {
+    position: fixed;
+    bottom: 0; left: 0;
+    height: 8px;
+    background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+  .nav {
+    position: fixed;
+    bottom: 20px; right: 25px;
+    display: flex; gap: 12px;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 20px;
+    width: 55px; height: 55px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+    backdrop-filter: blur(6px);
+  }
+  .nav button:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
+
+  .slide-num {
+    position: fixed;
+    bottom: 30px; left: 30px;
+    font-size: 16px;
+    opacity: 0.6;
+  }
+
+  /* Slide 3 — de zin */
+  .zin-display {
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    border-radius: 20px;
+    padding: 4vh 3vw;
+    font-size: 2.5vw;
+    max-width: 85vw;
+    line-height: 1.7;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .zin-display em { color: #d32f2f; font-style: normal; font-weight: bold; }
+
+  /* Slide 4 — voorbeeldvakjes */
+  .voorbeeld-vakjes {
+    display: flex;
+    gap: 1vw;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 2vh 0;
+  }
+  .pvak {
+    width: 6.5vw;
+    height: 12vh;
+    min-width: 52px;
+    min-height: 82px;
+    background: #fff;
+    border: 3px solid #0d5d5d;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8vh 0.3vw;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+  .pvak:hover { transform: translateY(-6px); }
+  .p-teken {
+    font-size: 1.8vw;
+    font-weight: bold;
+    color: #d32f2f;
+    line-height: 1;
+    font-family: 'Courier New', monospace;
+  }
+  .p-emoji {
+    font-size: 2.9vw;
+    line-height: 1;
+    margin-bottom: 0.6vh;
+  }
+
+  .resultaat {
+    background: rgba(0,0,0,0.25);
+    padding: 1.5vh 3vw;
+    border-radius: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 2.4vw;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 2vh;
+    letter-spacing: 0.15vw;
+  }
+
+  /* Slide 5 — hulpkaart */
+  .hulp-lijst {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5vh 3vw;
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 3vh 3vw;
+    max-width: 82vw;
+    font-size: 1.7vw;
+    text-align: left;
+    backdrop-filter: blur(6px);
+    margin-top: 1vh;
+  }
+  .hulp-lijst div::before { content: "👉 "; }
+  .hulp-lijst code {
+    background: rgba(255,255,255,0.92);
+    color: #d32f2f;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+  }
+
+  /* Slide 6 + 7 — stappen */
+  .stap-box {
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    border-radius: 20px;
+    padding: 4vh 4vw;
+    font-size: 2.1vw;
+    max-width: 72vw;
+    line-height: 1.6;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .stap-box strong { color: #d32f2f; }
+
+  @media (max-width: 800px) {
+    h1 { font-size: 7vw; }
+    h2 { font-size: 6vw; }
+    p  { font-size: 4vw; }
+    .zin-display { font-size: 4.5vw; padding: 3vh 4vw; }
+    .pvak { width: 10vw; height: 9vh; min-width: 42px; min-height: 62px; }
+    .p-teken { font-size: 3.2vw; }
+    .p-emoji { font-size: 4.5vw; }
+    .resultaat { font-size: 4vw; }
+    .hulp-lijst { font-size: 3.4vw; grid-template-columns: 1fr; }
+    .stap-box { font-size: 4vw; max-width: 88vw; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1 — Titel -->
+<div class="slide s1 active">
+  <div class="big-emoji">🔐✏️</div>
+  <h1>Maak je eigen<br>Wachtwoordzin</h1>
+  <p>Van een gewone zin naar een supersterk wachtwoord</p>
+</div>
+
+<!-- SLIDE 2 — Wat is een wachtwoordzin -->
+<div class="slide s2">
+  <div class="big-emoji">🤔</div>
+  <h2>Wat is een wachtwoordzin?</h2>
+  <p>Een zin die <strong>alleen jij</strong> leuk vindt.<br>
+  Van elk woord maak je <strong>één teken</strong>.<br>
+  Zo onthoud je een lang wachtwoord <strong>zonder</strong> het uit je hoofd te leren! 🧠✨</p>
+</div>
+
+<!-- SLIDE 3 — Het voorbeeld: de zin -->
+<div class="slide s3">
+  <h2>🐰 Het voorbeeld</h2>
+  <div class="zin-display">
+    "<em>Mijn</em> <em>3e</em> <em>konijn</em> <em>heette</em> <em>Pluisje</em> <em>en</em> <em>hij</em> <em>had</em> <em>een</em> <em>kooi</em>"
+  </div>
+  <p style="margin-top:3vh;">Elk woord wordt één teken 👇</p>
+</div>
+
+<!-- SLIDE 4 — Van zin naar wachtwoord -->
+<div class="slide s4">
+  <h2>🔄 Van zin naar wachtwoord</h2>
+  <div class="voorbeeld-vakjes">
+    <div class="pvak"><div class="p-teken">M</div><div class="p-emoji">👤</div></div>
+    <div class="pvak"><div class="p-teken">3</div><div class="p-emoji">🔱</div></div>
+    <div class="pvak"><div class="p-teken">k</div><div class="p-emoji">🐰</div></div>
+    <div class="pvak"><div class="p-teken">h</div><div class="p-emoji">♨️</div></div>
+    <div class="pvak"><div class="p-teken">P</div><div class="p-emoji">☁️</div></div>
+    <div class="pvak"><div class="p-teken">&amp;</div><div class="p-emoji">➕</div></div>
+    <div class="pvak"><div class="p-teken">h</div><div class="p-emoji">♂️</div></div>
+    <div class="pvak"><div class="p-teken">h</div><div class="p-emoji">🎩</div></div>
+    <div class="pvak"><div class="p-teken">e</div><div class="p-emoji">🥚</div></div>
+    <div class="pvak"><div class="p-teken">#</div><div class="p-emoji">🏠</div></div>
+  </div>
+  <div class="resultaat">M3khP&amp;hhe#</div>
+</div>
+
+<!-- SLIDE 5 — Hulpkaart -->
+<div class="slide s5">
+  <h2>🛠️ De hulpkaart</h2>
+  <div class="hulp-lijst">
+    <div>Eerste letter van elk woord</div>
+    <div>"en" → <code>&amp;</code></div>
+    <div>"is" → <code>=</code></div>
+    <div>Getallen → cijfer (derde → <code>3</code>)</div>
+    <div>"heet" → <code>#</code> (hekje!)</div>
+    <div>Kies zelf een teken dat past</div>
+    <div>Jouw regel is goed als JIJ het snapt</div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — Stap 1 -->
+<div class="slide s6">
+  <div class="big-emoji">✏️</div>
+  <h2>Nu jij! — Stap 1</h2>
+  <div class="stap-box">
+    Verzin een zin van <strong>5 tot 8 woorden</strong> over iets dat van jou is.<br><br>
+    Bijvoorbeeld over je huisdier, je game, je lievelingseten, of iets grappigs dat je hebt meegemaakt.
+  </div>
+</div>
+
+<!-- SLIDE 7 — Stap 2 + 3 -->
+<div class="slide s7">
+  <div class="big-emoji">🎨</div>
+  <h2>Stap 2 + 3</h2>
+  <div class="stap-box">
+    <strong>Stap 2:</strong> Maak van elk woord één teken (letter, cijfer of symbool).<br><br>
+    <strong>Stap 3:</strong> Teken in elk vakje iets dat je herinnert aan dat teken.<br><br>
+    Het hoeft niet mooi te zijn — een stokpoppetje is ook goed! 🖍️
+  </div>
+</div>
+
+<!-- SLIDE 8 — Slot -->
+<div class="slide s8">
+  <div class="big-emoji">🔒</div>
+  <h2>Onthoud dit goed</h2>
+  <p style="font-size:2.3vw;">
+    Je wachtwoordzin is <strong>van jou</strong>.<br>
+    Laat het niet aan anderen zien —<br>
+    zelfs niet aan je beste vriend of vriendin! 🤫
+  </p>
+</div>
+
+<!-- Voortgang + navigatie -->
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slideNum">1 / 8</div>
+<div class="nav">
+  <button onclick="prev()" aria-label="Vorige">◀</button>
+  <button onclick="next()" aria-label="Volgende">▶</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function show(i) {
+    slides[current].classList.remove('active');
+    current = (i + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    document.getElementById('progress').style.width =
+      ((current + 1) / slides.length * 100) + '%';
+    document.getElementById('slideNum').textContent =
+      (current + 1) + ' / ' + slides.length;
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  let startX = 0;
+  document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (dx < -50) next();
+    if (dx > 50) prev();
+  });
+
+  document.getElementById('progress').style.width = (1 / slides.length * 100) + '%';
+</script>
+
+</body>
+</html>
