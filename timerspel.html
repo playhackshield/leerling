@@ -343,6 +343,11 @@
 </div>
 
 <script>
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+
     // ============================================================
     // DATA WORDT GELADEN VANUIT FIREBASE
     // ============================================================
