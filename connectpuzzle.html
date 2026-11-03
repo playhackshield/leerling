@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Connect Puzzle - Digibord 2 Spelers</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti voor feestelijke overwinningen -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Fredoka voor een vrolijk, kindvriendelijk uiterlijk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      font-family: 'Fredoka', cursive, sans-serif;
+      touch-action: none;
+      overflow: hidden;
+    }
+    /* Vloeiende animatie voor kaarten */
+    .card-tile {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
+      touch-action: none;
+    }
+    .card-tile:active {
+      transform: scale(0.96);
+    }
+    .card-tile.selected {
+      transform: scale(1.05);
+      border-color: #facc15 !important;
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.8) !important;
+      animation: pulse-border 1.2s infinite alternate;
+    }
+    .card-tile.matched {
+      transform: scale(0.98);
+      opacity: 0.88;
+    }
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
+      100% { box-shadow: 0 0 26px rgba(250, 204, 21, 1); }
+    }
+    .pulse-win {
+      animation: bounce-win 0.8s ease infinite alternate;
+    }
+    @keyframes bounce-win {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+    /* SVG Connectielijnen */
+    svg line {
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-white w-screen h-screen flex flex-col justify-between overflow-hidden select-none">
+
+  <!-- ================= HEADER / SCOREBORD ================= -->
+  <header class="h-20 bg-slate-800/95 border-b-4 border-slate-700 px-6 flex items-center justify-between shadow-2xl z-20 shrink-0">
+    <!-- Speler 1 Status (Blauw) -->
+    <div class="flex items-center gap-4 bg-sky-950/80 border-2 border-sky-400 px-5 py-2 rounded-2xl shadow-inner min-w-[240px]">
+      <div class="w-12 h-12 rounded-full bg-sky-500 border-2 border-white flex items-center justify-center text-2xl shadow-md">
+        𐀪
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-sky-300 leading-none">Speler 1 (Blauw)</h2>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-xs uppercase tracking-wider text-sky-200 font-bold">Rondes:</span>
+          <div id="p1-stars" class="flex gap-1 text-amber-400 text-lg">
+            <span>⚪</span><span>⚪</span><span>⚪</span><span>⚪</span><span>⚪</span>
+          </div>
+        </div>
+      </div>
+      <div class="ml-auto text-3xl font-extrabold text-white" id="p1-score">0</div>
+    </div>
+
+    <!-- Midden: Ronde Info & Knoppen -->
+    <div class="flex flex-col items-center">
+      <div class="bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 px-6 py-1.5 rounded-full text-xl font-black shadow-lg tracking-wider border-2 border-yellow-200">
+        RONDE <span id="round-indicator">1</span> / 5
+      </div>
+      <span class="text-xs text-slate-400 mt-1 font-semibold tracking-wide">Trek lijnen of tik op de paren!</span>
+    </div>
+
+    <!-- Speler 2 Status (Oranje/Rood) -->
+    <div class="flex items-center gap-4 bg-amber-950/80 border-2 border-amber-500 px-5 py-2 rounded-2xl shadow-inner min-w-[240px] flex-row-reverse text-right">
+      <div class="w-12 h-12 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-2xl shadow-md">
+        𐙚
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-amber-400 leading-none">Speler 2 (Oranje)</h2>
+        <div class="flex items-center gap-2 mt-1 justify-end">
+          <div id="p2-stars" class="flex gap-1 text-amber-400 text-lg">
+            <span>⚪</span><span>⚪</span><span>⚪</span><span>⚪</span><span>⚪</span>
+          </div>
+          <span class="text-xs uppercase tracking-wider text-amber-200 font-bold">:Rondes</span>
+        </div>
+      </div>
+      <div class="mr-auto text-3xl font-extrabold text-white" id="p2-score">0</div>
+    </div>
+  </header>
+
+  <!-- ================= HOOFD SPEELVELD (SPLIT SCREEN) ================= -->
+  <main class="relative flex-1 flex w-full h-[calc(100vh-5rem)] overflow-hidden">
+
+    <!-- SPELER 1 HELFT (LINKS - BLAUW) -->
+    <section id="zone-p1" class="relative flex-1 h-full bg-gradient-to-br from-sky-950 via-slate-900 to-sky-900/60 p-4 border-r-4 border-slate-700 flex flex-col justify-center select-none overflow-hidden">
+      <!-- Decoratieve Speler Badge in achtergrond -->
+      <div class="absolute top-4 left-6 pointer-events-none opacity-25 text-sky-400 text-5xl font-black">
+        P1
+      </div>
+
+      <!-- SVG Canvas voor lijnen van Speler 1 -->
+      <svg id="svg-p1" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+
+      <!-- Grid met Kolom Links & Kolom Rechts -->
+      <div class="relative z-0 max-w-xl mx-auto w-full grid grid-cols-2 gap-12 sm:gap-16 px-4">
+        <!-- Kolom A (Links) -->
+        <div id="p1-col-a" class="flex flex-col gap-4 sm:gap-6 justify-center"></div>
+        <!-- Kolom B (Rechts) -->
+        <div id="p1-col-b" class="flex flex-col gap-4 sm:gap-6 justify-center"></div>
+      </div>
+
+      <!-- Ronde-Winst Banner Overlay P1 -->
+      <div id="p1-banner" class="hidden absolute inset-0 bg-sky-900/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6 transition-all duration-300">
+        <div class="text-7xl mb-2 animate-bounce">⭐</div>
+        <h3 class="text-4xl font-extrabold text-white mb-2">Speler 1 Wint Deze Ronde!</h3>
+        <p class="text-sky-200 text-xl font-bold">Geweldig gedaan!</p>
+      </div>
+    </section>
+
+    <!-- SPELER 2 HELFT (RECHTS - ORANJE) -->
+    <section id="zone-p2" class="relative flex-1 h-full bg-gradient-to-bl from-amber-950 via-slate-900 to-orange-950/60 p-4 border-l-4 border-slate-700 flex flex-col justify-center select-none overflow-hidden">
+      <!-- Decoratieve Speler Badge in achtergrond -->
+      <div class="absolute top-4 right-6 pointer-events-none opacity-25 text-amber-500 text-5xl font-black">
+        P2
+      </div>
+
+      <!-- SVG Canvas voor lijnen van Speler 2 -->
+      <svg id="svg-p2" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+
+      <!-- Grid met Kolom Links & Kolom Rechts -->
+      <div class="relative z-0 max-w-xl mx-auto w-full grid grid-cols-2 gap-12 sm:gap-16 px-4">
+        <!-- Kolom A (Links) -->
+        <div id="p2-col-a" class="flex flex-col gap-4 sm:gap-6 justify-center"></div>
+        <!-- Kolom B (Rechts) -->
+        <div id="p2-col-b" class="flex flex-col gap-4 sm:gap-6 justify-center"></div>
+      </div>
+
+      <!-- Ronde-Winst Banner Overlay P2 -->
+      <div id="p2-banner" class="hidden absolute inset-0 bg-amber-900/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6 transition-all duration-300">
+        <div class="text-7xl mb-2 animate-bounce">⭐</div>
+        <h3 class="text-4xl font-extrabold text-white mb-2">Speler 2 Wint Deze Ronde!</h3>
+        <p class="text-amber-200 text-xl font-bold">Super snel opgelost!</p>
+      </div>
+    </section>
+
+    <!-- OVERLAY: TUSSENSTAND / VOLGENDE RONDE COUNTDOWN -->
+    <div id="round-intermission" class="hidden absolute inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center text-center p-8">
+      <div id="intermission-title" class="text-5xl font-black text-amber-300 mb-4 animate-pulse">Ronde Afgelopen!</div>
+      <p id="intermission-msg" class="text-2xl text-slate-200 mb-8 max-w-xl font-medium"></p>
+      
+      <div class="flex items-center gap-6">
+        <button id="btn-next-round" class="px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white rounded-3xl font-extrabold text-3xl shadow-2xl border-4 border-green-300 transform active:scale-95 transition">
+          Volgende Ronde 👉 (<span id="auto-count">4</span>s)
+        </button>
+      </div>
+    </div>
+
+    <!-- OVERLAY: FINALE SCORE / EINDRESULTAAT (NA 5 RONDES) -->
+    <div id="game-over-screen" class="hidden absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center">
+      <div class="text-8xl mb-3 pulse-win">🏆</div>
+      <h1 class="text-6xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-100 mb-2">
+        GEFELICITEERD!
+      </h1>
+      <h2 id="winner-announcement" class="text-4xl font-extrabold text-white mb-8">
+        Speler 1 heeft gewonnen!
+      </h2>
+
+      <!-- Eindscore visualisatie -->
+      <div class="flex gap-8 mb-10 w-full max-w-2xl justify-center">
+        <!-- Speler 1 eindresultaat -->
+        <div class="flex-1 bg-sky-950/90 border-4 border-sky-400 rounded-3xl p-6 shadow-2xl text-center">
+          <div class="text-5xl mb-2">𐙚</div>
+          <div class="text-2xl font-bold text-sky-300">Speler 1</div>
+          <div id="p1-final-score" class="text-6xl font-black text-white mt-2">0</div>
+          <div class="text-sm text-sky-200 uppercase font-bold tracking-widest mt-1">Rondes Gewonnen</div>
+        </div>
+        <!-- Speler 2 eindresultaat -->
+        <div class="flex-1 bg-amber-950/90 border-4 border-amber-500 rounded-3xl p-6 shadow-2xl text-center">
+          <div class="text-5xl mb-2">𐙚</div>
+          <div class="text-2xl font-bold text-amber-300">Speler 2</div>
+          <div id="p2-final-score" class="text-6xl font-black text-white mt-2">0</div>
+          <div class="text-sm text-amber-200 uppercase font-bold tracking-widest mt-1">Rondes Gewonnen</div>
+        </div>
+      </div>
+
+      <button id="btn-restart" class="px-12 py-5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950 font-black text-3xl rounded-3xl shadow-2xl border-4 border-yellow-200 transform active:scale-95 transition cursor-pointer">
+        🔄 Opnieuw Spelen
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    /* =====================================================================
+     * 1. RECHTERMUISKNOP CONTEXTMENU UITZETTEN (VERPLICHT VOOR DIGIBORD)
+     * ===================================================================== */
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+
+    /* =====================================================================
+     * 2. AUDIO SYNTH (Web Audio API - Geen externe bestanden)
+     * ===================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      // Vrolijk succes akkoord (goed paar verbonden)
+      playSuccess() {
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+            gain.gain.setValueAtTime(0, now + idx * 0.07);
+            gain.gain.linearRampToValueAtTime(0.2, now + idx * 0.07 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.35);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 0.4);
+          });
+        } catch (e) { console.warn(e); }
+      }
+      // Zachte 'oei' zoemer (fout paar)
+      playError() {
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.26);
+        } catch (e) { console.warn(e); }
+      }
+      // Selectie klikje
+      playSelect() {
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } catch (e) { console.warn(e); }
+      }
+      // Ronde gewonnen fanfare
+      playRoundWin() {
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const notes = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.45);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.5);
+          });
+        } catch (e) { console.warn(e); }
+      }
+    }
+    const sounds = new SoundEngine();
+
+    /* =====================================================================
+     * 3. DATASET: LOGISCHE ASSOCIATIES (Kindvriendelijk & Duidelijk)
+     * ===================================================================== */
+    const ALL_PAIRS = [
+      { id: 'dog-bone', left: { icon: '🐶', label: 'Hond' }, right: { icon: '🦴', label: 'Bot' } },
+      { id: 'cloud-umbrella', left: { icon: '🌧️', label: 'Regenwolk' }, right: { icon: '☔', label: 'Paraplu' } },
+      { id: 'bee-honey', left: { icon: '🐝', label: 'Bij' }, right: { icon: '🍯', label: 'Honing' } },
+      { id: 'soccer-goal', left: { icon: '⚽', label: 'Voetbal' }, right: { icon: '🥅', label: 'Doel' } },
+      { id: 'pig-mud', left: { icon: '🐷', label: 'Varken' }, right: { icon: '🪵', label: 'Modder' } },
+      { id: 'flower-watering', left: { icon: '🌸', label: 'Bloem' }, right: { icon: '🚿', label: 'Gieter' } },
+      { id: 'plane-passport', left: { icon: '✈️', label: 'Vliegtuig' }, right: { icon: '🛂', label: 'Paspoort' } },
+      { id: 'candle-match', left: { icon: '🕯️', label: 'Kaars' }, right: { icon: '🔥', label: 'Lucifer' } },
+      { id: 'car-fuel', left: { icon: '🚗', label: 'Auto' }, right: { icon: '⛽', label: 'Benzine' } },
+      { id: 'bird-nest', left: { icon: '🐦', label: 'Vogel' }, right: { icon: '🪺', label: 'Nest' } },
+      { id: 'lock-key', left: { icon: '🔒', label: 'Slot' }, right: { icon: '🔑', label: 'Sleutel' } },
+      { id: 'tooth-brush', left: { icon: '🦷', label: 'Tand' }, right: { icon: '🪥', label: 'Tandenborstel' } },
+      { id: 'monkey-banana', left: { icon: '🐵', label: 'Aap' }, right: { icon: '🍌', label: 'Banaan' } },
+      { id: 'artist-palette', left: { icon: '🎨', label: 'Verfkwast' }, right: { icon: '🖼️', label: 'Schilderij' } },
+      { id: 'cow-milk', left: { icon: '🐮', label: 'Koe' }, right: { icon: '🥛', label: 'Melk' } },
+      { id: 'baby-bottle', left: { icon: '👶', label: 'Baby' }, right: { icon: '🍼', label: 'Zuigfles' } },
+      { id: 'spider-web', left: { icon: '🕷️', label: 'Spin' }, right: { icon: '🕸️', label: 'Spinnenweb' } },
+      { id: 'winter-snowman', left: { icon: '❄️', label: 'Sneeuw' }, right: { icon: '⛄', label: 'Sneeuwpop' } },
+      { id: 'fish-aquarium', left: { icon: '🐠', label: 'Vis' }, right: { icon: '🌊', label: 'Zee' } },
+      { id: 'letter-mailbox', left: { icon: '✉️', label: 'Brief' }, right: { icon: '📮', label: 'Brievenbus' } }
+    ];
+
+    // Shuffle utility (Fisher-Yates)
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    /* =====================================================================
+     * 4. SPELMOTOR & GAME STATE
+     * ===================================================================== */
+    const TOTAL_ROUNDS = 5;
+    const PAIRS_PER_ROUND = 4; // 4 koppels per ronde geeft optimale schermvulling op digibord
+
+    let currentRound = 1;
+    let p1Score = 0;
+    let p2Score = 0;
+    let roundActive = false;
+    let intermissionTimer = null;
+    let usedPairIndexes = [];
+
+    // Speler State Container
+    const players = {
+      p1: {
+        id: 'p1',
+        name: 'Speler 1',
+        themeColor: '#38bdf8', // sky-400
+        activeLineColor: '#38bdf8',
+        container: document.getElementById('zone-p1'),
+        svg: document.getElementById('svg-p1'),
+        colA: document.getElementById('p1-col-a'),
+        colB: document.getElementById('p1-col-b'),
+        banner: document.getElementById('p1-banner'),
+        scoreEl: document.getElementById('p1-score'),
+        starsEl: document.getElementById('p1-stars'),
+        // Ronde data
+        currentPairs: [],
+        matchedPairIds: new Set(),
+        selectedTile: null, // Voor tap-to-connect { element, pairId, side }
+        activeDrag: null,   // { pointerId, fromTile, tempLine }
+        completedLines: []  // Bewaar SVG lines
+      },
+      p2: {
+        id: 'p2',
+        name: 'Speler 2',
+        themeColor: '#fb923c', // orange-400
+        activeLineColor: '#f97316',
+        container: document.getElementById('zone-p2'),
+        svg: document.getElementById('svg-p2'),
+        colA: document.getElementById('p2-col-a'),
+        colB: document.getElementById('p2-col-b'),
+        banner: document.getElementById('p2-banner'),
+        scoreEl: document.getElementById('p2-score'),
+        starsEl: document.getElementById('p2-stars'),
+        // Ronde data
+        currentPairs: [],
+        matchedPairIds: new Set(),
+        selectedTile: null,
+        activeDrag: null,
+        completedLines: []
+      }
+    };
+
+    /* =====================================================================
+     * 5. INITIALISATIE & RONDE SETUP
+     * ===================================================================== */
+    function startNewGame() {
+      currentRound = 1;
+      p1Score = 0;
+      p2Score = 0;
+      usedPairIndexes = [];
+      updateScoreboardUI();
+      document.getElementById('game-over-screen').classList.add('hidden');
+      setupRound();
+    }
+
+    function setupRound() {
+      roundActive = true;
+      document.getElementById('round-indicator').textContent = currentRound;
+      document.getElementById('round-intermission').classList.add('hidden');
+      players.p1.banner.classList.add('hidden');
+      players.p2.banner.classList.add('hidden');
+
+      // Kies PAIRS_PER_ROUND unieke paren voor deze ronde
+      let availableIndices = [];
+      for (let i = 0; i < ALL_PAIRS.length; i++) {
+        if (!usedPairIndexes.includes(i)) availableIndices.push(i);
+      }
+      if (availableIndices.length < PAIRS_PER_ROUND) {
+        usedPairIndexes = [];
+        availableIndices = ALL_PAIRS.map((_, i) => i);
+      }
+
+      availableIndices = shuffleArray(availableIndices);
+      const selectedIndices = availableIndices.slice(0, PAIRS_PER_ROUND);
+      selectedIndices.forEach(idx => usedPairIndexes.push(idx));
+
+      const roundPairs = selectedIndices.map(idx => ALL_PAIRS[idx]);
+
+      // Beide spelers krijgen DEZELFDE paren zodat het 100% eerlijk is, 
+      // maar elk in hun eigen willekeurige volgorde links en rechts gehusseld!
+      initPlayerBoard(players.p1, roundPairs);
+      initPlayerBoard(players.p2, roundPairs);
+    }
+
+    function initPlayerBoard(player, pairs) {
+      player.currentPairs = pairs;
+      player.matchedPairIds.clear();
+      player.selectedTile = null;
+      player.activeDrag = null;
+      player.completedLines = [];
+      player.svg.innerHTML = '';
+      player.colA.innerHTML = '';
+      player.colB.innerHTML = '';
+
+      // Links: Linker items gehusseld
+      const leftItems = shuffleArray(pairs.map(p => ({
+        pairId: p.id,
+        side: 'left',
+        icon: p.left.icon,
+        label: p.left.label
+      })));
+
+      // Rechts: Rechter items gehusseld
+      const rightItems = shuffleArray(pairs.map(p => ({
+        pairId: p.id,
+        side: 'right',
+        icon: p.right.icon,
+        label: p.right.label
+      })));
+
+      // Render Kolom A (Links)
+      leftItems.forEach(item => {
+        const tile = createTileElement(item, player);
+        player.colA.appendChild(tile);
+      });
+
+      // Render Kolom B (Rechts)
+      rightItems.forEach(item => {
+        const tile = createTileElement(item, player);
+        player.colB.appendChild(tile);
+      });
+    }
+
+    // Bouwt een tegel element met grote emoji en tekst
+    function createTileElement(item, player) {
+      const tile = document.createElement('div');
+      tile.className = `card-tile relative flex items-center gap-3 p-3 sm:p-4 rounded-3xl cursor-pointer shadow-lg border-4 transition-all duration-200 select-none
+        ${player.id === 'p1' 
+          ? 'bg-slate-800/90 border-sky-500/60 text-sky-100 hover:border-sky-300' 
+          : 'bg-slate-800/90 border-amber-500/60 text-amber-100 hover:border-amber-300'}`;
+      
+      tile.dataset.pairId = item.pairId;
+      tile.dataset.side = item.side;
+      tile.dataset.player = player.id;
+
+      // Indicator bolletje aan de verbindingszijde (rechts voor links, links voor rechts)
+      const connectorDot = document.createElement('div');
+      connectorDot.className = `absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow-md z-10 
+        ${item.side === 'left' ? '-right-2.5' : '-left-2.5'} 
+        ${player.id === 'p1' ? 'bg-sky-400' : 'bg-amber-400'}`;
+      tile.appendChild(connectorDot);
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'text-4xl sm:text-5xl pointer-events-none filter drop-shadow';
+      iconSpan.textContent = item.icon;
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'text-lg sm:text-xl font-bold tracking-wide pointer-events-none';
+      labelSpan.textContent = item.label;
+
+      if (item.side === 'left') {
+        tile.appendChild(iconSpan);
+        tile.appendChild(labelSpan);
+      } else {
+        // Kolom B heeft de connector aan de linkerkant, emoji en label mooi uitlijnen
+        tile.appendChild(iconSpan);
+        tile.appendChild(labelSpan);
+      }
+
+      // MULTITOUCH POINTER EVENTS (Digibord vriendelijk)
+      attachPointerHandlers(tile, player);
+
+      return tile;
+    }
+
+    /* =====================================================================
+     * 6. POINTER & TOUCH HANDLING (MULTITOUCH PER SPELER)
+     * ===================================================================== */
+    function getTileCenter(tile, container) {
+      const rect = tile.getBoundingClientRect();
+      const parentRect = container.getBoundingClientRect();
+      const side = tile.dataset.side;
+
+      // Lijn start/eindigt aan de connector kant van de tegel
+      const x = side === 'left' 
+        ? (rect.right - parentRect.left) 
+        : (rect.left - parentRect.left);
+      const y = (rect.top + rect.height / 2) - parentRect.top;
+
+      return { x, y };
+    }
+
+    function attachPointerHandlers(tile, player) {
+      tile.addEventListener('pointerdown', (e) => {
+        if (!roundActive) return;
+        // Rechtermuisknop negeren
+        if (e.button !== 0) return;
+
+        const pairId = tile.dataset.pairId;
+        if (player.matchedPairIds.has(pairId)) return; // Reeds gematcht
+
+        // Geluid bij tikken
+        sounds.playSelect();
+
+        // 1. Ondersteun Tap-to-Select (als kind liever 2 keer tikt ipv sleept)
+        if (player.selectedTile && player.selectedTile !== tile) {
+          // Tweede tegel aangetikt!
+          checkAndConnectTiles(player, player.selectedTile, tile);
+          clearTileSelection(player);
+          return;
+        }
+
+        // Selecteer huidige tegel
+        clearTileSelection(player);
+        player.selectedTile = tile;
+        tile.classList.add('selected');
+
+        // 2. Begin een Drag-verbinding (voor direct slepen op het bord)
+        const startPos = getTileCenter(tile, player.container);
+        const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tempLine.setAttribute('x1', startPos.x);
+        tempLine.setAttribute('y1', startPos.y);
+        tempLine.setAttribute('x2', startPos.x);
+        tempLine.setAttribute('y2', startPos.y);
+        tempLine.setAttribute('stroke', player.themeColor);
+        tempLine.setAttribute('stroke-width', '6');
+        tempLine.setAttribute('stroke-dasharray', '8,8');
+        player.svg.appendChild(tempLine);
+
+        player.activeDrag = {
+          pointerId: e.pointerId,
+          fromTile: tile,
+          tempLine: tempLine
+        };
+
+        // Pointer capture zorgt dat move/up soepel blijven binnen het speelveld
+        try {
+          tile.setPointerCapture(e.pointerId);
+        } catch (err) {}
+      });
+
+      tile.addEventListener('pointermove', (e) => {
+        if (!player.activeDrag || player.activeDrag.pointerId !== e.pointerId) return;
+
+        const parentRect = player.container.getBoundingClientRect();
+        const currentX = e.clientX - parentRect.left;
+        const currentY = e.clientY - parentRect.top;
+
+        // Update SVG sleeplijn
+        player.activeDrag.tempLine.setAttribute('x2', currentX);
+        player.activeDrag.tempLine.setAttribute('y2', currentY);
+      });
+
+      const handlePointerEnd = (e) => {
+        if (!player.activeDrag || player.activeDrag.pointerId !== e.pointerId) return;
+
+        const fromTile = player.activeDrag.fromTile;
+        const tempLine = player.activeDrag.tempLine;
+
+        // Verwijder tijdelijke stippellijn
+        if (tempLine && tempLine.parentNode) {
+          tempLine.parentNode.removeChild(tempLine);
+        }
+
+        // Zoek welk element zich onder de vinger bevindt op het moment van loslaten
+        const releaseTarget = document.elementFromPoint(e.clientX, e.clientY);
+        const toTile = releaseTarget ? releaseTarget.closest('.card-tile') : null;
+
+        if (toTile && toTile !== fromTile && toTile.dataset.player === player.id) {
+          // Lijn getrokken naar een geldige tegel!
+          checkAndConnectTiles(player, fromTile, toTile);
+          clearTileSelection(player);
+        }
+
+        try {
+          fromTile.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+        player.activeDrag = null;
+      };
+
+      tile.addEventListener('pointerup', handlePointerEnd);
+      tile.addEventListener('pointercancel', handlePointerEnd);
+    }
+
+    function clearTileSelection(player) {
+      if (player.selectedTile) {
+        player.selectedTile.classList.remove('selected');
+        player.selectedTile = null;
+      }
+    }
+
+    /* =====================================================================
+     * 7. MATCH VALIDATIE & VISUELE CONNECTIES
+     * ===================================================================== */
+    function checkAndConnectTiles(player, tile1, tile2) {
+      // Beide moeten van verschillende zijden zijn (Links naar Rechts)
+      if (tile1.dataset.side === tile2.dataset.side) {
+        // Twee keer dezelfde kant geklikt: wissel simpelweg de selectie
+        sounds.playSelect();
+        tile1.classList.remove('selected');
+        tile2.classList.add('selected');
+        player.selectedTile = tile2;
+        return;
+      }
+
+      const pair1 = tile1.dataset.pairId;
+      const pair2 = tile2.dataset.pairId;
+
+      if (pair1 === pair2) {
+        // JUISTE CONNECTIE! 🎉
+        player.matchedPairIds.add(pair1);
+        sounds.playSuccess();
+
+        // Stijl beide tegels als 'matched'
+        [tile1, tile2].forEach(t => {
+          t.classList.remove('selected');
+          t.classList.add('matched', 'border-emerald-400');
+          t.style.backgroundColor = 'rgba(16, 185, 129, 0.25)';
+          t.style.borderColor = '#34d399';
+        });
+
+        // Permanente vloeiende verbindingslijn tekenen
+        drawPermanentConnection(player, tile1, tile2);
+
+        // Check of deze speler alle paren van de ronde heeft opgelost!
+        if (player.matchedPairIds.size === PAIRS_PER_ROUND) {
+          handlePlayerRoundWin(player);
+        }
+      } else {
+        // FOUTE CONNECTIE ❌
+        sounds.playError();
+
+        // Shake animatie
+        [tile1, tile2].forEach(t => {
+          t.classList.add('bg-rose-950/80', 'border-rose-500');
+          setTimeout(() => {
+            t.classList.remove('bg-rose-950/80', 'border-rose-500');
+          }, 400);
+        });
+      }
+    }
+
+    function drawPermanentConnection(player, tileA, tileB) {
+      const posA = getTileCenter(tileA, player.container);
+      const posB = getTileCenter(tileB, player.container);
+
+      // SVG Lijn met glow effect
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', posA.x);
+      line.setAttribute('y1', posA.y);
+      line.setAttribute('x2', posB.x);
+      line.setAttribute('y2', posB.y);
+      line.setAttribute('stroke', '#10b981'); // Emerald groen
+      line.setAttribute('stroke-width', '7');
+      line.setAttribute('filter', 'drop-shadow(0 0 6px rgba(16,185,129,0.9))');
+
+      player.svg.appendChild(line);
+      player.completedLines.push(line);
+    }
+
+    /* =====================================================================
+     * 8. RONDE OVERWINNING & TRANSITIES
+     * ===================================================================== */
+    function handlePlayerRoundWin(winner) {
+      if (!roundActive) return;
+      roundActive = false;
+
+      sounds.playRoundWin();
+
+      // Confetti op de helft van de winnaar
+      const originX = winner.id === 'p1' ? 0.25 : 0.75;
+      confetti({
+        particleCount: 80,
+        spread: 80,
+        origin: { x: originX, y: 0.6 },
+        colors: winner.id === 'p1' ? ['#38bdf8', '#0284c7', '#ffffff'] : ['#fb923c', '#ea580c', '#ffffff']
+      });
+
+      // Update score
+      if (winner.id === 'p1') {
+        p1Score++;
+      } else {
+        p2Score++;
+      }
+      updateScoreboardUI();
+
+      // Toon winnaar banner over de winnende helft
+      winner.banner.classList.remove('hidden');
+
+      // Na een korte pauze, open de tussenstand overlay
+      setTimeout(() => {
+        showRoundIntermission(winner);
+      }, 1400);
+    }
+
+    function showRoundIntermission(winner) {
+      if (currentRound >= TOTAL_ROUNDS) {
+        // Einde spel!
+        showFinalGameOver();
+        return;
+      }
+
+      const intermission = document.getElementById('round-intermission');
+      const title = document.getElementById('intermission-title');
+      const msg = document.getElementById('intermission-msg');
+      const countSpan = document.getElementById('auto-count');
+
+      title.textContent = `${winner.name} Wint Ronde ${currentRound}!`;
+      title.className = `text-5xl font-black mb-4 animate-bounce ${winner.id === 'p1' ? 'text-sky-400' : 'text-amber-400'}`;
+      msg.textContent = `Stand: Speler 1 (${p1Score}) - (${p2Score}) Speler 2. Klaarmaken voor ronde ${currentRound + 1}!`;
+
+      intermission.classList.remove('hidden');
+
+      // Automatische countdown van 4 seconden
+      let secondsLeft = 4;
+      countSpan.textContent = secondsLeft;
+      clearInterval(intermissionTimer);
+
+      intermissionTimer = setInterval(() => {
+        secondsLeft--;
+        countSpan.textContent = secondsLeft;
+        if (secondsLeft <= 0) {
+          clearInterval(intermissionTimer);
+          nextRound();
+        }
+      }, 1000);
+    }
+
+    function nextRound() {
+      clearInterval(intermissionTimer);
+      currentRound++;
+      if (currentRound > TOTAL_ROUNDS) {
+        showFinalGameOver();
+      } else {
+        setupRound();
+      }
+    }
+
+    function updateScoreboardUI() {
+      document.getElementById('p1-score').textContent = p1Score;
+      document.getElementById('p2-score').textContent = p2Score;
+
+      // Update sterren / rondes indicatoren
+      const renderStars = (container, score) => {
+        container.innerHTML = '';
+        for (let i = 1; i <= TOTAL_ROUNDS; i++) {
+          const star = document.createElement('span');
+          star.textContent = i <= score ? '⭐' : '⚪';
+          container.appendChild(star);
+        }
+      };
+
+      renderStars(players.p1.starsEl, p1Score);
+      renderStars(players.p2.starsEl, p2Score);
+    }
+
+    /* =====================================================================
+     * 9. EINDRESULTAAT SCHERM & FINALE CONFETTI
+     * ===================================================================== */
+    function showFinalGameOver() {
+      roundActive = false;
+      document.getElementById('round-intermission').classList.add('hidden');
+      const gameOverScreen = document.getElementById('game-over-screen');
+      const announcement = document.getElementById('winner-announcement');
+
+      document.getElementById('p1-final-score').textContent = p1Score;
+      document.getElementById('p2-final-score').textContent = p2Score;
+
+      if (p1Score > p2Score) {
+        announcement.textContent = '🎉 Speler 1 (Blauw) is de Grote Kampioen! 🎉';
+        announcement.className = 'text-4xl font-extrabold text-sky-400 mb-8';
+      } else if (p2Score > p1Score) {
+        announcement.textContent = '🎉 Speler 2 (Oranje) is de Grote Kampioen! 🎉';
+        announcement.className = 'text-4xl font-extrabold text-amber-400 mb-8';
+      } else {
+        announcement.textContent = '🤝 Gelijkspel! Jullie zijn allebei toppers! 🤝';
+        announcement.className = 'text-4xl font-extrabold text-yellow-300 mb-8';
+      }
+
+      gameOverScreen.classList.remove('hidden');
+
+      // Grote feestelijke confetti salvo's
+      const end = Date.now() + 3000;
+      const interval = setInterval(() => {
+        if (Date.now() > end) {
+          return clearInterval(interval);
+        }
+        confetti({
+          startVelocity: 30,
+          spread: 360,
+          ticks: 60,
+          origin: { x: Math.random(), y: Math.random() - 0.2 }
+        });
+      }, 300);
+    }
+
+    /* =====================================================================
+     * 10. EVENT LISTENERS VOOR KNOPPEN EN RESIZE
+     * ===================================================================== */
+    document.getElementById('btn-next-round').addEventListener('click', () => {
+      sounds.init();
+      nextRound();
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      sounds.init();
+      startNewGame();
+    });
+
+    // Herteken lijnen bij venster resize (bijv. als het digibord naar fullscreen gaat)
+    window.addEventListener('resize', () => {
+      [players.p1, players.p2].forEach(p => {
+        p.svg.innerHTML = '';
+        p.completedLines = [];
+        p.matchedPairIds.forEach(pairId => {
+          const tileA = p.colA.querySelector(`[data-pair-id="${pairId}"]`);
+          const tileB = p.colB.querySelector(`[data-pair-id="${pairId}"]`);
+          if (tileA && tileB) {
+            drawPermanentConnection(p, tileA, tileB);
+          }
+        });
+      });
+    });
+
+    // Start spel direct bij het laden
+    window.addEventListener('load', () => {
+      startNewGame();
+    });
+  </script>
+</body>
+</html>
