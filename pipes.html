@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pipes Puzzle - Digibord 2 Spelers</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Orbitron & Inter voor een strakke, moderne stijl -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      touch-action: none;
+      overflow: hidden;
+      background-color: #090d16;
+    }
+    .font-tech {
+      font-family: 'Chakra Petch', sans-serif;
+    }
+    /* Pijptegel interactie */
+    .pipe-cell {
+      touch-action: manipulation;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.08s ease;
+    }
+    .pipe-cell:active {
+      transform: scale(0.96);
+    }
+    .pipe-inner {
+      transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.25, 1);
+      width: 100%;
+      height: 100%;
+    }
+    /* Pulse voor de centrale energiebron */
+    @keyframes pulse-core {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 14px currentColor); }
+    }
+    .power-core-pulse {
+      animation: pulse-core 1.8s infinite ease-in-out;
+      transform-origin: center;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between select-none text-slate-100">
+
+  <!-- ================= TOP BALK / CONTROLS ================= -->
+  <header class="h-20 bg-slate-900/90 border-b-2 border-slate-800 px-6 flex items-center justify-between shadow-xl z-20 shrink-0">
+    <!-- Speler 1 Label -->
+    <div class="flex items-center gap-3">
+      <div class="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_12px_#22d3ee]"></div>
+      <div>
+        <h1 class="text-xl font-tech font-bold text-cyan-400 tracking-wider">SPELER 1</h1>
+        <p class="text-xs text-slate-400 font-medium">Verbind alle buizen</p>
+      </div>
+    </div>
+
+    <!-- Midden Controls: Grid Switch & Nieuw Spel -->
+    <div class="flex items-center gap-4">
+      <!-- Grid Keuze (3x3 / 4x4) -->
+      <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 shadow-inner">
+        <button id="btn-grid-3" class="px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 bg-cyan-500 text-slate-950 shadow-md">
+          3 × 3
+        </button>
+        <button id="btn-grid-4" class="px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 text-slate-300 hover:text-white">
+          4 × 4
+        </button>
+      </div>
+
+      <!-- Nieuw Spel Knop -->
+      <button id="btn-new-game" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-95 text-slate-950 font-tech font-bold text-base rounded-xl shadow-lg border border-teal-300 flex items-center gap-2 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Nieuw Spel
+      </button>
+
+      <!-- Geluid Aan/Uit -->
+      <button id="btn-mute" class="w-11 h-11 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-slate-300 transition" title="Geluid aan/uit">
+        <span id="mute-icon" class="text-lg">🔊</span>
+      </button>
+    </div>
+
+    <!-- Speler 2 Label -->
+    <div class="flex items-center gap-3 flex-row-reverse text-right">
+      <div class="w-4 h-4 rounded-full bg-amber-400 shadow-[0_0_12px_#f59e0b]"></div>
+      <div>
+        <h1 class="text-xl font-tech font-bold text-amber-400 tracking-wider">SPELER 2</h1>
+        <p class="text-xs text-slate-400 font-medium">Verbind alle buizen</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HOOFD SPEELVELD (2 IDENTIEKE PUZZELS) ================= -->
+  <main class="relative flex-1 flex w-full h-[calc(100vh-5rem)] overflow-hidden">
+
+    <!-- SPELER 1 VELD (LINKS - CYAN) -->
+    <section id="p1-panel" class="relative flex-1 h-full bg-gradient-to-b from-slate-950 via-slate-900 to-[#071520] border-r-2 border-slate-800 flex flex-col items-center justify-center p-6 select-none overflow-hidden">
+      <!-- Subtiel raster en teller -->
+      <div class="absolute top-4 left-6 flex items-center gap-3 text-cyan-300/80 font-tech text-sm tracking-wider pointer-events-none">
+        <span>VERBONDEN:</span>
+        <span id="p1-progress" class="font-bold text-cyan-400 text-lg">0 / 9</span>
+      </div>
+
+      <!-- Speelbord Container Speler 1 -->
+      <div id="p1-board-container" class="relative p-3 rounded-2xl bg-slate-950/80 border-2 border-cyan-500/30 shadow-[0_0_35px_rgba(6,182,212,0.15)] flex items-center justify-center">
+        <div id="p1-grid" class="grid gap-2 sm:gap-3"></div>
+      </div>
+
+      <!-- Overwinning Banner P1 -->
+      <div id="p1-win-banner" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-6">
+        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center mb-4 shadow-[0_0_30px_#22d3ee]">
+          <span class="text-4xl text-cyan-300">⚡</span>
+        </div>
+        <h2 class="text-4xl sm:text-5xl font-tech font-black text-cyan-400 mb-2 tracking-wide">SPELER 1 WINT!</h2>
+        <p class="text-slate-300 text-lg font-medium max-w-sm mb-6">Alle buizen zijn succesvol aangesloten op de hoofdcentrale.</p>
+        <button class="btn-play-again px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-tech font-bold text-lg rounded-xl shadow-lg transition">
+          Nieuwe Ronde
+        </button>
+      </div>
+    </section>
+
+    <!-- SPELER 2 VELD (RECHTS - AMBER) -->
+    <section id="p2-panel" class="relative flex-1 h-full bg-gradient-to-b from-slate-950 via-slate-900 to-[#201507] border-l-2 border-slate-800 flex flex-col items-center justify-center p-6 select-none overflow-hidden">
+      <!-- Subtiel raster en teller -->
+      <div class="absolute top-4 right-6 flex items-center gap-3 text-amber-300/80 font-tech text-sm tracking-wider pointer-events-none">
+        <span>VERBONDEN:</span>
+        <span id="p2-progress" class="font-bold text-amber-400 text-lg">0 / 9</span>
+      </div>
+
+      <!-- Speelbord Container Speler 2 -->
+      <div id="p2-board-container" class="relative p-3 rounded-2xl bg-slate-950/80 border-2 border-amber-500/30 shadow-[0_0_35px_rgba(245,158,11,0.15)] flex items-center justify-center">
+        <div id="p2-grid" class="grid gap-2 sm:gap-3"></div>
+      </div>
+
+      <!-- Overwinning Banner P2 -->
+      <div id="p2-win-banner" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-6">
+        <div class="w-20 h-20 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center mb-4 shadow-[0_0_30px_#f59e0b]">
+          <span class="text-4xl text-amber-300">⚡</span>
+        </div>
+        <h2 class="text-4xl sm:text-5xl font-tech font-black text-amber-400 mb-2 tracking-wide">SPELER 2 WINT!</h2>
+        <p class="text-slate-300 text-lg font-medium max-w-sm mb-6">Alle buizen zijn succesvol aangesloten op de hoofdcentrale.</p>
+        <button class="btn-play-again px-8 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-tech font-bold text-lg rounded-xl shadow-lg transition">
+          Nieuwe Ronde
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* =====================================================================
+     * 1. RECHTERMUISKNOP CONTEXTMENU UITGESCHAKELD (VERPLICHT VOOR DIGIBORD)
+     * ===================================================================== */
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+
+    /* =====================================================================
+     * 2. AUDIO SYNTH (Web Audio API - Geen externe audio-bestanden)
+     * ===================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playRotate() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(760, now + 0.05);
+
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } catch (e) {}
+      }
+      playWin() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const notes = [440, 554.37, 659.25, 880, 1108.73];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.45);
+          });
+        } catch (e) {}
+      }
+    }
+    const sounds = new SoundEngine();
+
+    /* =====================================================================
+     * 3. GAME CONSTANTEN & BUIZEN BITMASK
+     * Bitmask representatie:
+     * 1 = Boven (N), 2 = Rechts (E), 4 = Onder (S), 8 = Links (W)
+     * ===================================================================== */
+    const DIR = {
+      N: 1, // 0001
+      E: 2, // 0010
+      S: 4, // 0100
+      W: 8  // 1000
+    };
+    const OPPOSITE = {
+      [DIR.N]: DIR.S,
+      [DIR.S]: DIR.N,
+      [DIR.E]: DIR.W,
+      [DIR.W]: DIR.E
+    };
+
+    // Roteer masker 90 graden met de klok mee
+    function rotateMaskClockwise(mask) {
+      let next = 0;
+      if (mask & DIR.N) next |= DIR.E;
+      if (mask & DIR.E) next |= DIR.S;
+      if (mask & DIR.S) next |= DIR.W;
+      if (mask & DIR.W) next |= DIR.N;
+      return next;
+    }
+
+    /* =====================================================================
+     * 4. PUZZLE GENERATIE (SPANNING TREE / NET ALGORITME)
+     * ===================================================================== */
+    let gridSize = 3; // Standaard 3 of 4
+    let gameActive = false;
+
+    // Spelers data
+    const p1State = {
+      id: 'p1',
+      name: 'Speler 1',
+      color: '#22d3ee', // Cyan
+      glowColor: 'rgba(34, 211, 238, 0.65)',
+      gridEl: document.getElementById('p1-grid'),
+      bannerEl: document.getElementById('p1-win-banner'),
+      progressEl: document.getElementById('p1-progress'),
+      tiles: []
+    };
+
+    const p2State = {
+      id: 'p2',
+      name: 'Speler 2',
+      color: '#f59e0b', // Amber
+      glowColor: 'rgba(245, 158, 11, 0.65)',
+      gridEl: document.getElementById('p2-grid'),
+      bannerEl: document.getElementById('p2-win-banner'),
+      progressEl: document.getElementById('p2-progress'),
+      tiles: []
+    };
+
+    // Genereer een gegarandeerd oplosbaar netwerk op N x N
+    function generatePuzzle(size) {
+      const total = size * size;
+      const baseMasks = new Array(total).fill(0);
+      const visited = new Array(total).fill(false);
+
+      // Centrum tegel is de energiecentrale (bron)
+      const centerR = Math.floor(size / 2);
+      const centerC = Math.floor(size / 2);
+      const centerIdx = centerR * size + centerC;
+
+      // Spanning Tree generatie via Randomized Prim / Kruskal
+      const inTree = new Set();
+      const walls = [];
+
+      function getNeighbors(idx) {
+        const r = Math.floor(idx / size);
+        const c = idx % size;
+        const res = [];
+        if (r > 0) res.push({ to: idx - size, dir: DIR.N });
+        if (r < size - 1) res.push({ to: idx + size, dir: DIR.S });
+        if (c > 0) res.push({ to: idx - 1, dir: DIR.W });
+        if (c < size - 1) res.push({ to: idx + 1, dir: DIR.E });
+        return res;
+      }
+
+      inTree.add(centerIdx);
+      getNeighbors(centerIdx).forEach(n => {
+        walls.push({ u: centerIdx, v: n.to, dir: n.dir });
+      });
+
+      while (inTree.size < total && walls.length > 0) {
+        const wallIdx = Math.floor(Math.random() * walls.length);
+        const { u, v, dir } = walls.splice(wallIdx, 1)[0];
+
+        if (!inTree.has(v)) {
+          inTree.add(v);
+          baseMasks[u] |= dir;
+          baseMasks[v] |= OPPOSITE[dir];
+
+          getNeighbors(v).forEach(n => {
+            if (!inTree.has(n.to)) {
+              walls.push({ u: v, v: n.to, dir: n.dir });
+            }
+          });
+        }
+      }
+
+      // Nu we een complete, samenhangende boom hebben, verdraaien we de tegels willekeurig.
+      // We zorgen dat ze niet toevallig allemaal meteen al goed staan.
+      const initialRotations = [];
+      let allZero = true;
+
+      for (let i = 0; i < total; i++) {
+        // Rotatie tussen 0 en 3 kwartslagen (0, 90, 180, 270 deg)
+        let r = Math.floor(Math.random() * 4);
+        // Voor een tegel met 4 verbindingen (kruis) of 0 maakt rotatie visueel niet uit,
+        // maar voor bochten, T-splitsingen en eindpunten wel.
+        if (r !== 0) allZero = false;
+        initialRotations.push(r);
+      }
+
+      // Als toevallig alles op 0 stond, forceren we minstens een paar verdraaiingen
+      if (allZero) {
+        initialRotations[0] = 1;
+        initialRotations[total - 1] = 2;
+      }
+
+      return {
+        size,
+        centerIdx,
+        baseMasks,
+        initialRotations
+      };
+    }
+
+    /* =====================================================================
+     * 5. SVG BUIZEN TEKENEN (HOOGWAARDIGE VECTOR GRAPHICS)
+     * ===================================================================== */
+    function createPipeSvg(mask, isSource, isPowered, themeColor, glowColor) {
+      const activeColor = isPowered ? themeColor : '#334155';
+      const glowFilter = isPowered ? `style="filter: drop-shadow(0 0 5px ${glowColor});"` : '';
+      const strokeWidth = 14;
+
+      // Basis SVG element
+      let paths = '';
+
+      // Centrale hub / cirkel in het midden van de buis
+      paths += `<circle cx="50" cy="50" r="8" fill="${activeColor}" ${glowFilter} />`;
+
+      // Buistakken naar de 4 randen (midden naar kant)
+      if (mask & DIR.N) {
+        paths += `<line x1="50" y1="50" x2="50" y2="0" stroke="${activeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" ${glowFilter} />`;
+      }
+      if (mask & DIR.E) {
+        paths += `<line x1="50" y1="50" x2="100" y2="50" stroke="${activeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" ${glowFilter} />`;
+      }
+      if (mask & DIR.S) {
+        paths += `<line x1="50" y1="50" x2="50" y2="100" stroke="${activeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" ${glowFilter} />`;
+      }
+      if (mask & DIR.W) {
+        paths += `<line x1="50" y1="50" x2="0" y2="50" stroke="${activeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" ${glowFilter} />`;
+      }
+
+      // Als dit de hoofd-energiebron is, tekenen we een herkenbare pulserende kern in het midden
+      if (isSource) {
+        paths += `
+          <g class="power-core-pulse" style="color: ${themeColor}">
+            <circle cx="50" cy="50" r="14" fill="${themeColor}" />
+            <polygon points="50,40 54,48 62,49 56,55 58,63 50,58 42,63 44,55 38,49 46,48" fill="#090d16" />
+          </g>
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 100 100" class="w-full h-full block">
+          ${paths}
+        </svg>
+      `;
+    }
+
+    /* =====================================================================
+     * 6. BORDBOUW & MULTI-TOUCH POINTER HANDLERS
+     * ===================================================================== */
+    let currentPuzzleData = null;
+
+    function buildPlayerBoard(player, puzzle) {
+      player.gridEl.innerHTML = '';
+      player.bannerEl.classList.add('hidden');
+      player.tiles = [];
+
+      // Stel CSS Grid kolommen in op basis van 3x3 of 4x4
+      player.gridEl.className = `grid gap-2 sm:gap-3.5 ${puzzle.size === 3 ? 'grid-cols-3' : 'grid-cols-4'}`;
+
+      // Bereken tegelformaat zodat het altijd mooi past op elk digibord
+      const cellSize = puzzle.size === 3 
+        ? 'w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32' 
+        : 'w-18 h-18 sm:w-22 sm:h-22 md:w-24 md:h-24';
+
+      for (let i = 0; i < puzzle.size * puzzle.size; i++) {
+        const isSource = (i === puzzle.centerIdx);
+        const baseMask = puzzle.baseMasks[i];
+        const rotSteps = puzzle.initialRotations[i];
+
+        // Bereken huidig effectief masker op basis van rotatie
+        let curMask = baseMask;
+        for (let r = 0; r < rotSteps; r++) {
+          curMask = rotateMaskClockwise(curMask);
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `pipe-cell ${cellSize} rounded-2xl bg-slate-900 border-2 border-slate-800 flex items-center justify-center p-1.5 cursor-pointer shadow-md select-none relative overflow-hidden`;
+        
+        const inner = document.createElement('div');
+        inner.className = 'pipe-inner';
+        cell.appendChild(inner);
+
+        const tileObj = {
+          idx: i,
+          isSource,
+          baseMask,
+          rotSteps: rotSteps % 4,
+          curMask,
+          isPowered: isSource,
+          cellEl: cell,
+          innerEl: inner
+        };
+
+        player.tiles.push(tileObj);
+
+        // Onafhankelijk Pointer Event (Touch / Digibord / Muis)
+        // Hiermee kunnen beide kinderen exact op hetzelfde moment drukken
+        cell.addEventListener('pointerdown', (e) => {
+          if (!gameActive) return;
+          if (e.button !== 0) return; // Alleen primaire klik / touch
+
+          e.preventDefault();
+          sounds.playRotate();
+
+          // 90 graden draaien met de klok mee
+          rotateTile(player, tileObj);
+        });
+
+        player.gridEl.appendChild(cell);
+      }
+
+      // Initiële update van stroompaden
+      updatePowerFlow(player);
+    }
+
+    function rotateTile(player, tile) {
+      tile.rotSteps = (tile.rotSteps + 1) % 4;
+      tile.curMask = rotateMaskClockwise(tile.curMask);
+
+      // Vloeiende CSS rotatie
+      tile.innerEl.style.transform = `rotate(${tile.rotSteps * 90}deg)`;
+
+      // Herbereken de stroomloop
+      updatePowerFlow(player);
+    }
+
+    /* =====================================================================
+     * 7. STROOMBEREKENING (BREADTH-FIRST SEARCH VANAF CENTRALE)
+     * ===================================================================== */
+    function updatePowerFlow(player) {
+      const size = gridSize;
+      const total = size * size;
+      const centerIdx = currentPuzzleData.centerIdx;
+
+      // Reset stroomstatus
+      player.tiles.forEach(t => t.isPowered = false);
+
+      // BFS vanaf energiebron
+      const queue = [centerIdx];
+      player.tiles[centerIdx].isPowered = true;
+      let poweredCount = 1;
+
+      while (queue.length > 0) {
+        const currIdx = queue.shift();
+        const currTile = player.tiles[currIdx];
+        const r = Math.floor(currIdx / size);
+        const c = currIdx % size;
+
+        // Controleer alle 4 de richtingen
+        // NOORD
+        if ((currTile.curMask & DIR.N) && r > 0) {
+          const nIdx = currIdx - size;
+          const nextTile = player.tiles[nIdx];
+          if (!nextTile.isPowered && (nextTile.curMask & DIR.S)) {
+            nextTile.isPowered = true;
+            poweredCount++;
+            queue.push(nIdx);
+          }
+        }
+        // OOST
+        if ((currTile.curMask & DIR.E) && c < size - 1) {
+          const nIdx = currIdx + 1;
+          const nextTile = player.tiles[nIdx];
+          if (!nextTile.isPowered && (nextTile.curMask & DIR.W)) {
+            nextTile.isPowered = true;
+            poweredCount++;
+            queue.push(nIdx);
+          }
+        }
+        // ZUID
+        if ((currTile.curMask & DIR.S) && r < size - 1) {
+          const nIdx = currIdx + size;
+          const nextTile = player.tiles[nIdx];
+          if (!nextTile.isPowered && (nextTile.curMask & DIR.N)) {
+            nextTile.isPowered = true;
+            poweredCount++;
+            queue.push(nIdx);
+          }
+        }
+        // WEST
+        if ((currTile.curMask & DIR.W) && c > 0) {
+          const nIdx = currIdx - 1;
+          const nextTile = player.tiles[nIdx];
+          if (!nextTile.isPowered && (nextTile.curMask & DIR.E)) {
+            nextTile.isPowered = true;
+            poweredCount++;
+            queue.push(nIdx);
+          }
+        }
+      }
+
+      // Werk visuals bij per tegel
+      player.tiles.forEach(t => {
+        // We renderen het basis-SVG (onvervalste stand) en laten de div-container de rotatie doen via CSS transform
+        t.innerEl.innerHTML = createPipeSvg(t.baseMask, t.isSource, t.isPowered, player.color, player.glowColor);
+        t.innerEl.style.transform = `rotate(${t.rotSteps * 90}deg)`;
+
+        // Update tegel styling
+        if (t.isPowered) {
+          t.cellEl.style.borderColor = player.color;
+          t.cellEl.style.backgroundColor = player.id === 'p1' ? 'rgba(8, 51, 68, 0.45)' : 'rgba(69, 26, 3, 0.45)';
+        } else {
+          t.cellEl.style.borderColor = '#1e293b';
+          t.cellEl.style.backgroundColor = '#0b0f19';
+        }
+      });
+
+      // Update voortgang teller
+      player.progressEl.textContent = `${poweredCount} / ${total}`;
+
+      // Check Overwinning! (Alle buizen zijn opgeladen)
+      if (poweredCount === total && gameActive) {
+        handleWin(player);
+      }
+    }
+
+    /* =====================================================================
+     * 8. OVERWINNING EN TRANSITIES
+     * ===================================================================== */
+    function handleWin(winner) {
+      gameActive = false;
+      sounds.playWin();
+
+      // Feestelijke confetti op de zijde van de winnaar
+      const originX = winner.id === 'p1' ? 0.25 : 0.75;
+      confetti({
+        particleCount: 110,
+        spread: 85,
+        origin: { x: originX, y: 0.55 },
+        colors: winner.id === 'p1' ? ['#22d3ee', '#06b6d4', '#ffffff'] : ['#f59e0b', '#d97706', '#ffffff']
+      });
+
+      // Toon winnaar scherm
+      winner.bannerEl.classList.remove('hidden');
+    }
+
+    /* =====================================================================
+     * 9. START EN BEDIENING
+     * ===================================================================== */
+    function startNewGame() {
+      gameActive = true;
+      currentPuzzleData = generatePuzzle(gridSize);
+
+      // Bouw beide identieke velden
+      buildPlayerBoard(p1State, currentPuzzleData);
+      buildPlayerBoard(p2State, currentPuzzleData);
+    }
+
+    // Grid 3x3 knop
+    document.getElementById('btn-grid-3').addEventListener('click', () => {
+      if (gridSize === 3) return;
+      gridSize = 3;
+      updateGridButtons();
+      startNewGame();
+    });
+
+    // Grid 4x4 knop
+    document.getElementById('btn-grid-4').addEventListener('click', () => {
+      if (gridSize === 4) return;
+      gridSize = 4;
+      updateGridButtons();
+      startNewGame();
+    });
+
+    function updateGridButtons() {
+      const b3 = document.getElementById('btn-grid-3');
+      const b4 = document.getElementById('btn-grid-4');
+
+      if (gridSize === 3) {
+        b3.className = "px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 bg-cyan-500 text-slate-950 shadow-md";
+        b4.className = "px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 text-slate-300 hover:text-white";
+      } else {
+        b4.className = "px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 bg-cyan-500 text-slate-950 shadow-md";
+        b3.className = "px-5 py-2 rounded-lg font-tech font-bold text-base transition-all duration-150 text-slate-300 hover:text-white";
+      }
+    }
+
+    // Nieuw Spel knop
+    document.getElementById('btn-new-game').addEventListener('click', () => {
+      sounds.init();
+      startNewGame();
+    });
+
+    // Herstart knoppen in de winnaar banners
+    document.querySelectorAll('.btn-play-again').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sounds.init();
+        startNewGame();
+      });
+    });
+
+    // Mute Knop
+    document.getElementById('btn-mute').addEventListener('click', () => {
+      sounds.muted = !sounds.muted;
+      document.getElementById('mute-icon').textContent = sounds.muted ? '🔇' : '🔊';
+    });
+
+    // Start bij eerste weergave
+    window.addEventListener('load', () => {
+      startNewGame();
+    });
+  </script>
+</body>
+</html>
