@@ -390,6 +390,11 @@
     </div>
 
     <script>
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const customCursor = document.getElementById('custom-cursor');
