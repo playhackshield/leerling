@@ -286,6 +286,11 @@
     </div>
 </div>
 <script>
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+
     (function() {
         const TOTALE_RONDES = 8;
         const STRAF_SECONDEN = 5;
