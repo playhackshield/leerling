@@ -90,7 +90,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             padding: 20px 24px 24px 24px;
             border-left: 6px solid #6a9ec7;
-            display: none; /* standaard verborgen */
+            display: none;
             animation: fadeSlide 0.3s ease;
         }
         .panel.open {
@@ -344,20 +344,17 @@
 
     <script>
         // ============================================================
-        // 1. VRAGENLIJST (10 OPEN VRAGEN – geïnspireerd op jouw lijst)
-        //    Pas deze gerust aan!
+        // 1. VRAGENLIJST (8 OPEN VRAGEN)
         // ============================================================
         const VRAGEN = [
-            { id: 0, tekst: "Hoe was je vakantie? Wat is het meest bijzondere dat je hebt meegemaakt?" },
-            { id: 1, tekst: "Wat deed jij het liefst in je vrije tijd? Houd je meer van beweging of van rust?" },
-            { id: 2, tekst: "Wat vind jij het minst leuk op school? En waarom?" },
-            { id: 3, tekst: "Wat is jouw favoriete onderdeel op school? (bijv. rekenen, taal, tekenen, gym)" },
-            { id: 4, tekst: "Als je 3 uur extra vrije tijd kreeg, wat zou je dan doen? En met wie?" },
-            { id: 5, tekst: "Welke games speel jij het liefst? En speel je liever alleen of samen?" },
-            { id: 6, tekst: "Wat doe jij het liefst op een telefoon, tablet of computer?" },
-            { id: 7, tekst: "Vind jij het belangrijk om te winnen in een spel, of gaat het meer om de lol?" },
-            { id: 8, tekst: "Als je iets online meemaakt dat niet leuk is, wat doe je dan?" },
-            { id: 9, tekst: "Wat vind jij belangrijk in de omgang met anderen? (bijv. eerlijkheid, respect, samenwerken)" }
+            { id: 0, tekst: "Wat vind jij het alleroneerlijkste aan de regels die volwassenen bedenken over jouw schermtijd, en wat zou jij tegen hen zeggen als ze echt één minuut zonder oordeel naar jou zouden luisteren?" },
+            { id: 1, tekst: "Wanneer merk jij bij jezelf heel duidelijk dat een spel of filmpje jou eigenlijk 'te pakken heeft' — en wat is jouw eigen geheime truc of gedachte om dan tóch zelf de baas te blijven?" },
+            { id: 2, tekst: "Wat is iets wat kinderen veel beter snappen aan de online wereld dan volwassenen, en wat zou jij volwassenen daarover willen uitleggen?" },
+            { id: 3, tekst: "Wanneer mag je online iets helemaal voor jezelf houden (een geheim), en wanneer is het juist slim om het wel met iemand te delen?" },
+            { id: 4, tekst: "Waaraan merk jij het allerbeste dat iemand online of in een game een echte vriend is, en niet alleen iemand die iets van je nodig heeft?" },
+            { id: 5, tekst: "Stel je ziet in een groepschat of game dat iemand wordt buitengesloten of genegeerd: wat zou jij doen om diegene het gevoel te geven dat hij of zij er wél bij hoort?" },
+            { id: 6, tekst: "Welke 'superkracht' geeft het internet of technologie jou nu al, waar mensen van honderd jaar geleden alleen maar van konden dromen?" },
+            { id: 7, tekst: "Als jij de baas was over het hele internet en één nieuwe knop mocht uitvinden om andere kinderen blijer te maken of te helpen, wat zou die knop dan doen?" }
         ];
 
         // ============================================================
@@ -365,37 +362,35 @@
         // ============================================================
         let leerlingen = [];
 
-async function loadLeerlingen() {
-    try {
-        // Haal het enige document op uit de "contestants" collectie
-        const snapshot = await db.collection('contestants').limit(1).get();
+        async function loadLeerlingen() {
+            try {
+                const snapshot = await db.collection('contestants').limit(1).get();
 
-        if (snapshot.empty) {
-            throw new Error('Geen document gevonden in de "contestants" collectie');
+                if (snapshot.empty) {
+                    throw new Error('Geen document gevonden in de "contestants" collectie');
+                }
+
+                const data = snapshot.docs[0].data();
+
+                if (data.leerlingen && Array.isArray(data.leerlingen) && data.leerlingen.length > 0) {
+                    leerlingen = data.leerlingen;
+                } else {
+                    throw new Error('Geen geldige leerlingen gevonden in het document');
+                }
+            } catch (err) {
+                console.warn('Fout bij laden leerlingen uit Firebase, gebruik fallback:', err.message);
+                leerlingen = [
+                    { naam: 'Leerling 1', groep: 0 },
+                    { naam: 'Leerling 2', groep: 0 },
+                    { naam: 'Leerling 3', groep: 0 },
+                    { naam: 'Leerling 4', groep: 0 }
+                ];
+                document.getElementById('statusMessage').innerHTML =
+                    '⚠️ <span>Kon leerlingen niet laden uit Firebase — gebruik standaard 4 leerlingen</span>';
+            }
+            renderLeerlingen();
         }
 
-        const data = snapshot.docs[0].data();
-
-        if (data.leerlingen && Array.isArray(data.leerlingen) && data.leerlingen.length > 0) {
-            leerlingen = data.leerlingen;
-        } else {
-            throw new Error('Geen geldige leerlingen gevonden in het document');
-        }
-    } catch (err) {
-        console.warn('Fout bij laden leerlingen uit Firebase, gebruik fallback:', err.message);
-        // Fallback: 4 standaard leerlingen
-        leerlingen = [
-            { naam: 'Leerling 1', groep: 0 },
-            { naam: 'Leerling 2', groep: 0 },
-            { naam: 'Leerling 3', groep: 0 },
-            { naam: 'Leerling 4', groep: 0 }
-        ];
-        document.getElementById('statusMessage').innerHTML =
-            '⚠️ <span>Kon leerlingen niet laden uit Firebase — gebruik standaard 4 leerlingen</span>';
-    }
-    renderLeerlingen();
-}
-        
         // ============================================================
         // 3. RENDEREN
         // ============================================================
@@ -403,16 +398,12 @@ async function loadLeerlingen() {
         const panelContainer = document.getElementById('panelContainer');
         const errorDiv = document.getElementById('errorMessage');
 
-        // Opslag voor antwoorden per leerling (alleen in geheugen)
         const antwoorden = {};
 
         function renderLeerlingen() {
-            // Leegmaken
             grid.innerHTML = '';
             panelContainer.innerHTML = '';
-            antwoorden.clear?.();
 
-            // Kaarten en paneleren maken
             leerlingen.forEach((l, index) => {
                 const naam = l.naam || `Leerling ${index + 1}`;
                 const groep = l.groep !== undefined ? l.groep : '';
@@ -434,9 +425,8 @@ async function loadLeerlingen() {
                 panel.id = `panel-${index}`;
                 panel.dataset.index = index;
 
-                // Vraag dropdown
                 let vraagOptions = VRAGEN.map(v =>
-                    `<option value="${v.id}">${v.id+1}. ${v.tekst.substring(0, 60)}${v.tekst.length > 60 ? '…' : ''}</option>`
+                    `<option value="${v.id}">${v.id+1}. ${v.tekst.substring(0, 70)}${v.tekst.length > 70 ? '…' : ''}</option>`
                 ).join('');
 
                 panel.innerHTML = `
@@ -449,7 +439,7 @@ async function loadLeerlingen() {
                         <select id="vraag-${index}">
                             ${vraagOptions}
                         </select>
-                        <span class="vraag-nummer">vraag 1/10</span>
+                        <span class="vraag-nummer">vraag 1/8</span>
                     </div>
                     <div class="panel-row" style="margin-top:10px;">
                         <label for="antwoord-${index}">✏️ Wat vertelt de leerling?</label>
@@ -458,21 +448,18 @@ async function loadLeerlingen() {
                 `;
                 panelContainer.appendChild(panel);
 
-                // Sluitknop
                 const closeBtn = panel.querySelector('.close-btn');
                 closeBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     closePanel(index);
                 });
 
-                // Opslag in antwoorden object initialiseren
                 antwoorden[index] = {
                     naam: naam,
                     vraagId: 0,
                     antwoord: ''
                 };
 
-                // Event listeners voor opslaan in geheugen
                 const select = panel.querySelector(`#vraag-${index}`);
                 const textarea = panel.querySelector(`#antwoord-${index}`);
 
@@ -484,11 +471,8 @@ async function loadLeerlingen() {
                     antwoorden[index].antwoord = textarea.value;
                 });
 
-                // Initial values
                 antwoorden[index].vraagId = parseInt(select.value);
             });
-
-            // Event listener voor sluiten via klik buiten panel (optional) – doen we niet om verwarring te voorkomen
         }
 
         // ============================================================
@@ -501,11 +485,6 @@ async function loadLeerlingen() {
             if (!panel) return;
 
             const isOpen = panel.classList.contains('open');
-
-            // Alle andere panels sluiten (optioneel: als je maar 1 tegelijk open wilt)
-            // Zo ja, haal commentaar weg:
-            // document.querySelectorAll('.panel.open').forEach(p => p.classList.remove('open'));
-            // document.querySelectorAll('.leerling-card.active').forEach(c => c.classList.remove('active'));
 
             if (isOpen) {
                 closePanel(index);
@@ -540,9 +519,7 @@ async function loadLeerlingen() {
         document.getElementById('generateBtn').addEventListener('click', generatePrompt);
 
         function generatePrompt() {
-            // Alle open panels "opslaan" (de tekst staat al in antwoorden via input events)
-            // Maar we moeten ook de laatste tekst ophalen uit de textareas voor het geval ze niet
-            // door input event zijn geüpdatet (bijv. bij paste zonder event)
+            // Haal laatste waarden op uit de textareas en selects
             leerlingen.forEach((l, index) => {
                 const textarea = document.querySelector(`#antwoord-${index}`);
                 if (textarea) {
@@ -554,7 +531,7 @@ async function loadLeerlingen() {
                 }
             });
 
-            // Verzamel alle ingevulde antwoorden (alleen als er tekst staat)
+            // Verzamel alle ingevulde antwoorden
             const ingevuld = [];
             for (const [index, data] of Object.entries(antwoorden)) {
                 const tekst = data.antwoord?.trim();
@@ -569,7 +546,6 @@ async function loadLeerlingen() {
             }
 
             if (ingevuld.length === 0) {
-                // Toon foutmelding
                 errorDiv.style.display = 'block';
                 errorDiv.textContent = '⚠️ Er zijn nog geen antwoorden ingevuld. Vul eerst bij een leerling iets in!';
                 document.getElementById('promptOutput').classList.remove('visible');
@@ -578,7 +554,40 @@ async function loadLeerlingen() {
                 errorDiv.style.display = 'none';
             }
 
+            // ============================================================
+            // Bepaal het aantal vragen op basis van het aantal leerlingen
+            // ============================================================
+            const aantalLeerlingen = ingevuld.length;
+            let aantalVragenTotaal;
+            let vragenPerLeerling;
+            let verdelingUitleg;
+
+            if (aantalLeerlingen >= 7) {
+                aantalVragenTotaal = aantalLeerlingen;
+                vragenPerLeerling = 1;
+                verdelingUitleg = `Er zijn ${aantalLeerlingen} leerlingen. Genereer precies ${aantalVragenTotaal} vragen in totaal (1 vraag per leerling).`;
+            } else if (aantalLeerlingen === 6) {
+                aantalVragenTotaal = 12;
+                vragenPerLeerling = 2;
+                verdelingUitleg = `Er zijn ${aantalLeerlingen} leerlingen. Genereer precies ${aantalVragenTotaal} vragen in totaal (2 vragen per leerling).`;
+            } else if (aantalLeerlingen === 5) {
+                aantalVragenTotaal = 10;
+                vragenPerLeerling = 2;
+                verdelingUitleg = `Er zijn ${aantalLeerlingen} leerlingen. Genereer precies ${aantalVragenTotaal} vragen in totaal (2 vragen per leerling).`;
+            } else if (aantalLeerlingen === 4) {
+                aantalVragenTotaal = 12;
+                vragenPerLeerling = 3;
+                verdelingUitleg = `Er zijn ${aantalLeerlingen} leerlingen. Genereer precies ${aantalVragenTotaal} vragen in totaal (3 vragen per leerling).`;
+            } else {
+                // 1, 2 of 3 leerlingen – spel gaat toch niet door, maar we genereren wel een prompt
+                aantalVragenTotaal = aantalLeerlingen * 2;
+                vragenPerLeerling = 2;
+                verdelingUitleg = `Er zijn ${aantalLeerlingen} leerlingen. Genereer precies ${aantalVragenTotaal} vragen in totaal (2 vragen per leerling).`;
+            }
+
+            // ============================================================
             // Bouw de prompt
+            // ============================================================
             let prompt = `Ik heb een kennismakingsronde gedaan in mijn klas. Leerlingen vertelden over zichzelf. Hier zijn de antwoorden:\n\n`;
 
             ingevuld.forEach(item => {
@@ -589,21 +598,24 @@ async function loadLeerlingen() {
             });
 
             prompt += `---\n`;
-            prompt += `Gebruik deze antwoorden om voor ELKE leerling een leuke en interessante meerkeuzevraag te maken met 4 antwoorden (1 goed, 3 fout).\n`;
-            prompt += `De vragen moeten gaan over wat de leerling zelf heeft verteld. Zorg dat de vragen afwisselend en verrassend zijn.\n`;
-            prompt += `\n`;
-            prompt += `Genereer de output als een JSON array met de volgende structuur:\n`;
+            prompt += `OPDRACHT:\n`;
+            prompt += `Maak meerkeuzevragen voor een quiz op basis van wat elke leerling heeft verteld.\n`;
+            prompt += `Elke vraag heeft 4 antwoorden (1 goed, 3 fout). Zorg dat de vragen afwisselend en verrassend zijn, en dat ze gaan over wat de leerling zelf heeft verteld.\n\n`;
+            prompt += `AANTAL VRAGEN:\n`;
+            prompt += verdelingUitleg + `\n`;
+            prompt += `Zorg dat elke leerling precies ${vragenPerLeerling} vraag/vragen krijgt toegewezen. Als er meerdere vragen per leerling zijn, zorg dan dat ze verschillende aspecten van het verhaal belichten.\n\n`;
+            prompt += `OUTPUT FORMAT:\n`;
+            prompt += `Genereer de output als een geldige JSON array met de volgende structuur:\n`;
             prompt += `[\n`;
             prompt += `  {\n`;
             prompt += `    "leerling": "Naam van de leerling",\n`;
             prompt += `    "vraag": "De meerkeuzevraag",\n`;
             prompt += `    "opties": ["Optie A", "Optie B", "Optie C", "Optie D"],\n`;
-            prompt += `    "correct": 0  // index van het juiste antwoord (0 t/m 3)\n`;
+            prompt += `    "correct": 0\n`;
             prompt += `  },\n`;
             prompt += `  ...\n`;
-            prompt += `]\n`;
-            prompt += `\n`;
-            prompt += `Let op: de JSON moet geldig zijn en alleen de array bevatten (geen extra tekst eromheen).\n`;
+            prompt += `]\n\n`;
+            prompt += `Let op: "correct" is de index (0 t/m 3) van het juiste antwoord. De JSON moet geldig zijn en alleen de array bevatten (geen extra tekst eromheen).\n`;
 
             // Toon de prompt
             const outputDiv = document.getElementById('promptOutput');
@@ -611,12 +623,10 @@ async function loadLeerlingen() {
             textarea.value = prompt;
             outputDiv.classList.add('visible');
 
-            // Scroll naar de output
             outputDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            // Feedback over aantal leerlingen
             document.getElementById('statusMessage').innerHTML =
-                `✅ <span>${ingevuld.length} leerling(en) verwerkt in de prompt</span>`;
+                `✅ <span>${ingevuld.length} leerling(en) verwerkt — ${aantalVragenTotaal} vragen gevraagd aan de AI</span>`;
         }
 
         // ============================================================
@@ -630,7 +640,6 @@ async function loadLeerlingen() {
                 navigator.clipboard.writeText(textarea.value).then(() => {
                     showCopyFeedback(true);
                 }).catch(() => {
-                    // Fallback: gebruik de oude execCommand methode
                     document.execCommand('copy');
                     showCopyFeedback(true);
                 });
@@ -654,9 +663,6 @@ async function loadLeerlingen() {
         // 7. START
         // ============================================================
         loadLeerlingen();
-
-        // Als er op een lege plek wordt geklikt, sluit dan alle panels? (optioneel)
-        // Niet doen om frustratie te voorkomen.
 
         console.log('✅ Kennismakingspagina geladen. Vragen: ', VRAGEN.length);
     </script>
