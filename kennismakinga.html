@@ -425,10 +425,9 @@
                 panel.id = `panel-${index}`;
                 panel.dataset.index = index;
 
-                let vraagOptions = VRAGEN.map(v =>
-                    `<option value="${v.id}">${v.id+1}. ${v.tekst.substring(0, 70)}${v.tekst.length > 70 ? '…' : ''}</option>`
-                ).join('');
-
+let vraagOptions = VRAGEN.map(v =>
+    `<option value="${v.id}">${v.id+1}. ${v.tekst}</option>`
+).join('');
                 panel.innerHTML = `
                     <div class="panel-header">
                         <h2>${naam}</h2>
