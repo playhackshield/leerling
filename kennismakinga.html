@@ -136,10 +136,8 @@
         .panel-row label {
             font-weight: 500;
             color: #2a4a6a;
-            min-width: 120px;
             font-size: 0.95rem;
         }
-        .panel-row select,
         .panel-row textarea {
             flex: 1;
             min-width: 200px;
@@ -151,7 +149,6 @@
             background: #fafcfe;
             transition: border 0.2s;
         }
-        .panel-row select:focus,
         .panel-row textarea:focus {
             outline: none;
             border-color: #4a8ab0;
@@ -162,13 +159,68 @@
             resize: vertical;
             font-family: inherit;
         }
-        .panel-row .vraag-nummer {
-            font-size: 0.85rem;
-            color: #6a8aaa;
-            background: #eaf0f6;
-            padding: 2px 12px;
-            border-radius: 20px;
-            white-space: nowrap;
+
+        /* ===== VRAAG-KAARTJES (alternatief voor dropdown) ===== */
+        .vraag-kaartjes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .vraag-kaartje {
+            background: #fafcfe;
+            border: 2px solid #d0dce8;
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            line-height: 1.45;
+            color: #1a2a3a;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .vraag-kaartje:hover {
+            border-color: #6a9ec7;
+            background: #f0f7fc;
+            transform: translateX(2px);
+        }
+
+        .vraag-kaartje.selected {
+            border-color: #2a6a9a;
+            background: #e3f0fa;
+            box-shadow: 0 0 0 3px rgba(42, 106, 154, 0.15);
+        }
+
+        .vraag-kaartje .vraag-nummer-badge {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #d0dce8;
+            color: #2a4a6a;
+            font-weight: 700;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .vraag-kaartje.selected .vraag-nummer-badge {
+            background: #2a6a9a;
+            color: white;
+        }
+
+        .vraag-kaartje .vraag-tekst-inhoud {
+            flex: 1;
+            padding-top: 2px;
         }
 
         /* ===== GENEREER KNOP ===== */
@@ -281,10 +333,6 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            .panel-row label {
-                min-width: auto;
-            }
-            .panel-row select,
             .panel-row textarea {
                 min-width: auto;
             }
@@ -307,36 +355,6 @@
             margin: 10px auto;
             text-align: center;
         }
-        .loading {
-            text-align: center;
-            color: #4a6a8a;
-            padding: 30px;
-        }
-/* Zorg dat de volledige vraag zichtbaar is in de dropdown */
-.panel-row select {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    height: auto;
-    min-height: 44px;
-    line-height: 1.4;
-}
-
-/* Voor de uitgeklapte opties (werkt in de meeste moderne browsers) */
-.panel-row select option {
-    white-space: normal;
-    word-wrap: break-word;
-    padding: 8px;
-    line-height: 1.4;
-}
-
-/* Maak de select breder op grotere schermen */
-@media (min-width: 700px) {
-    .panel-row select {
-        min-width: 400px;
-        flex: 1 1 400px;
-    }
-}
     </style>
 </head>
 <body>
@@ -450,22 +468,26 @@
                 panel.id = `panel-${index}`;
                 panel.dataset.index = index;
 
-let vraagOptions = VRAGEN.map(v =>
-    `<option value="${v.id}">${v.id+1}. ${v.tekst}</option>`
-).join('');
+                // Bouw de kaartjes voor alle vragen
+                let vraagKaartjesHTML = VRAGEN.map(v => `
+                    <div class="vraag-kaartje ${v.id === 0 ? 'selected' : ''}" data-vraag-id="${v.id}" data-leerling-index="${index}">
+                        <span class="vraag-nummer-badge">${v.id + 1}</span>
+                        <span class="vraag-tekst-inhoud">${v.tekst}</span>
+                    </div>
+                `).join('');
+
                 panel.innerHTML = `
                     <div class="panel-header">
                         <h2>${naam}</h2>
                         <button class="close-btn" data-index="${index}">&times;</button>
                     </div>
-                    <div class="panel-row">
-                        <label for="vraag-${index}">📌 Vraag:</label>
-                        <select id="vraag-${index}">
-                            ${vraagOptions}
-                        </select>
-                        <span class="vraag-nummer">vraag 1/8</span>
+                    <div class="panel-row" style="margin-bottom: 8px;">
+                        <label>📌 Kies een vraag:</label>
                     </div>
-                    <div class="panel-row" style="margin-top:10px;">
+                    <div class="vraag-kaartjes" id="vraag-kaartjes-${index}">
+                        ${vraagKaartjesHTML}
+                    </div>
+                    <div class="panel-row" style="margin-top:16px;">
                         <label for="antwoord-${index}">✏️ Wat vertelt de leerling?</label>
                         <textarea id="antwoord-${index}" placeholder="Typ hier de sleutelwoorden of het verhaal van ${naam}…"></textarea>
                     </div>
@@ -484,18 +506,20 @@ let vraagOptions = VRAGEN.map(v =>
                     antwoord: ''
                 };
 
-                const select = panel.querySelector(`#vraag-${index}`);
-                const textarea = panel.querySelector(`#antwoord-${index}`);
-
-                select.addEventListener('change', () => {
-                    antwoorden[index].vraagId = parseInt(select.value);
+                // Click-listeners voor de vraag-kaartjes
+                const kaartjes = panel.querySelectorAll('.vraag-kaartje');
+                kaartjes.forEach(kaartje => {
+                    kaartje.addEventListener('click', () => {
+                        kaartjes.forEach(k => k.classList.remove('selected'));
+                        kaartje.classList.add('selected');
+                        antwoorden[index].vraagId = parseInt(kaartje.dataset.vraagId);
+                    });
                 });
 
+                const textarea = panel.querySelector(`#antwoord-${index}`);
                 textarea.addEventListener('input', () => {
                     antwoorden[index].antwoord = textarea.value;
                 });
-
-                antwoorden[index].vraagId = parseInt(select.value);
             });
         }
 
@@ -543,16 +567,13 @@ let vraagOptions = VRAGEN.map(v =>
         document.getElementById('generateBtn').addEventListener('click', generatePrompt);
 
         function generatePrompt() {
-            // Haal laatste waarden op uit de textareas en selects
+            // Haal laatste waarden op uit de textareas
             leerlingen.forEach((l, index) => {
                 const textarea = document.querySelector(`#antwoord-${index}`);
                 if (textarea) {
                     antwoorden[index].antwoord = textarea.value;
                 }
-                const select = document.querySelector(`#vraag-${index}`);
-                if (select) {
-                    antwoorden[index].vraagId = parseInt(select.value);
-                }
+                // vraagId wordt al bijgehouden via de klik-listeners op de kaartjes
             });
 
             // Verzamel alle ingevulde antwoorden
