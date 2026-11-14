@@ -312,6 +312,31 @@
             color: #4a6a8a;
             padding: 30px;
         }
+/* Zorg dat de volledige vraag zichtbaar is in de dropdown */
+.panel-row select {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    height: auto;
+    min-height: 44px;
+    line-height: 1.4;
+}
+
+/* Voor de uitgeklapte opties (werkt in de meeste moderne browsers) */
+.panel-row select option {
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 8px;
+    line-height: 1.4;
+}
+
+/* Maak de select breder op grotere schermen */
+@media (min-width: 700px) {
+    .panel-row select {
+        min-width: 400px;
+        flex: 1 1 400px;
+    }
+}
     </style>
 </head>
 <body>
