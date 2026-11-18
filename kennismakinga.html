@@ -355,6 +355,12 @@
             margin: 10px auto;
             text-align: center;
         }
+        #openGeminiBtn {
+            background: #4285f4;
+        }
+        #openGeminiBtn:hover {
+            background: #3367d6;
+        }
     </style>
 </head>
 <body>
@@ -382,6 +388,7 @@
         <h3>📄 Kopieer deze prompt en plak hem in een AI (bijv. DeepSeek):</h3>
         <textarea id="promptTextarea" readonly></textarea>
         <button id="copyBtn" class="copy-btn">📋 Kopieer prompt</button>
+        <button id="openGeminiBtn" class="copy-btn" style="margin-left: 10px;">🌐 Open Gemini</button>
         <span id="copyFeedback" class="copy-feedback">✓ Gekopieerd!</span>
     </div>
 
@@ -694,6 +701,11 @@
             }
         });
 
+// Open Gemini in een nieuw tabblad
+document.getElementById('openGeminiBtn').addEventListener('click', function() {
+    window.open('https://gemini.google.com/app', '_blank');
+});
+        
         function showCopyFeedback(show) {
             const fb = document.getElementById('copyFeedback');
             if (show) {
