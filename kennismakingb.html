@@ -4,12 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>4-Hoeken Quiz - Digitale Weerbaarheid</title>
-
+    <!-- Firebase SDK (compat zodat firebase-config.js direct werkt) -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
-
     <style>
         /* ===== ALGEMENE STIJL ===== */
         * {
@@ -546,7 +545,7 @@
         <div class="json-section" id="jsonSection">
             <button class="json-close-btn" id="jsonCloseBtn" title="Verberg dit blok">✕</button>
             <label for="jsonInput">📋 Plak hier je JSON met quizvragen:</label>
-            
+
             <!-- Dropdown voor opgeslagen quizzen uit Firestore -->
             <select id="quizSelect" class="quiz-select" title="Kies een opgeslagen vragenset">
                 <option value="">-- Kies een opgeslagen vragenset --</option>
@@ -554,9 +553,9 @@
 
             <textarea id="jsonInput" placeholder='[
     {
-        "leerling": "Pietje",
-        "vraag": "Wat gebeurde er op de camping van Pietje?",
-        "opties": ["Een overval", "Een schietpartij", "Een vechtpartij", "Brand"],
+        "leerling": "Vraag 1",
+        "vraag": "Welke app gebruiken veel kinderen om leuke video\x27s te maken?",
+        "opties": ["TikTok", "CapCut", "YouTube", "Snapchat"],
         "correct": 1
     },
     ...
@@ -578,7 +577,7 @@
         <div class="modal-box">
             <h3>Nieuwe vragenset opslaan</h3>
             <p>Geef een titel op voor deze set quizvragen:</p>
-            <input type="text" id="newQuizTitleInput" placeholder="Bijv. Groep 8 - Kennismaking" />
+            <input type="text" id="newQuizTitleInput" placeholder="Bijv. Groep 4 t/m 7 - Kennismaking" />
             <div class="modal-actions">
                 <button type="button" class="modal-cancel-btn" id="cancelTitleBtn">Annuleren</button>
                 <button type="button" class="modal-confirm-btn" id="confirmTitleBtn">Opslaan</button>
@@ -598,28 +597,28 @@
 
         <!-- Quiz header -->
         <div class="quiz-header">
-            <span class="vraag-teller" id="vraagTeller">Vraag 1 / 10</span>
-            <span class="leerling-naam" id="leerlingNaam">👤 Pietje</span>
+            <span class="vraag-teller" id="vraagTeller">Vraag 1 / 1</span>
+            <span class="leerling-naam" id="leerlingNaam">👤 Leerling</span>
         </div>
 
         <!-- Vraag -->
         <div class="vraag-tekst" id="vraagTekst">
-            <span class="vraag-nummer">1.</span> Wat gebeurde er op de camping van Pietje?
+            <span class="vraag-nummer">1.</span> Nog geen quiz geladen.
         </div>
 
         <!-- Antwoorden -->
         <div class="antwoorden-grid" id="antwoordenGrid">
             <div class="antwoord-optie kleur-a" data-index="0">
-                <span class="letter">A</span> Een overval
+                <span class="letter">A</span> Optie A
             </div>
             <div class="antwoord-optie kleur-b" data-index="1">
-                <span class="letter">B</span> Een schietpartij
+                <span class="letter">B</span> Optie B
             </div>
             <div class="antwoord-optie kleur-c" data-index="2">
-                <span class="letter">C</span> Een vechtpartij
+                <span class="letter">C</span> Optie C
             </div>
             <div class="antwoord-optie kleur-d" data-index="3">
-                <span class="letter">D</span> Brand
+                <span class="letter">D</span> Optie D
             </div>
         </div>
 
@@ -627,10 +626,10 @@
         <div class="quiz-nav">
             <div class="nav-buttons">
                 <button class="prev-btn" id="prevBtn" disabled>◀ Vorige</button>
-                <button class="next-btn" id="nextBtn">Volgende ▶</button>
+                <button class="next-btn" id="nextBtn" disabled>Volgende ▶</button>
             </div>
             <div class="nav-buttons">
-                <button class="toon-antwoord-btn" id="toonAntwoordBtn">✅ Toon antwoord</button>
+                <button class="toon-antwoord-btn" id="toonAntwoordBtn" disabled>✅ Toon antwoord</button>
                 <button class="reset-btn" id="resetBtn">🔄 Reset</button>
             </div>
         </div>
@@ -638,16 +637,22 @@
 
     <script>
         // ================================================================
-        // 0. FIREBASE INITIALISATIE
+        // 0. FIRESTORE REFERENTIE (uit firebase-config.js)
         // ================================================================
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
         const COLLECTIE_NAAM = 'kennismaking_vragen';
 
+        function getFirestoreDb() {
+            if (typeof db !== 'undefined' && db) return db;
+            if (window.db) return window.db;
+            if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+                window.db = firebase.firestore();
+                return window.db;
+            }
+            throw new Error('Firestore database (db) is niet beschikbaar. Controleer firebase-config.js.');
+        }
+
         // ================================================================
-        // 2. STATE
+        // 1. STATE
         // ================================================================
         let quizVragen = [];
         let huidigeIndex = 0;
@@ -655,7 +660,7 @@
         let opgeslagenSets = {}; // Map van docId -> { titel, vragenJson }
 
         // ================================================================
-        // 3. DOM REFERENTIES
+        // 2. DOM REFERENTIES
         // ================================================================
         const quizSelect = document.getElementById('quizSelect');
         const jsonInput = document.getElementById('jsonInput');
@@ -684,17 +689,18 @@
         const resetBtn = document.getElementById('resetBtn');
 
         // ================================================================
-        // 4. KLEUREN & LETTERS
+        // 3. KLEUREN & LETTERS
         // ================================================================
         const KLEUREN = ['kleur-a', 'kleur-b', 'kleur-c', 'kleur-d'];
         const LETTERS = ['A', 'B', 'C', 'D'];
 
         // ================================================================
-        // 5. FIRESTORE CRUD FUNCTIES
+        // 4. FIRESTORE CRUD FUNCTIES
         // ================================================================
         async function laadDropdownUitFirestore(geselecteerdId = '') {
             try {
-                const snapshot = await db.collection(COLLECTIE_NAAM).orderBy('titel').get();
+                const firestore = getFirestoreDb();
+                const snapshot = await firestore.collection(COLLECTIE_NAAM).orderBy('titel').get();
                 opgeslagenSets = {};
 
                 // Reset dropdown en zet lege waarde als standaard
@@ -731,6 +737,7 @@
                 jsonInput.value = '';
                 deleteBtn.disabled = true;
                 jsonStatus.textContent = '';
+                jsonStatus.className = 'json-status';
             } else {
                 // Bestaand item geselecteerd -> JSON in tekstvak laden
                 const item = opgeslagenSets[selectedId];
@@ -754,7 +761,8 @@
             } else {
                 // Bestaand item bijwerken in Firestore
                 try {
-                    await db.collection(COLLECTIE_NAAM).doc(selectedId).update({
+                    const firestore = getFirestoreDb();
+                    await firestore.collection(COLLECTIE_NAAM).doc(selectedId).update({
                         vragenJson: huidigeJsonTekst
                     });
                     opgeslagenSets[selectedId].vragenJson = huidigeJsonTekst;
@@ -780,7 +788,8 @@
             titleModal.classList.remove('visible');
 
             try {
-                const docRef = await db.collection(COLLECTIE_NAAM).add({
+                const firestore = getFirestoreDb();
+                const docRef = await firestore.collection(COLLECTIE_NAAM).add({
                     titel: titel,
                     vragenJson: huidigeJsonTekst
                 });
@@ -817,7 +826,8 @@
             const verwijderdeTitel = opgeslagenSets[selectedId]?.titel || 'Item';
 
             try {
-                await db.collection(COLLECTIE_NAAM).doc(selectedId).delete();
+                const firestore = getFirestoreDb();
+                await firestore.collection(COLLECTIE_NAAM).doc(selectedId).delete();
 
                 // Herlaad dropdown met standaard lege selectie en maak tekstvak leeg
                 await laadDropdownUitFirestore('');
@@ -832,19 +842,18 @@
         });
 
         // ================================================================
-        // 6. QUIZ FUNCTIES
+        // 5. QUIZ FUNCTIES
         // ================================================================
         function laadQuiz(vragen) {
             if (!vragen || vragen.length === 0) {
-                jsonStatus.textContent = '⚠️ Geen geldige vragen gevonden. Gebruik standaard vragen.';
+                jsonStatus.textContent = '⚠️ Geen geldige vragen gevonden.';
                 jsonStatus.className = 'json-status error';
-                quizVragen = [...STANDAARD_VRAGEN];
-            } else {
-                jsonStatus.textContent = `✅ ${vragen.length} vragen geladen!`;
-                jsonStatus.className = 'json-status';
-                quizVragen = [...vragen];
+                return;
             }
 
+            jsonStatus.textContent = `✅ ${vragen.length} vragen geladen!`;
+            jsonStatus.className = 'json-status';
+            quizVragen = [...vragen];
             huidigeIndex = 0;
             antwoordGetoond = false;
             quizContainer.classList.add('visible');
@@ -884,7 +893,7 @@
             });
 
             const nieuweOpties = antwoordenGrid.querySelectorAll('.antwoord-optie');
-            nieuweOpties.forEach((el, i) => {
+            nieuweOpties.forEach((el) => {
                 el.addEventListener('click', () => {
                     if (antwoordGetoond) return;
                     if (el.classList.contains('disabled')) return;
@@ -946,14 +955,13 @@
         }
 
         // ================================================================
-        // 7. JSON PARSEN
+        // 6. JSON PARSEN
         // ================================================================
         function parseJSONInput() {
             const text = jsonInput.value.trim();
             if (!text) {
-                jsonStatus.textContent = '📚 Geen JSON gevonden. Standaard vragen worden geladen.';
-                jsonStatus.className = 'json-status';
-                laadQuiz([...STANDAARD_VRAGEN]);
+                jsonStatus.textContent = '⚠️ Plak eerst een JSON met quizvragen of kies een set uit de lijst.';
+                jsonStatus.className = 'json-status error';
                 return;
             }
 
@@ -981,12 +989,11 @@
                 jsonStatus.textContent = `❌ Fout: ${e.message}`;
                 jsonStatus.className = 'json-status error';
                 console.error('JSON parse error:', e);
-                laadQuiz([...STANDAARD_VRAGEN]);
             }
         }
 
         // ================================================================
-        // 8. EVENT LISTENERS
+        // 7. EVENT LISTENERS
         // ================================================================
         generateBtn.addEventListener('click', parseJSONInput);
         prevBtn.addEventListener('click', gaNaarVorige);
@@ -1011,10 +1018,9 @@
         });
 
         // ================================================================
-        // 9. KEYBOARD NAVIGATIE
+        // 8. KEYBOARD NAVIGATIE
         // ================================================================
         document.addEventListener('keydown', (e) => {
-            // Voorkom sneltoetsen als gebruiker in de modal of textarea typt
             if (titleModal.classList.contains('visible')) return;
             if (document.activeElement === jsonInput) return;
 
@@ -1034,13 +1040,12 @@
         });
 
         // ================================================================
-        // 10. START: Laad dropdown en standaard vragen bij opstarten
+        // 9. START: Laad dropdown bij opstarten
         // ================================================================
         window.addEventListener('load', () => {
-            laadDropdownUitFirestore('');
             setTimeout(() => {
-                laadQuiz([...STANDAARD_VRAGEN]);
-            }, 100);
+                laadDropdownUitFirestore('');
+            }, 200);
         });
     </script>
 
