@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>4-Hoeken Quiz - Digitale Weerbaarheid</title>
+    <!-- Firebase SDK (compat zodat firebase-config.js direct werkt) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         /* ===== ALGEMENE STIJL ===== */
         * {
@@ -40,6 +44,24 @@
             color: #1a2a3a;
             display: block;
             margin-bottom: 8px;
+        }
+        .quiz-select {
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border: 1.5px solid #d0dce8;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: #1a2a3a;
+            background: #fafcfe;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .quiz-select:focus {
+            outline: none;
+            border-color: #4a8ab0;
+            box-shadow: 0 0 0 3px rgba(74, 138, 176, 0.12);
         }
         .json-section textarea {
             width: 100%;
@@ -84,18 +106,38 @@
         .json-actions .generate-btn:active {
             transform: scale(0.97);
         }
-        .json-actions .clear-btn {
-            background: #d0dce8;
-            color: #2a4a6a;
+        .json-actions .save-btn {
+            background: #27ae60;
+            color: white;
             border: none;
             padding: 10px 24px;
             border-radius: 30px;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
         }
-        .json-actions .clear-btn:hover {
-            background: #bcc8d8;
+        .json-actions .save-btn:hover {
+            background: #219150;
+        }
+        .json-actions .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .json-actions .delete-btn:hover:not(:disabled) {
+            background: #c0392b;
+        }
+        .json-actions .delete-btn:disabled {
+            background: #e0e8f0;
+            color: #8a9aaa;
+            cursor: not-allowed;
         }
         .json-status {
             margin-top: 8px;
@@ -148,6 +190,80 @@
         }
         .show-json-btn.visible {
             display: inline-block;
+        }
+
+        /* ===== POPUP MODAL VOOR TITEL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 26, 42, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+        .modal-overlay.visible {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 28px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+            animation: fadeSlide 0.25s ease;
+        }
+        .modal-box h3 {
+            color: #1a2a3a;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+        .modal-box p {
+            color: #4a6a8a;
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+        }
+        .modal-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d0dce8;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 18px;
+        }
+        .modal-box input:focus {
+            outline: none;
+            border-color: #2a6a9a;
+            box-shadow: 0 0 0 3px rgba(42, 106, 154, 0.15);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-actions button {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .modal-cancel-btn {
+            background: #e0e8f0;
+            color: #2a4a6a;
+        }
+        .modal-cancel-btn:hover {
+            background: #cbd6e2;
+        }
+        .modal-confirm-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .modal-confirm-btn:hover {
+            background: #219150;
         }
 
         /* ===== QUIZ CONTAINER ===== */
@@ -387,19 +503,6 @@
         .kleur-blok.groen { background: #2ecc71; }
         .kleur-blok.geel { background: #f1c40f; }
 
-        /* ===== STANDAARDVRAAG INDICATOR ===== */
-        .standaard-badge {
-            display: inline-block;
-            background: #f39c12;
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 2px 12px;
-            border-radius: 30px;
-            margin-left: 10px;
-            letter-spacing: 0.5px;
-        }
-
         /* ===== RESPONSIVE ===== */
         @media (max-width: 700px) {
             .quiz-container {
@@ -441,6 +544,12 @@
         <div class="json-section" id="jsonSection">
             <button class="json-close-btn" id="jsonCloseBtn" title="Verberg dit blok">✕</button>
             <label for="jsonInput">📋 Plak hier je JSON met quizvragen:</label>
+            
+            <!-- Dropdown voor opgeslagen quizzen uit Firestore -->
+            <select id="quizSelect" class="quiz-select" title="Kies een opgeslagen vragenset">
+                <option value="">-- Kies een opgeslagen vragenset --</option>
+            </select>
+
             <textarea id="jsonInput" placeholder='[
     {
         "leerling": "Pietje",
@@ -452,8 +561,8 @@
 ]'></textarea>
             <div class="json-actions">
                 <button class="generate-btn" id="generateBtn">🚀 Genereer quiz</button>
-                <button class="clear-btn" id="clearBtn">🗑️ Leeg maken</button>
-                <button class="clear-btn" id="defaultBtn">📚 Gebruik standaard vragen</button>
+                <button class="save-btn" id="saveBtn">💾 Opslaan</button>
+                <button class="delete-btn" id="deleteBtn" disabled>🗑️ Verwijder</button>
             </div>
             <div id="jsonStatus" class="json-status"></div>
         </div>
@@ -461,6 +570,19 @@
 
     <!-- ===== TOON JSON KNOP (verschijnt als blok verborgen is) ===== -->
     <button class="show-json-btn" id="showJsonBtn">📋 Toon JSON-invoer</button>
+
+    <!-- ===== POPUP MODAL VOOR NIEUWE NAAM ===== -->
+    <div class="modal-overlay" id="titleModal">
+        <div class="modal-box">
+            <h3>Nieuwe vragenset opslaan</h3>
+            <p>Geef een titel op voor deze set quizvragen:</p>
+            <input type="text" id="newQuizTitleInput" placeholder="Bijv. Groep 8 - Kennismaking" />
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel-btn" id="cancelTitleBtn">Annuleren</button>
+                <button type="button" class="modal-confirm-btn" id="confirmTitleBtn">Opslaan</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== QUIZ ===== -->
     <div class="quiz-container" id="quizContainer">
@@ -514,120 +636,104 @@
 
     <script>
         // ================================================================
+        // 0. FIREBASE INITIALISATIE
+        // ================================================================
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const COLLECTIE_NAAM = 'kennismaking_vragen';
+
+        // ================================================================
         // 1. STANDAARD VRAGEN (10 stuks – dummy, later vervangen)
         // ================================================================
         const STANDAARD_VRAGEN = [
-  {
-    "leerling": "Vraag 1",
-    "vraag": "Welke app gebruiken veel kinderen om leuke video's te maken met muziek, filters en speciale effecten?",
-    "opties": [
-      "TikTok",
-      "CapCut",
-      "YouTube",
-      "Snapchat"
-    ],
-    "correct": 1
-  },
-  {
-    "leerling": "Vraag 2",
-    "vraag": "Welke game is het meest populair onder kinderen en kun je met vrienden spelen op de telefoon, tablet, PC en console?",
-    "opties": [
-      "Fortnite",
-      "Minecraft",
-      "Roblox",
-      "Brawl Stars"
-    ],
-    "correct": 2
-  },
-  {
-    "leerling": "Vraag 3",
-    "vraag": "Welke game is superpopulair omdat je er zelf outfits kunt ontwerpen, personages kunt stylen en een eigen wereld kunt bouwen?",
-    "opties": [
-      "Fortnite",
-      "Roblox",
-      "Minecraft",
-      "FIFA"
-    ],
-    "correct": 1
-  },
-  {
-    "leerling": "Vraag 4",
-    "vraag": "Tim krijgt een bericht in zijn game: 'Klik hier en krijg gratis 1000 V-Bucks!' Wat moet Tim doen?",
-    "opties": [
-      "Meteen klikken, want hij wil graag gratis V-Bucks",
-      "Zijn vrienden vragen of zij ook hebben geklikt",
-      "Niet klikken en het aan zijn vader of moeder vertellen",
-      "Zijn wachtwoord veranderen en dan klikken"
-    ],
-    "correct": 2
-  },
-  {
-    "leerling": "Vraag 5",
-    "vraag": "Lisa plaatst elke dag een foto op haar Instagram. Wat is het verstandigste om te doen voor haar privacy?",
-    "opties": [
-      "Haar account op privé zetten",
-      "Alleen foto's van haar gezicht plaatsen",
-      "Haar achternaam in haar bio zetten",
-      "Elke dag haar locatie erbij zetten"
-    ],
-    "correct": 0
-  },
-  {
-    "leerling": "Vraag 6",
-    "vraag": "Welke game komt binnenkort uit en zijn heel veel gamers heel erg enthousiast over?",
-    "opties": [
-      "FIFA 26",
-      "GTA 6",
-      "Mario Kart 9",
-      "Pokémon Z"
-    ],
-    "correct": 1
-  },
-  {
-    "leerling": "Vraag 7",
-    "vraag": "Welke social media app is op dit moment het populairst onder meisjes van 8 tot 12 jaar?",
-    "opties": [
-      "Snapchat",
-      "TikTok",
-      "Instagram",
-      "WhatsApp"
-    ],
-    "correct": 1
-  },
-  {
-    "leerling": "Vraag 8",
-    "vraag": "Max gebruikt overal hetzelfde wachtwoord: 'max123'. Waarom is dat niet slim?",
-    "opties": [
-      "Omdat hij dan zijn wachtwoord kan vergeten",
-      "Omdat zijn vrienden het kunnen raden",
-      "Omdat als iemand zijn wachtwoord ontdekt, al zijn accounts gevaar lopen",
-      "Omdat wachtwoorden maar één keer gebruikt mogen worden"
-    ],
-    "correct": 2
-  },
-  {
-    "leerling": "Vraag 9",
-    "vraag": "Een onbekend meisje stuurt Sara een bericht: 'Wil je vriendinnen worden?' Wat is het beste wat Sara kan doen?",
-    "opties": [
-      "Meteen terugschrijven en alles over zichzelf vertellen",
-      "Een foto van zichzelf sturen",
-      "Het aan haar moeder of juf vertellen en niet zomaar alles delen",
-      "Afspreken om elkaar te ontmoeten"
-    ],
-    "correct": 2
-  },
-  {
-    "leerling": "Vraag 10",
-    "vraag": "Wat is het grootste verschil tussen een gameconsole en een gaming PC?",
-    "opties": [
-      "Een PC is goedkoper dan een console",
-      "Een PC kun je zelf upgraden en heeft betere graphics",
-      "Een console kun je meenemen in je tas",
-      "Een PC heeft geen games"
-    ],
-    "correct": 1
-  }
-];
+            {
+                "leerling": "Vraag 1",
+                "vraag": "Welke app gebruiken veel kinderen om leuke video's te maken met muziek, filters en speciale effecten?",
+                "opties": ["TikTok", "CapCut", "YouTube", "Snapchat"],
+                "correct": 1
+            },
+            {
+                "leerling": "Vraag 2",
+                "vraag": "Welke game is het meest populair onder kinderen en kun je met vrienden spelen op de telefoon, tablet, PC en console?",
+                "opties": ["Fortnite", "Minecraft", "Roblox", "Brawl Stars"],
+                "correct": 2
+            },
+            {
+                "leerling": "Vraag 3",
+                "vraag": "Welke game is superpopulair omdat je er zelf outfits kunt ontwerpen, personages kunt stylen en een eigen wereld kunt bouwen?",
+                "opties": ["Fortnite", "Roblox", "Minecraft", "FIFA"],
+                "correct": 1
+            },
+            {
+                "leerling": "Vraag 4",
+                "vraag": "Tim krijgt een bericht in zijn game: 'Klik hier en krijg gratis 1000 V-Bucks!' Wat moet Tim doen?",
+                "opties": [
+                    "Meteen klikken, want hij wil graag gratis V-Bucks",
+                    "Zijn vrienden vragen of zij ook hebben geklikt",
+                    "Niet klikken en het aan zijn vader of moeder vertellen",
+                    "Zijn wachtwoord veranderen en dan klikken"
+                ],
+                "correct": 2
+            },
+            {
+                "leerling": "Vraag 5",
+                "vraag": "Lisa plaatst elke dag een foto op haar Instagram. Wat is het verstandigste om te doen voor haar privacy?",
+                "opties": [
+                    "Haar account op privé zetten",
+                    "Alleen foto's van haar gezicht plaatsen",
+                    "Haar achternaam in haar bio zetten",
+                    "Elke dag haar locatie erbij zetten"
+                ],
+                "correct": 0
+            },
+            {
+                "leerling": "Vraag 6",
+                "vraag": "Welke game komt binnenkort uit en zijn heel veel gamers heel erg enthousiast over?",
+                "opties": ["FIFA 26", "GTA 6", "Mario Kart 9", "Pokémon Z"],
+                "correct": 1
+            },
+            {
+                "leerling": "Vraag 7",
+                "vraag": "Welke social media app is op dit moment het populairst onder meisjes van 8 tot 12 jaar?",
+                "opties": ["Snapchat", "TikTok", "Instagram", "WhatsApp"],
+                "correct": 1
+            },
+            {
+                "leerling": "Vraag 8",
+                "vraag": "Max gebruikt overal hetzelfde wachtwoord: 'max123'. Waarom is dat niet slim?",
+                "opties": [
+                    "Omdat hij dan zijn wachtwoord kan vergeten",
+                    "Omdat zijn vrienden het kunnen raden",
+                    "Omdat als iemand zijn wachtwoord ontdekt, al zijn accounts gevaar lopen",
+                    "Omdat wachtwoorden maar één keer gebruikt mogen worden"
+                ],
+                "correct": 2
+            },
+            {
+                "leerling": "Vraag 9",
+                "vraag": "Een onbekend meisje stuurt Sara een bericht: 'Wil je vriendinnen worden?' Wat is het beste wat Sara kan doen?",
+                "opties": [
+                    "Meteen terugschrijven en alles over zichzelf vertellen",
+                    "Een foto van zichzelf sturen",
+                    "Het aan haar moeder of juf vertellen en niet zomaar alles delen",
+                    "Afspreken om elkaar te ontmoeten"
+                ],
+                "correct": 2
+            },
+            {
+                "leerling": "Vraag 10",
+                "vraag": "Wat is het grootste verschil tussen een gameconsole en een gaming PC?",
+                "opties": [
+                    "Een PC is goedkoper dan een console",
+                    "Een PC kun je zelf upgraden en heeft betere graphics",
+                    "Een console kun je meenemen in je tas",
+                    "Een PC heeft geen games"
+                ],
+                "correct": 1
+            }
+        ];
 
         // ================================================================
         // 2. STATE
@@ -635,18 +741,26 @@
         let quizVragen = [];
         let huidigeIndex = 0;
         let antwoordGetoond = false;
+        let opgeslagenSets = {}; // Map van docId -> { titel, vragenJson }
 
         // ================================================================
         // 3. DOM REFERENTIES
         // ================================================================
+        const quizSelect = document.getElementById('quizSelect');
         const jsonInput = document.getElementById('jsonInput');
         const generateBtn = document.getElementById('generateBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const defaultBtn = document.getElementById('defaultBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
         const jsonStatus = document.getElementById('jsonStatus');
         const jsonWrapper = document.getElementById('jsonWrapper');
         const jsonCloseBtn = document.getElementById('jsonCloseBtn');
         const showJsonBtn = document.getElementById('showJsonBtn');
+
+        // Modal referenties
+        const titleModal = document.getElementById('titleModal');
+        const newQuizTitleInput = document.getElementById('newQuizTitleInput');
+        const cancelTitleBtn = document.getElementById('cancelTitleBtn');
+        const confirmTitleBtn = document.getElementById('confirmTitleBtn');
 
         const quizContainer = document.getElementById('quizContainer');
         const vraagTeller = document.getElementById('vraagTeller');
@@ -665,7 +779,149 @@
         const LETTERS = ['A', 'B', 'C', 'D'];
 
         // ================================================================
-        // 5. QUIZ FUNCTIES
+        // 5. FIRESTORE CRUD FUNCTIES
+        // ================================================================
+        async function laadDropdownUitFirestore(geselecteerdId = '') {
+            try {
+                const snapshot = await db.collection(COLLECTIE_NAAM).orderBy('titel').get();
+                opgeslagenSets = {};
+
+                // Reset dropdown en zet lege waarde als standaard
+                quizSelect.innerHTML = '<option value="">-- Kies een opgeslagen vragenset --</option>';
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    opgeslagenSets[doc.id] = {
+                        titel: data.titel || 'Zonder titel',
+                        vragenJson: data.vragenJson || ''
+                    };
+
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data.titel || 'Zonder titel';
+                    quizSelect.appendChild(option);
+                });
+
+                quizSelect.value = geselecteerdId;
+                deleteBtn.disabled = !quizSelect.value;
+            } catch (err) {
+                console.error('Fout bij ophalen uit Firestore:', err);
+                jsonStatus.textContent = `❌ Fout bij ophalen database: ${err.message}`;
+                jsonStatus.className = 'json-status error';
+            }
+        }
+
+        // Wanneer er een optie wordt gekozen in de dropdown
+        quizSelect.addEventListener('change', () => {
+            const selectedId = quizSelect.value;
+
+            if (!selectedId) {
+                // Leeg item geselecteerd -> tekstvak leegmaken en verwijderknop uit
+                jsonInput.value = '';
+                deleteBtn.disabled = true;
+                jsonStatus.textContent = '';
+            } else {
+                // Bestaand item geselecteerd -> JSON in tekstvak laden
+                const item = opgeslagenSets[selectedId];
+                jsonInput.value = item ? item.vragenJson : '';
+                deleteBtn.disabled = false;
+                jsonStatus.textContent = `📂 "${item.titel}" geladen.`;
+                jsonStatus.className = 'json-status';
+            }
+        });
+
+        // Opslaan knop
+        saveBtn.addEventListener('click', async () => {
+            const selectedId = quizSelect.value;
+            const huidigeJsonTekst = jsonInput.value;
+
+            if (!selectedId) {
+                // Leeg item geselecteerd -> open popup voor titel
+                newQuizTitleInput.value = '';
+                titleModal.classList.add('visible');
+                newQuizTitleInput.focus();
+            } else {
+                // Bestaand item bijwerken in Firestore
+                try {
+                    await db.collection(COLLECTIE_NAAM).doc(selectedId).update({
+                        vragenJson: huidigeJsonTekst
+                    });
+                    opgeslagenSets[selectedId].vragenJson = huidigeJsonTekst;
+                    jsonStatus.textContent = `💾 "${opgeslagenSets[selectedId].titel}" is bijgewerkt!`;
+                    jsonStatus.className = 'json-status';
+                } catch (err) {
+                    console.error('Fout bij bijwerken:', err);
+                    jsonStatus.textContent = `❌ Opslaan mislukt: ${err.message}`;
+                    jsonStatus.className = 'json-status error';
+                }
+            }
+        });
+
+        // Popup bevestigen -> nieuw document aanmaken
+        async function bevestigNieuweTitel() {
+            const titel = newQuizTitleInput.value.trim();
+            if (!titel) {
+                newQuizTitleInput.focus();
+                return;
+            }
+
+            const huidigeJsonTekst = jsonInput.value;
+            titleModal.classList.remove('visible');
+
+            try {
+                const docRef = await db.collection(COLLECTIE_NAAM).add({
+                    titel: titel,
+                    vragenJson: huidigeJsonTekst
+                });
+
+                // Herlaad dropdown en selecteer direct het nieuw aangemaakte item
+                await laadDropdownUitFirestore(docRef.id);
+                jsonStatus.textContent = `✅ "${titel}" opgeslagen en toegevoegd aan de lijst!`;
+                jsonStatus.className = 'json-status';
+            } catch (err) {
+                console.error('Fout bij toevoegen:', err);
+                jsonStatus.textContent = `❌ Toevoegen mislukt: ${err.message}`;
+                jsonStatus.className = 'json-status error';
+            }
+        }
+
+        confirmTitleBtn.addEventListener('click', bevestigNieuweTitel);
+        cancelTitleBtn.addEventListener('click', () => {
+            titleModal.classList.remove('visible');
+        });
+        newQuizTitleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                bevestigNieuweTitel();
+            } else if (e.key === 'Escape') {
+                titleModal.classList.remove('visible');
+            }
+        });
+
+        // Verwijder knop (direct verwijderen zonder bevestiging en terug naar lege optie)
+        deleteBtn.addEventListener('click', async () => {
+            const selectedId = quizSelect.value;
+            if (!selectedId) return; // Lege optie kan niet worden verwijderd
+
+            const verwijderdeTitel = opgeslagenSets[selectedId]?.titel || 'Item';
+
+            try {
+                await db.collection(COLLECTIE_NAAM).doc(selectedId).delete();
+
+                // Herlaad dropdown met standaard lege selectie en maak tekstvak leeg
+                await laadDropdownUitFirestore('');
+                jsonInput.value = '';
+                jsonStatus.textContent = `🗑️ "${verwijderdeTitel}" is verwijderd.`;
+                jsonStatus.className = 'json-status';
+            } catch (err) {
+                console.error('Fout bij verwijderen:', err);
+                jsonStatus.textContent = `❌ Verwijderen mislukt: ${err.message}`;
+                jsonStatus.className = 'json-status error';
+            }
+        });
+
+        // ================================================================
+        // 6. QUIZ FUNCTIES
         // ================================================================
         function laadQuiz(vragen) {
             if (!vragen || vragen.length === 0) {
@@ -709,16 +965,13 @@
                 const kleur = KLEUREN[i] || 'kleur-a';
                 const tekst = opties[i] || `Optie ${letter}`;
 
-                // Reset classes
                 el.className = `antwoord-optie ${kleur}`;
                 el.dataset.index = i;
                 el.innerHTML = `<span class="letter">${letter}</span> ${tekst}`;
 
-                // Verwijder event listeners (voorkomt dubbel)
                 el.replaceWith(el.cloneNode(true));
             });
 
-            // Haal de nieuwe elementen op en voeg click listeners toe
             const nieuweOpties = antwoordenGrid.querySelectorAll('.antwoord-optie');
             nieuweOpties.forEach((el, i) => {
                 el.addEventListener('click', () => {
@@ -728,17 +981,11 @@
                 });
             });
 
-            // Reset antwoord getoond status
             antwoordGetoond = false;
-
-            // Navigatie knoppen
             prevBtn.disabled = index === 0;
             nextBtn.disabled = index === quizVragen.length - 1;
-
-            // Toon antwoord knop inschakelen
             toonAntwoordBtn.disabled = false;
 
-            // Verwijder alle markeringen (correct/fout) van de antwoorden
             nieuweOpties.forEach(el => {
                 el.classList.remove('correct', 'fout', 'disabled');
             });
@@ -788,7 +1035,7 @@
         }
 
         // ================================================================
-        // 6. JSON PARSEN
+        // 7. JSON PARSEN
         // ================================================================
         function parseJSONInput() {
             const text = jsonInput.value.trim();
@@ -804,7 +1051,6 @@
                 if (!Array.isArray(data)) {
                     throw new Error('JSON moet een array zijn.');
                 }
-                // Valideer of het de juiste structuur heeft
                 const isValid = data.every(item =>
                     item.leerling !== undefined &&
                     item.vraag !== undefined &&
@@ -824,30 +1070,14 @@
                 jsonStatus.textContent = `❌ Fout: ${e.message}`;
                 jsonStatus.className = 'json-status error';
                 console.error('JSON parse error:', e);
-                // Toch standaard laden?
                 laadQuiz([...STANDAARD_VRAGEN]);
             }
         }
 
         // ================================================================
-        // 7. EVENT LISTENERS
+        // 8. EVENT LISTENERS
         // ================================================================
         generateBtn.addEventListener('click', parseJSONInput);
-
-        clearBtn.addEventListener('click', () => {
-            jsonInput.value = '';
-            jsonStatus.textContent = '🗑️ Inhoud gewist. Klik op "Genereer" om standaard vragen te laden.';
-            jsonStatus.className = 'json-status';
-            quizContainer.classList.remove('visible');
-        });
-
-        defaultBtn.addEventListener('click', () => {
-            jsonInput.value = '';
-            jsonStatus.textContent = '📚 Standaard vragen geladen!';
-            jsonStatus.className = 'json-status';
-            laadQuiz([...STANDAARD_VRAGEN]);
-        });
-
         prevBtn.addEventListener('click', gaNaarVorige);
         nextBtn.addEventListener('click', gaNaarVolgende);
 
@@ -870,9 +1100,13 @@
         });
 
         // ================================================================
-        // 8. KEYBOARD NAVIGATIE (extra handig)
+        // 9. KEYBOARD NAVIGATIE
         // ================================================================
         document.addEventListener('keydown', (e) => {
+            // Voorkom sneltoetsen als gebruiker in de modal of textarea typt
+            if (titleModal.classList.contains('visible')) return;
+            if (document.activeElement === jsonInput) return;
+
             if (!quizContainer.classList.contains('visible')) return;
             if (e.key === 'ArrowLeft' && !prevBtn.disabled) {
                 e.preventDefault();
@@ -889,16 +1123,14 @@
         });
 
         // ================================================================
-        // 9. START: Laad standaard vragen bij opstarten
+        // 10. START: Laad dropdown en standaard vragen bij opstarten
         // ================================================================
         window.addEventListener('load', () => {
+            laadDropdownUitFirestore('');
             setTimeout(() => {
                 laadQuiz([...STANDAARD_VRAGEN]);
             }, 100);
         });
-
-        console.log('✅ 4-Hoeken Quiz geladen!');
-        console.log(`📚 ${STANDAARD_VRAGEN.length} standaard vragen beschikbaar.`);
     </script>
 
 </body>
